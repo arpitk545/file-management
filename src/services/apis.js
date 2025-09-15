@@ -6,7 +6,7 @@ export const signupAPI = `${BASE_URL}/auth/signup`;
 export const loginAPI = `${BASE_URL}/auth/login`;
 export const logoutAPI = `${BASE_URL}/auth/logout`;
 export const changePasswordAPI = `${BASE_URL}/auth/change-password`;
-export const googleauthAPI =`${BASE_URL}/auth/google`
+export const googleauthAPI =`https://file-management-0nxg.onrender.com/auth/google`
 // ==================== Article & Region APIs ====================
 export const createRegionAPI = `${BASE_URL}/articles/create-region`;
 export const getAllRegionsAPI = `${BASE_URL}/articles/all-regions`;

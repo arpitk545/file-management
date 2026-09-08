@@ -7,7 +7,7 @@ export const loginAPI = `${BASE_URL}/auth/login`;
 export const logoutAPI = `${BASE_URL}/auth/logout`;
 export const changePasswordAPI = `${BASE_URL}/auth/change-password`;
 export const forgotPasswordAPI = `${BASE_URL}/auth/forgot-password`;
-export const googleauthAPI ="http://localhost:4000/auth/google";
+export const googleauthAPI = `${BASE_URL ? BASE_URL.replace(/\/api\/v1\/?$/, "") : "http://localhost:4000"}/auth/google`;
 // ==================== Article & Region APIs ====================
 export const createRegionAPI = `${BASE_URL}/articles/create-region`;
 export const getAllRegionsAPI = `${BASE_URL}/articles/all-regions`;
@@ -139,6 +139,6 @@ export const getallStudentResultAPI = (contestId) => `${BASE_URL}/contest/contes
 export const createcontestAIquestionsAPI = `${BASE_URL}/contest/contest/generate`;
 
 // ==================== Ad APIs ====================
-export const saveAdAPI = `http://127.0.0.1:4000/api/v1/ad/save`;
-export const getAdAPI = `http://127.0.0.1:4000/api/v1/ad/get`;
+export const saveAdAPI = `${BASE_URL}/ad/save`;
+export const getAdAPI = `${BASE_URL}/ad/get`;
 

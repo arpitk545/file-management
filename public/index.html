@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="apple-touch-icon" href="https://res.cloudinary.com/dltmcgoaq/image/upload/v1776616958/notebook_twxugx.png" />
+  <link rel="icon" href="https://res.cloudinary.com/dltmcgoaq/image/upload/v1776616958/notebook_twxugx.png" />
+  <title>CLYS</title>
+  <!-- Google Adsense Test Script -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3940256099942544" crossorigin="anonymous"></script>
+  <!-- Lottie Web Component only -->
+  <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.3/dist/dotlottie-wc.js" type="module"></script>
+  <style>
+    /* Minimal style: only what's needed for loader + heading */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background:white;
+      min-height: 100vh;
+    }
+
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease;
+    }
+
+    dotlottie-wc {
+      width: 220px;
+      height: 220px;
+      display: block;
+    }
+
+    .heading {
+      margin-top: 20px;
+      font-family: system-ui, 'Segoe UI', sans-serif;
+      font-size: 24px;
+      font-weight: 600;
+      color: black;
+      text-align: center;
+      letter-spacing: -0.3px;
+    }
+
+    @media (max-width: 550px) {
+      dotlottie-wc {
+        width: 160px;
+        height: 160px;
+      }
+      .heading {
+        font-size: 20px;
+        margin-top: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="loader">
+    <!-- Lottie animation only -->
+    <dotlottie-wc
+      src="https://lottie.host/c7e13f0d-d3de-43cb-8f99-12e4f4e39466/47ygOfUKYV.lottie"
+      autoplay
+      loop>
+    </dotlottie-wc>
+    <!-- Only heading - nothing else -->
+    <div class="heading">Loading your CLYS education platform</div>
+  </div>
+
+  <div id="root"></div>
+
+  <script>
+    // Simple loader hide after page load
+    window.addEventListener("load", () => {
+      const loader = document.getElementById("loader");
+      if (loader) {
+        loader.style.opacity = "0";
+        setTimeout(() => {
+          loader.style.display = "none";
+        }, 500);
+      }
+    });
+  </script>
+</body>
+</html>

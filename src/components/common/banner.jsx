@@ -1,64 +1,87 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState, useRef } from "react"
-import { motion } from "framer-motion"
-import { apiConnector } from "../../services/apiconnector"
-import { getAdAPI } from "../../services/apis"
-
-// Official Google AdSense Test Credentials
-const GOOGLE_TEST_AD = {
-  client: "ca-pub-3940256099942544", // Official Google AdMob / AdSense Test Publisher ID
-  slot: "6300978111",              // Official Google AdSense Test Slot ID
-  format: "auto",
-}
+import React, { useEffect, useState, useRef } from "react";
+import { apiConnector } from "../../services/apiconnector";
+import { getAdAPI } from "../../services/apis";
 
 export default function Banner() {
-  const [adConfig, setAdConfig] = useState(GOOGLE_TEST_AD);
+  const [adConfig, setAdConfig] = useState(null);
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const adRef = useRef(null);
+  const hasPushedRef = useRef(false);
 
-  // Fetch dynamic Ad Config from server, fallback to official Google test credentials
+  // Fetch dynamic Ad Config from server
   useEffect(() => {
     let isMounted = true;
     const fetchAd = async () => {
       try {
         const response = await apiConnector("GET", getAdAPI);
         if (response.data?.success && response.data?.data) {
-          if (isMounted) {
-            setAdConfig({
-              client: response.data.data.client || GOOGLE_TEST_AD.client,
-              slot: response.data.data.slot || GOOGLE_TEST_AD.slot,
-              format: response.data.data.format || GOOGLE_TEST_AD.format,
-            });
+          const ad = response.data.data;
+          // Only configure if real client and slot exist and are not dummy test placeholders
+          const isDummy =
+            !ad.client ||
+            !ad.slot ||
+            ad.client === "ca-pub-3940256099942544" ||
+            ad.client === "ca-pub-1234567890123456" ||
+            ad.client === "1234567890123456";
+
+          if (!isDummy && ad.isActive !== false) {
+            if (isMounted) {
+              setAdConfig({
+                client: ad.client,
+                slot: ad.slot,
+                format: ad.format || "auto",
+              });
+            }
+            return;
           }
         }
-      } catch (err) {
+        // If no active or valid ad found, don't show anything
         if (isMounted) {
-          setAdConfig(GOOGLE_TEST_AD);
+          setAdConfig(null);
+          setIsAdLoaded(false);
+        }
+      } catch (err) {
+        // When server has no active ad (404), do not show anything
+        if (isMounted) {
+          setAdConfig(null);
+          setIsAdLoaded(false);
         }
       }
     };
+
     fetchAd();
     return () => {
       isMounted = false;
     };
   }, []);
 
-  // Initialize adsbygoogle and listen for when Google AdSense actually fills the ad
+  // Initialize adsbygoogle and listen for when Google AdSense fills the ad
   useEffect(() => {
-    try {
-      if (typeof window !== "undefined") {
-        ((window).adsbygoogle = (window).adsbygoogle || []).push({});
-      }
-    } catch (e) {
-      console.warn("Google AdSense init:", e);
-    }
+    if (!adConfig) return;
 
     const adElement = adRef.current;
     if (!adElement) return;
 
+    // Guard against duplicate adsbygoogle.push() to avoid TagError
+    if (
+      !hasPushedRef.current &&
+      !adElement.getAttribute("data-adsbygoogle-status")
+    ) {
+      hasPushedRef.current = true;
+      try {
+        if (typeof window !== "undefined") {
+          ((window).adsbygoogle = (window).adsbygoogle || []).push({});
+        }
+      } catch (e) {
+        // Gracefully ignore TagError if AdSense already loaded
+      }
+    }
+
     // Function to check if Google AdSense has inserted an iframe or marked as filled
     const checkAdStatus = () => {
+      if (!adElement) return;
       const status = adElement.getAttribute("data-ad-status");
       const iframe = adElement.querySelector("iframe");
       if (status === "filled" || iframe) {
@@ -81,8 +104,15 @@ export default function Banner() {
       subtree: true,
     });
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, [adConfig]);
+
+  // If no ad is configured in database, show absolutely nothing
+  if (!adConfig) {
+    return null;
+  }
 
   return (
     <section
@@ -107,7 +137,6 @@ export default function Banner() {
             data-ad-client={adConfig.client}
             data-ad-slot={adConfig.slot}
             data-ad-format={adConfig.format || "auto"}
-            data-ad-test="on"
             data-full-width-responsive="true"
           />
         </div>

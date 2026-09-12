@@ -2,30 +2,38 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Upload, Plus, X, ImageIcon, FileText, MapPin, Trash2, Save, ToggleLeft, ToggleRight } from "lucide-react"
+import { Upload, Plus, X, ImageIcon, FileText, MapPin, Trash2, Save, ArrowLeft, Sparkles } from "lucide-react"
 import { getArticleById, updateArticle, deleteArticle, getAllRegionsWithStructure } from "../../../services/operations/articelsAPI"
 import { useParams, useNavigate } from "react-router-dom"
 import { toast } from "react-hot-toast"
 import ArticlesEditor from "../Admin/Articles/articles-editor"
 
+const TAG_COLOR_PALETTES = [
+  { bg: "bg-[#fff4c4]", text: "text-[#746019]", border: "border-[#fde89c]" }, // Yellow
+  { bg: "bg-[#c3faf5]", text: "text-[#187574]", border: "border-[#9eece4]" }, // Teal
+  { bg: "bg-[#ffd8f4]", text: "text-[#86296b]", border: "border-[#f3bee5]" }, // Rose
+  { bg: "bg-[#ffe6cd]", text: "text-[#7c3a00]", border: "border-[#fcd0a1]" }, // Orange
+  { bg: "bg-[#f5f3ff]", text: "text-[#4262ff]", border: "border-[#ddd6fe]" }, // Blue
+]
+
 const EditArticles = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  
+
   const [regions, setRegions] = useState([])
   const [selectedRegion, setSelectedRegion] = useState(null)
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [selectedSubcategory, setSelectedSubcategory] = useState(null)
-  
+
   const [article, setArticle] = useState({
     title: "",
     tags: [],
     content: "",
     thumbnail: null,
     commentsEnabled: true,
-    status: "draft"
+    status: "draft",
   })
-  
+
   const [imageBlocks, setImageBlocks] = useState([])
   const [showImageUpload, setShowImageUpload] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -33,7 +41,7 @@ const EditArticles = () => {
   const [isDeleting, setIsDeleting] = useState(false)
   const [tagInput, setTagInput] = useState("")
 
-  // Load regions data
+  // Load regions
   useEffect(() => {
     const loadRegions = async () => {
       try {
@@ -47,7 +55,7 @@ const EditArticles = () => {
     loadRegions()
   }, [])
 
-  // Load article data
+  // Load article
   useEffect(() => {
     const loadArticleData = async () => {
       setIsLoading(true)
@@ -61,22 +69,21 @@ const EditArticles = () => {
           return
         }
 
-        // Set region, category, subcategory from existing data
         if (articleData.region) {
-          const regionObj = regions.find(r => r._id === articleData.region || r.name === articleData.region)
+          const regionObj = regions.find((r) => r._id === articleData.region || r.name === articleData.region)
           if (regionObj) {
             setSelectedRegion(regionObj)
-            
+
             if (articleData.category) {
-              const categoryObj = regionObj.category?.find(c => 
-                c._id === articleData.category || c.name === articleData.category
+              const categoryObj = regionObj.category?.find(
+                (c) => c._id === articleData.category || c.name === articleData.category
               )
               if (categoryObj) {
                 setSelectedCategory(categoryObj)
-                
+
                 if (articleData.subCategory) {
-                  const subcategoryObj = categoryObj.subCategory?.find(sc => 
-                    sc._id === articleData.subCategory || sc.name === articleData.subCategory
+                  const subcategoryObj = categoryObj.subCategory?.find(
+                    (sc) => sc._id === articleData.subCategory || sc.name === articleData.subCategory
                   )
                   if (subcategoryObj) {
                     setSelectedSubcategory(subcategoryObj)
@@ -93,16 +100,15 @@ const EditArticles = () => {
           content: articleData.content || "",
           thumbnail: articleData.thumbnail?.[0] || null,
           commentsEnabled: articleData.commentsEnabled ?? true,
-          status: articleData.status || "draft"
+          status: articleData.status || "draft",
         })
 
-        // Set image blocks
-        const initialImageBlocks = articleData.images?.map((img, index) => ({
-          id: Date.now() + index,
-          image: img
-        })) || []
+        const initialImageBlocks =
+          articleData.images?.map((img, index) => ({
+            id: Date.now() + index,
+            image: img,
+          })) || []
         setImageBlocks(initialImageBlocks)
-
       } catch (error) {
         console.error("Error loading Post:", error)
         toast.error("Failed to load Post data")
@@ -116,23 +122,26 @@ const EditArticles = () => {
     }
   }, [id, regions, navigate])
 
-  const handleRegionChange = (regionId) => {
-    const region = regions.find(r => r._id === regionId)
+  const handleRegionChange = (e) => {
+    const regionId = e.target.value
+    const region = regions.find((r) => r._id === regionId)
     setSelectedRegion(region || null)
     setSelectedCategory(null)
     setSelectedSubcategory(null)
   }
 
-  const handleCategoryChange = (categoryId) => {
+  const handleCategoryChange = (e) => {
+    const categoryId = e.target.value
     if (!selectedRegion) return
-    const category = selectedRegion.category?.find(c => c._id === categoryId)
+    const category = selectedRegion.category?.find((c) => c._id === categoryId)
     setSelectedCategory(category || null)
     setSelectedSubcategory(null)
   }
 
-  const handleSubcategoryChange = (subcategoryId) => {
+  const handleSubcategoryChange = (e) => {
+    const subcategoryId = e.target.value
     if (!selectedCategory) return
-    const subcategory = selectedCategory.subCategory?.find(sc => sc._id === subcategoryId)
+    const subcategory = selectedCategory.subCategory?.find((sc) => sc._id === subcategoryId)
     setSelectedSubcategory(subcategory || null)
   }
 
@@ -150,7 +159,7 @@ const EditArticles = () => {
   const removeTag = (tagToRemove) => {
     setArticle({
       ...article,
-      tags: article.tags.filter(tag => tag !== tagToRemove),
+      tags: article.tags.filter((tag) => tag !== tagToRemove),
     })
   }
 
@@ -161,7 +170,6 @@ const EditArticles = () => {
     }
   }
 
-  // Image management
   const addImageBlock = () => {
     const newBlock = {
       id: Date.now(),
@@ -170,39 +178,27 @@ const EditArticles = () => {
     setImageBlocks([...imageBlocks, newBlock])
   }
 
-  const removeImageBlock = (id) => {
-    setImageBlocks(imageBlocks.filter(block => block.id !== id))
+  const removeImageBlock = (blockId) => {
+    setImageBlocks(imageBlocks.filter((b) => b.id !== blockId))
   }
 
   const handleFileUpload = (file, blockId = null) => {
     if (blockId) {
-      setImageBlocks(imageBlocks.map(block => 
-        block.id === blockId ? { ...block, image: file } : block
-      ))
+      setImageBlocks(
+        imageBlocks.map((block) => (block.id === blockId ? { ...block, [blockId]: file, image: file } : block))
+      )
     } else {
       setArticle({ ...article, thumbnail: file })
     }
   }
 
-  // Toggles
-  const toggleComments = () => {
-    setArticle({
-      ...article,
-      commentsEnabled: !article.commentsEnabled
-    })
+  const handleEditorContentChange = (content) => {
+    setArticle({ ...article, content })
   }
 
-  const handleStatusChange = (e) => {
-    setArticle({
-      ...article,
-      status: e.target.value
-    })
-  }
-
-  // Form submission
   const handleUpdate = async () => {
-    if (!selectedRegion || !selectedCategory || !selectedSubcategory || !article.title) {
-      toast.error("Please fill in all required fields")
+    if (!selectedRegion || !selectedCategory || !selectedSubcategory || !article.title.trim()) {
+      toast.error("Please fill in all required fields (Region, Category, Subcategory, and Title)")
       return
     }
 
@@ -213,19 +209,19 @@ const EditArticles = () => {
       formData.append("region", selectedRegion.name)
       formData.append("category", selectedCategory.name)
       formData.append("subCategory", selectedSubcategory.name)
-      formData.append("title", article.title)
+      formData.append("title", article.title.trim())
       formData.append("tags", article.tags.join(","))
       formData.append("content", article.content)
       formData.append("status", article.status)
       formData.append("commentsEnabled", article.commentsEnabled)
 
-      if (article.thumbnail && typeof article.thumbnail !== 'string') {
+      if (article.thumbnail && typeof article.thumbnail !== "string") {
         formData.append("thumbnail", article.thumbnail)
       }
 
       imageBlocks
-        .filter(block => block.image && typeof block.image !== 'string')
-        .forEach(block => {
+        .filter((block) => block.image && typeof block.image !== "string")
+        .forEach((block) => {
           formData.append("images", block.image)
         })
 
@@ -245,7 +241,7 @@ const EditArticles = () => {
   }
 
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this Post?")) return
+    if (!window.confirm("Are you sure you want to delete this Post permanently?")) return
 
     setIsDeleting(true)
     try {
@@ -254,11 +250,11 @@ const EditArticles = () => {
         toast.success("Post deleted successfully!")
         navigate("/articles/news")
       } else {
-        throw new Error(response.message || "Failed to deletePost")
+        throw new Error(response.message || "Failed to delete Post")
       }
     } catch (error) {
       console.error("Error deleting Post:", error)
-      toast.error(error.message || "An error occurred while deleting the Post")
+      toast.error(error.message || "Failed to delete Post")
     } finally {
       setIsDeleting(false)
     }
@@ -291,8 +287,10 @@ const EditArticles = () => {
           setIsDragOver(true)
         }}
         onDragLeave={() => setIsDragOver(false)}
-        className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200 cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 ${
-          isDragOver ? "border-blue-500 bg-blue-50" : "border-gray-300"
+        className={`relative border-2 border-dashed rounded-2xl p-6 sm:p-8 text-center transition-all cursor-pointer ${
+          isDragOver
+            ? "border-[#0fbcb0] bg-[#c3faf5]/30"
+            : "border-[#0fbcb0]/50 bg-[#c3faf5]/10 hover:border-[#0fbcb0] hover:bg-[#c3faf5]/25"
         }`}
       >
         <input
@@ -302,12 +300,12 @@ const EditArticles = () => {
           accept="image/*"
         />
         <div className="flex flex-col items-center gap-3">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-            <Upload className="w-8 h-8 text-white" />
+          <div className="w-12 h-12 rounded-2xl bg-white border border-[#9eece4] flex items-center justify-center text-[#187574] shadow-xs">
+            <Upload className="w-6 h-6 text-[#0fbcb0]" />
           </div>
           <div>
-            <p className="text-lg font-semibold text-gray-900">{placeholder}</p>
-            <p className="text-sm text-gray-500 mt-1">Drag & drop or click to browse</p>
+            <p className="text-sm sm:text-base font-bold text-[#1c1c1e]">{placeholder}</p>
+            <p className="text-xs text-[#187574] mt-0.5">Drag & drop or click to replace image</p>
           </div>
         </div>
       </div>
@@ -316,446 +314,377 @@ const EditArticles = () => {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-blue-100 via-white to-purple-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-xl font-semibold text-gray-700">Loading Post...</p>
+      <div className="min-h-screen bg-[#f7f8fa] flex items-center justify-center p-6">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-4 border-[#ffd02f] border-t-[#1c1c1e] rounded-full animate-spin mx-auto" />
+          <p className="text-sm font-semibold text-[#555a6a]">Loading post...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-blue-100 via-white to-purple-100 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-            Edit Article
-          </h1>
-          <p className="text-gray-600 text-lg">Update your Post content</p>
-        </motion.div>
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-8 px-4 sm:px-6 lg:px-8 xl:px-12 w-full">
+      <div className="w-full space-y-6">
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e0e2e8]">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/articles/news")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Posts</span>
+            </button>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#ffd02f] text-[#1c1c1e]">
+              EDIT POST
+            </span>
+          </div>
+          <button
+            onClick={() => navigate(`/approve-articles/${id}`)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1c1c1e] text-white hover:bg-[#2c2c34] text-sm font-bold transition-all shadow-sm self-start sm:self-auto active:scale-98"
+          >
+            <span>Review Mode</span>
+            <Sparkles className="w-4 h-4 text-[#ffd02f]" />
+          </button>
+        </div>
 
-        {/* Selection Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white rounded-3xl shadow-2xl p-8 mb-8 backdrop-blur-xl"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-white" />
+        {/* Page Title */}
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#1c1c1e]">
+            Edit Post
+          </h1>
+          <p className="text-sm sm:text-base text-[#555a6a]">
+            Modify post taxonomy, content, cover image, or publication status
+          </p>
+        </div>
+
+        {/* Post Details (Lavender / Blue Palette) */}
+        <div className="bg-[#f5f3ff] rounded-2xl border-2 border-[#ddd6fe] shadow-sm p-5 sm:p-7 space-y-4 w-full">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-full bg-[#4262ff] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+              <MapPin className="w-4 h-4" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">Post Details</h2>
+            <h2 className="text-base sm:text-lg font-bold text-[#1c1c1e]">Taxonomy Location</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Region Select */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Region</label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            <div className="space-y-1.5 p-3 rounded-xl bg-white border border-[#ddd6fe]">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#746019]">Region</label>
               <select
                 value={selectedRegion?._id || ""}
-                onChange={(e) => handleRegionChange(e.target.value)}
-                className="w-full h-14 px-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200"
+                onChange={handleRegionChange}
+                className="w-full h-11 px-3 bg-[#fff8e0]/60 border border-[#fde89c] rounded-lg text-[#1c1c1e] font-semibold focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all text-sm"
               >
-                <option value="">Select Region</option>
-                {regions.map(region => (
-                  <option key={region._id} value={region._id}>
-                    {region.name}
+                <option value="">Choose region</option>
+                {regions.map((r) => (
+                  <option key={r._id} value={r._id}>
+                    {r.name}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Category Select */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Category</label>
+            <div className="space-y-1.5 p-3 rounded-xl bg-white border border-[#ddd6fe]">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#187574]">Category</label>
               <select
                 value={selectedCategory?._id || ""}
-                onChange={(e) => handleCategoryChange(e.target.value)}
+                onChange={handleCategoryChange}
                 disabled={!selectedRegion}
-                className="w-full h-14 px-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 disabled:bg-gray-100"
+                className="w-full h-11 px-3 bg-[#c3faf5]/40 border border-[#9eece4] rounded-lg text-[#1c1c1e] font-semibold focus:outline-none focus:border-2 focus:border-[#0fbcb0] transition-all text-sm disabled:opacity-50"
               >
-                <option value="">Select Category</option>
-                {selectedRegion?.category?.map(category => (
-                  <option key={category._id} value={category._id}>
-                    {category.name}
+                <option value="">Choose category</option>
+                {selectedRegion?.category?.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Subcategory Select */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Subcategory</label>
+            <div className="space-y-1.5 p-3 rounded-xl bg-white border border-[#ddd6fe]">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#86296b]">Subcategory</label>
               <select
                 value={selectedSubcategory?._id || ""}
-                onChange={(e) => handleSubcategoryChange(e.target.value)}
+                onChange={handleSubcategoryChange}
                 disabled={!selectedCategory}
-                className="w-full h-14 px-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 disabled:bg-gray-100"
+                className="w-full h-11 px-3 bg-[#ffd8f4]/35 border border-[#f3bee5] rounded-lg text-[#1c1c1e] font-semibold focus:outline-none focus:border-2 focus:border-[#86296b] transition-all text-sm disabled:opacity-50"
               >
-                <option value="">Select Subcategory</option>
-                {selectedCategory?.subCategory?.map(subcategory => (
-                  <option key={subcategory._id} value={subcategory._id}>
-                    {subcategory.name}
+                <option value="">Choose subcategory</option>
+                {selectedCategory?.subCategory?.map((sc) => (
+                  <option key={sc._id} value={sc._id}>
+                    {sc.name}
                   </option>
                 ))}
               </select>
             </div>
           </div>
-        </motion.div>
-        
-        {/* Edit Article Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="bg-white rounded-3xl shadow-2xl p-8 mb-8 backdrop-blur-xl"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center">
-              <FileText className="w-5 h-5 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900">Edit Post</h2>
+        </div>
+
+        {/* Content & Metadata Card */}
+        <div className="bg-white rounded-2xl border border-[#e0e2e8] shadow-sm p-5 sm:p-7 space-y-6 w-full">
+          <div className="flex items-center gap-2.5 pb-2 border-b border-[#e0e2e8]">
+            <FileText className="w-5 h-5 text-[#0fbcb0]" />
+            <h2 className="text-lg sm:text-xl font-bold text-[#1c1c1e]">Post Content & Settings</h2>
           </div>
 
-          <div className="grid gap-6">
+          <div className="space-y-6">
             {/* Title */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Post Title</label>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">Post Title</label>
               <input
                 type="text"
                 value={article.title}
                 onChange={(e) => setArticle({ ...article, title: e.target.value })}
-                placeholder="Enter your Post title"
-                className="w-full h-14 px-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 text-gray-900 font-medium"
+                placeholder="Post title..."
+                className="w-full h-12 px-4 bg-white border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all text-sm font-semibold"
               />
             </div>
 
             {/* Thumbnail */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Post Thumbnail</label>
-              <FileUploadArea onFileSelect={handleFileUpload} placeholder="Upload thumbnail image" />
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#187574]">Cover Thumbnail</label>
+              <FileUploadArea onFileSelect={handleFileUpload} placeholder="Change cover thumbnail" />
+
               {article.thumbnail && (
-                <div className="mt-3">
-                  <img
-                    src={
-                      typeof article.thumbnail === 'string'
-                        ? article.thumbnail
-                        : URL.createObjectURL(article.thumbnail)
-                    }
-                    alt="Thumbnail Preview"
-                    className="w-full max-w-xs rounded-xl border border-gray-300"
-                  />
+                <div className="mt-3 p-3 bg-[#c3faf5]/30 border border-[#9eece4] rounded-xl flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img
+                      src={
+                        typeof article.thumbnail === "string"
+                          ? article.thumbnail
+                          : URL.createObjectURL(article.thumbnail)
+                      }
+                      alt="Thumbnail Preview"
+                      className="w-16 h-16 rounded-lg object-cover border border-[#9eece4] shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-[#1c1c1e] truncate">
+                        {typeof article.thumbnail === "string" ? "Current Cover Image" : article.thumbnail.name}
+                      </p>
+                      <p className="text-xs text-[#187574]">Ready to update</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setArticle({ ...article, thumbnail: null })}
+                    className="p-1.5 rounded-full bg-white text-red-500 hover:bg-red-50 border border-red-200"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
               )}
             </div>
 
-            {/* Status and Comments Toggle */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">Status</label>
-                <select
-                  value={article.status}
-                  onChange={handleStatusChange}
-                  className="w-full h-14 px-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 text-gray-900 font-medium"
-                >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">Comments</label>
-                <div className="flex items-center gap-4 h-14 px-4 bg-white border-2 border-gray-200 rounded-2xl">
-                  <button
-                    type="button"
-                    onClick={toggleComments}
-                    className="flex items-center gap-2"
-                  >
-                    {article.commentsEnabled ? (
-                      <ToggleRight className="w-6 h-6 text-green-500" />
-                    ) : (
-                      <ToggleLeft className="w-6 h-6 text-gray-400" />
-                    )}
-                    <span className="font-medium text-gray-700">
-                      {article.commentsEnabled ? "Enabled" : "Disabled"}
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Tags with Multiple Selection */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Tags</label>
-              <div className="flex gap-2 mb-3">
+            {/* Tags */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">Tags & Keywords</label>
+              <div className="flex gap-2">
                 <input
                   type="text"
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyPress={handleTagInputKeyPress}
-                  placeholder="Enter a tag and press Enter"
-                  className="flex-1 h-12 px-4 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 text-gray-900"
+                  placeholder="Type tag and press Enter"
+                  className="flex-1 h-12 px-4 bg-white border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all text-sm font-medium"
                 />
                 <button
                   type="button"
                   onClick={addTag}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors duration-200"
+                  className="h-12 px-6 rounded-full bg-[#1c1c1e] text-white hover:bg-[#2c2c34] font-bold text-sm transition-all flex items-center justify-center gap-1 shadow-sm"
                 >
                   <Plus className="w-4 h-4" />
+                  <span>Add</span>
                 </button>
               </div>
 
-              {/* Display Tags */}
               {article.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {article.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
-                    >
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => removeTag(tag)}
-                        className="w-4 h-4 bg-blue-200 hover:bg-blue-300 rounded-full flex items-center justify-center transition-colors duration-200"
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {article.tags.map((tag, index) => {
+                    const palette = TAG_COLOR_PALETTES[index % TAG_COLOR_PALETTES.length]
+                    return (
+                      <span
+                        key={index}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${palette.bg} ${palette.text} border ${palette.border}`}
                       >
-                        <X className="w-2 h-2" />
-                      </button>
-                    </span>
-                  ))}
+                        #{tag}
+                        <button
+                          type="button"
+                          onClick={() => removeTag(tag)}
+                          className="p-0.5 hover:bg-black/10 rounded-full"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    )
+                  })}
                 </div>
               )}
             </div>
 
-            {/* Rich Text Editor for Article Content */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Article Content</label>
-              <ArticlesEditor
-                content={article.content}
-                onChange={(content) => setArticle({ ...article, content })}
-                placeholder="Write your Post content here..."
-              />
+            {/* Editor */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">Post Content</label>
+              <div className="rounded-xl border border-[#c7cad5] overflow-hidden bg-white focus-within:border-2 focus-within:border-[#4262ff]">
+                <ArticlesEditor
+                  content={article.content}
+                  onChange={handleEditorContentChange}
+                  placeholder="Update post content..."
+                />
+              </div>
             </div>
 
-            {/* Dynamic Content Parts - Keep for backward compatibility */}
-            {/* <div className="space-y-4">
-              {contentParts.map((part, index) => (
-                <div key={part.id} className="relative">
-                  {part.type === "text" ? (
-                    <div className="relative">
-                      <textarea
-                        value={part}
-                        onChange={(e) => updateContentPart(part.id, e.target.value)}
-                        placeholder="Additional text content..."
-                        rows={4}
-                        className="w-full p-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 text-gray-900 resize-none"
-                      />
-                      <div className="absolute top-2 right-2 flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => addContentPart("image", part.id)}
-                          className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center justify-center transition-colors duration-200"
-                          title="Add image below"
-                        >
-                          <ImageIcon className="w-4 h-4" />
-                        </button>
-                        {contentParts.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeContentPart(part.id)}
-                            className="w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-lg flex items-center justify-center transition-colors duration-200"
-                            title="Delete this section"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="relative p-4 bg-gray-50 border-2 border-gray-200 rounded-2xl">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-semibold text-gray-700">Image {index + 1}</h4>
-                        <button
-                          type="button"
-                          onClick={() => removeContentPart(part.id)}
-                          className="w-6 h-6 bg-red-100 hover:bg-red-200 rounded-lg flex items-center justify-center transition-colors duration-200"
-                        >
-                          <X className="w-3 h-3 text-red-600" />
-                        </button>
-                      </div>
-                      <FileUploadArea
-                        onFileSelect={handleContentImageUpload}
-                        placeholder="Upload content image"
-                        partId={part.id}
-                      />
-                      {part.content && (
-                        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-xl">
-                          <p className="text-sm text-green-700 font-medium">
-                            {typeof part.content === 'string' 
-                              ? `✓ Image uploaded` 
-                              : `✓ ${part.content.name}`}
-                          </p>
-                        </div>
-                      )}
-                      <div className="mt-3 flex justify-center">
-                        <button
-                          type="button"
-                          onClick={() => addContentPart("text", part.id)}
-                          className="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded-lg transition-colors duration-200"
-                        >
-                          Add text below
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div> */}
+            {/* Status & Comments */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 bg-[#fff8e0]/40 rounded-xl border border-[#fde89c] space-y-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#746019]">
+                  Publication Status
+                </label>
+                <select
+                  value={article.status}
+                  onChange={(e) => setArticle({ ...article, status: e.target.value })}
+                  className="w-full h-11 px-3 bg-white border border-[#fde89c] rounded-xl text-sm font-bold text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#ffd02f]"
+                >
+                  <option value="draft">Draft (Waiting for Approval)</option>
+                  <option value="approved">Approved (Live)</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
 
-            {/* Add Images Section - Below Content */}
-            <div className="flex justify-center">
+              <div className="p-4 bg-[#ffe6cd]/30 rounded-xl border border-[#fcd0a1] flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-sm text-[#1c1c1e]">Reader Comments</h4>
+                  <p className="text-xs text-[#7c3a00]">Allow reader interactions</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={article.commentsEnabled}
+                    onChange={() =>
+                      setArticle({
+                        ...article,
+                        commentsEnabled: !article.commentsEnabled,
+                      })
+                    }
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1c1c1e]"></div>
+                </label>
+              </div>
+            </div>
+
+            {/* Gallery Images */}
+            <div className="pt-2">
               <button
                 type="button"
                 onClick={() => setShowImageUpload(!showImageUpload)}
-                className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-lg"
+                className="px-5 py-2.5 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
               >
-                <Plus className="w-5 h-5" />
-                Add Additional Images
+                <Plus className="w-4 h-4 text-[#86296b]" />
+                <span>{showImageUpload ? "Hide Gallery Images" : "Manage Additional Images"}</span>
               </button>
             </div>
 
-            {/* Additional Image Upload Section */}
+            {/* Gallery Images Section */}
             <AnimatePresence>
               {showImageUpload && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="p-6 bg-gray-50 rounded-2xl border-2 border-gray-200"
+                  className="p-4 bg-[#ffd8f4]/20 rounded-xl border border-[#f3bee5] space-y-4"
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-                        <ImageIcon className="w-4 h-4 text-white" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900">Additional Images</h3>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4 text-[#86296b]" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#86296b]">
+                        Gallery Blocks ({imageBlocks.length})
+                      </span>
                     </div>
                     <button
                       type="button"
-                      onClick={() => setShowImageUpload(false)}
-                      className="w-8 h-8 bg-red-100 hover:bg-red-200 rounded-xl flex items-center justify-center transition-colors duration-200"
-                    >
-                      <X className="w-4 h-4 text-red-600" />
-                    </button>
-                  </div>
-
-                  <div className="mb-4">
-                    <button
-                      type="button"
                       onClick={addImageBlock}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors duration-200"
+                      className="px-3.5 py-1.5 rounded-full bg-[#86296b] text-white hover:bg-[#6e2257] text-xs font-bold transition-all flex items-center gap-1"
                     >
-                      <Plus className="w-4 h-4" />
-                      Add Image
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Slot</span>
                     </button>
                   </div>
 
-                  <div className="grid gap-4">
-                    <AnimatePresence>
-                      {imageBlocks.map((block, index) => (
-                        <motion.div
-                          key={block.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -20 }}
-                          transition={{ duration: 0.3 }}
-                          className="p-4 bg-white rounded-xl border border-gray-200"
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <h4 className="text-md font-medium text-gray-900">Additional Image {index + 1}</h4>
-                            <button
-                              type="button"
-                              onClick={() => removeImageBlock(block.id)}
-                              className="w-6 h-6 bg-red-100 hover:bg-red-200 rounded-lg flex items-center justify-center transition-colors duration-200"
-                            >
-                              <X className="w-3 h-3 text-red-600" />
-                            </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {imageBlocks.map((block, index) => (
+                      <div key={block.id} className="p-3 bg-white rounded-xl border border-[#f3bee5] space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-[#1c1c1e]">Image {index + 1}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeImageBlock(block.id)}
+                            className="p-1 rounded hover:bg-red-50 text-red-500"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <FileUploadArea onFileSelect={handleFileUpload} placeholder="Upload or replace image" blockId={block.id} />
+                        {block.image && (
+                          <div className="p-2 bg-[#ffd8f4]/30 rounded-lg flex items-center gap-2">
+                            <img
+                              src={typeof block.image === "string" ? block.image : URL.createObjectURL(block.image)}
+                              alt="Gallery Preview"
+                              className="w-12 h-12 rounded object-cover"
+                            />
+                            <span className="text-xs font-medium text-[#1c1c1e] truncate">
+                              {typeof block.image === "string" ? "Stored Image" : block.image.name}
+                            </span>
                           </div>
-                          <FileUploadArea
-                            onFileSelect={handleFileUpload}
-                            placeholder="Upload image"
-                            blockId={block.id}
-                          />
-                          {block.image && (
-                            <div className="mt-3">
-                              <img
-                                src={
-                                  typeof block.image === 'string'
-                                    ? block.image
-                                    : URL.createObjectURL(block.image)
-                                }
-                                alt={`Additional Image ${index + 1}`}
-                                className="w-full max-w-xs rounded-xl border border-gray-300"
-                              />
-                            </div>
-                          )}
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Action Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center"
-        >
-          <button
-            onClick={handleUpdate}
-            disabled={isSubmitting}
-            className="px-8 py-4 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-2xl hover:from-orange-600 hover:to-red-700 transition-all duration-200 transform hover:scale-105 shadow-lg font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-          >
-            {isSubmitting ? (
-              <div className="flex items-center gap-3">
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Updating...
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <Save className="w-5 h-5" />
-                Update Post
-              </div>
-            )}
-          </button>
+        {/* Action Buttons Bar */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
           <button
             type="button"
             onClick={handleDelete}
             disabled={isDeleting}
-            className="px-8 py-4 bg-gradient-to-r from-gray-500 to-gray-700 text-white rounded-2xl hover:from-gray-600 hover:to-gray-800 transition-all duration-200 transform hover:scale-105 shadow-lg font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            className="px-6 py-3 rounded-full bg-[#fbd4d4] hover:bg-[#f9a9a9] text-[#600000] border border-[#e3c5c5] font-bold text-sm transition-all disabled:opacity-50"
           >
-            {isDeleting ? (
-              <div className="flex items-center gap-3">
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Deleting...
-              </div>
+            {isDeleting ? "Deleting..." : "Delete Post"}
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/articles/news")}
+            className="px-6 py-3 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] font-semibold text-sm transition-all shadow-sm"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleUpdate}
+            disabled={isSubmitting}
+            className="px-8 py-3.5 rounded-full bg-[#4262ff] hover:bg-[#2a41b6] text-white font-bold text-sm shadow-md hover:shadow transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-98"
+          >
+            {isSubmitting ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Updating Post...</span>
+              </>
             ) : (
-              <div className="flex items-center gap-3">
-                <Trash2 className="w-5 h-5" />
-                Delete Post
-              </div>
+              <>
+                <Save className="w-4 h-4 text-[#ffd02f]" />
+                <span>Update Post</span>
+              </>
             )}
           </button>
-        </motion.div>
+        </div>
       </div>
     </div>
   )

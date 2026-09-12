@@ -2,119 +2,130 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Card, CardContent, CardHeader, CardTitle } from "../../../ui/card"
-import { Button } from "../../../ui/button"
-import { Input } from "../../../ui/input"
-import { Label } from "../../../ui/label"
 import { getAllQuizRegions, createQuizQuestion, getAllQuizQuestions, extractQuestionsFromFile } from "../../../../services/operations/quizAPI"
 import QuizAI from "./CreateQuizAI"
-import { Database, X, Plus, Clock, User, Target, Tag, Trash2, Upload, BookOpen, CheckCircle, Bot, Sparkles, FileInput, FileUp, ImageIcon, StickyNote } from 'lucide-react'
+import {
+  Database,
+  X,
+  Plus,
+  Clock,
+  User,
+  Target,
+  Tag,
+  Trash2,
+  Upload,
+  BookOpen,
+  CheckCircle,
+  Bot,
+  Sparkles,
+  FileInput,
+  FileUp,
+  ImageIcon,
+  StickyNote,
+  ArrowLeft,
+  Layers,
+  ChevronRight,
+  HelpCircle,
+} from "lucide-react"
 import toast from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
 
-const ModernInput = ({ label, type = "text", placeholder, value, onChange, icon: Icon }) => (
-  <div className="space-y-2">
-    <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-      {Icon && <Icon className="w-4 h-4" />}
-      {label}
-    </Label>
-    <Input
+const MiroLoader = ({ message = "Loading quiz data..." }) => (
+  <div className="flex flex-col items-center justify-center py-16 gap-3">
+    <div className="relative w-12 h-12">
+      <div className="w-12 h-12 rounded-full border-4 border-[#eef0f3] border-t-[#ffd02f] border-r-[#1c1c1e] animate-spin" />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-3 h-3 rounded-full bg-[#ffd02f]" />
+      </div>
+    </div>
+    <span className="text-xs font-bold uppercase tracking-wider text-[#555a6a]">{message}</span>
+  </div>
+)
+
+const ModernInput = ({ label, type = "text", placeholder, value, onChange, icon: Icon, required = false }) => (
+  <div className="space-y-1.5">
+    <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+      {Icon && <Icon className="w-3.5 h-3.5 inline mr-1 text-[#4262ff]" />}
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <input
       type={type}
       placeholder={placeholder}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="h-14 px-4 border-2 border-gray-200 rounded-2xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+      className="w-full h-12 px-4 bg-white border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] font-semibold text-sm focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all"
     />
   </div>
 )
 
-const ModernTextarea = ({ label, placeholder, value, onChange, rows = 4 }) => (
-  <div className="space-y-2">
-    <Label className="text-sm font-semibold text-gray-700">{label}</Label>
+const ModernTextarea = ({ label, placeholder, value, onChange, rows = 3, required = false }) => (
+  <div className="space-y-1.5">
+    <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
     <textarea
       placeholder={placeholder}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       rows={rows}
-      className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 resize-none"
+      className="w-full px-4 py-3 bg-white border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] font-semibold text-sm focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all resize-none"
     />
-  </div>
-)
-
-const ProgressIndicator = ({ currentStep, totalSteps }) => (
-  <div className="flex items-center justify-center mb-8">
-    <div className="flex items-center space-x-2">
-      {Array.from({ length: totalSteps }, (_, index) => (
-        <div key={index} className="flex items-center">
-          <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
-              index < currentStep
-                ? "bg-green-500 text-white"
-                : index === currentStep
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-500"
-            }`}
-          >
-            {index < currentStep ? <CheckCircle className="w-4 h-4" /> : index + 1}
-          </div>
-          {index < totalSteps - 1 && (
-            <div className={`w-8 h-1 mx-2 rounded-full transition-all duration-300 ${index < currentStep ? "bg-green-500" : "bg-gray-200"}`} />
-          )}
-        </div>
-      ))}
-    </div>
   </div>
 )
 
 function ThumbnailUploader({ preview, onFileSelect, onClear }) {
   return (
-    <div className="space-y-3">
-      <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-        <ImageIcon className="w-4 h-4" />
-        Thumbnail
-      </Label>
+    <div className="space-y-1.5">
+      <label className="block text-xs font-bold uppercase tracking-wider text-[#187574] flex items-center gap-1">
+        <ImageIcon className="w-3.5 h-3.5 text-[#0fbcb0]" />
+        Quiz Cover Thumbnail
+      </label>
 
       {preview ? (
-        <div className="relative rounded-2xl overflow-hidden border-2 border-dashed border-blue-300">
-          <img src={preview || "/placeholder.svg"} alt="Quiz thumbnail" className="w-full h-56 object-cover" />
+        <div className="relative border-2 border-dashed border-[#0fbcb0] bg-[#c3faf5]/20 rounded-2xl p-3 flex items-center gap-4">
+          <img src={preview || "/placeholder.svg"} alt="Quiz thumbnail" className="w-20 h-20 object-cover rounded-xl border border-[#9eece4] bg-white" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-[#1c1c1e]">Cover image selected</p>
+            <p className="text-xs text-[#187574]">Ready for upload</p>
+          </div>
           <button
             type="button"
             onClick={onClear}
-            className="absolute top-2 right-2 inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/90 hover:bg-white text-red-600 shadow"
+            className="p-2 rounded-full bg-white text-red-500 hover:bg-red-50 border border-red-200 transition-all active:scale-95"
             aria-label="Remove thumbnail"
-            title="Remove thumbnail"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
       ) : (
-        <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-blue-300 rounded-2xl cursor-pointer hover:border-blue-400 transition-colors">
+        <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-[#0fbcb0]/50 bg-[#c3faf5]/10 rounded-2xl cursor-pointer hover:border-[#0fbcb0] hover:bg-[#c3faf5]/25 transition-all">
           <input
             type="file"
             accept="image/*"
             className="hidden"
             onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              const reader = new FileReader();
+              const file = e.target.files?.[0]
+              if (!file) return
+              const reader = new FileReader()
               reader.onload = () => {
-                onFileSelect({ file, dataUrl: reader.result });
-              };
-              reader.readAsDataURL(file);
+                onFileSelect({ file, dataUrl: reader.result })
+              }
+              reader.readAsDataURL(file)
             }}
           />
-          <Upload className="w-8 h-8 text-blue-500" />
+          <div className="w-10 h-10 rounded-xl bg-white border border-[#9eece4] flex items-center justify-center text-[#0fbcb0] shadow-xs">
+            <Upload className="w-5 h-5" />
+          </div>
           <div className="text-center">
-            <p className="font-semibold text-gray-700">Upload thumbnail</p>
-            <p className="text-sm text-gray-500">PNG, JPG up to ~2MB</p>
+            <p className="font-bold text-sm text-[#1c1c1e]">Upload Cover Image</p>
+            <p className="text-xs text-[#187574]">PNG, JPG up to 2MB</p>
           </div>
         </label>
       )}
     </div>
-  );
+  )
 }
 
-// Per-question image upload + note
 function QuestionImageAndNote({ question, onUpdate }) {
   const handleSelect = (file) => {
     const reader = new FileReader()
@@ -123,57 +134,57 @@ function QuestionImageAndNote({ question, onUpdate }) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-          <ImageIcon className="w-4 h-4" />
-          Image (optional)
-        </Label>
+    <div className="space-y-4 pt-3 border-t border-[#e0e2e8]">
+      <div className="space-y-1.5">
+        <label className="block text-xs font-bold uppercase tracking-wider text-[#86296b] flex items-center gap-1">
+          <ImageIcon className="w-3.5 h-3.5 text-[#d1259e]" />
+          Question Diagram / Image (optional)
+        </label>
 
         {question.image ? (
-          <div className="relative border-2 border-dashed border-purple-300 rounded-2xl overflow-hidden">
-            <img src={question.image || "/placeholder.svg"} alt="Question" className="w-full h-56 object-cover" />
+          <div className="relative border border-[#f3bee5] bg-[#ffd8f4]/20 rounded-xl p-2.5 flex items-center gap-3">
+            <img src={question.image || "/placeholder.svg"} alt="Question preview" className="w-16 h-16 object-contain rounded-lg bg-white border border-[#f3bee5]" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-[#1c1c1e]">Diagram attached</p>
+              <p className="text-[11px] text-[#86296b]">Included in question card</p>
+            </div>
             <button
               type="button"
               onClick={() => onUpdate({ ...question, image: "" })}
-              className="absolute top-2 right-2 inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/90 hover:bg-white text-red-600 shadow"
-              aria-label="Remove image"
-              title="Remove image"
+              className="p-1.5 rounded-full bg-white text-red-500 hover:bg-red-50 border border-red-200"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         ) : (
-          <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-purple-300 rounded-2xl cursor-pointer hover:border-purple-400 transition-colors">
+          <label className="flex items-center justify-center gap-2 p-3 border-2 border-dashed border-[#f3bee5] bg-[#ffd8f4]/15 rounded-xl cursor-pointer hover:border-[#d1259e] hover:bg-[#ffd8f4]/25 transition-all">
             <input
               type="file"
               accept="image/*"
               className="hidden"
               onChange={(e) => {
-                const file = e.target.files?.[0];
+                const file = e.target.files?.[0]
                 if (file) handleSelect(file)
               }}
             />
-            <Upload className="w-8 h-8 text-purple-500" />
-            <div className="text-center">
-              <p className="font-semibold text-gray-700">Upload image</p>
-              <p className="text-sm text-gray-500">PNG, JPG up to ~2MB</p>
-            </div>
+            <Upload className="w-4 h-4 text-[#d1259e]" />
+            <span className="text-xs font-bold text-[#1c1c1e]">Upload Question Image</span>
+            <span className="text-[11px] text-[#86296b]">(PNG/JPG)</span>
           </label>
         )}
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-          <StickyNote className="w-4 h-4" />
-          Note (optional)
-        </Label>
+      <div className="space-y-1.5">
+        <label className="block text-xs font-bold uppercase tracking-wider text-[#7c3a00] flex items-center gap-1">
+          <StickyNote className="w-3.5 h-3.5 text-[#ff7347]" />
+          Explanation / Solution Note (optional)
+        </label>
         <textarea
-          placeholder="Add an explanatory note for this question..."
+          placeholder="Add an explanatory note or hint for this question..."
           value={question.note || ""}
           onChange={(e) => onUpdate({ ...question, note: e.target.value })}
-          rows={3}
-          className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 resize-none"
+          rows={2}
+          className="w-full px-4 py-2.5 bg-white border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] font-semibold text-xs focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all resize-none"
         />
       </div>
     </div>
@@ -182,35 +193,36 @@ function QuestionImageAndNote({ question, onUpdate }) {
 
 const QuestionCard = ({ question, onUpdate, onDelete, index }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
+    initial={{ opacity: 0, y: 15 }}
     animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -20 }}
-    transition={{ duration: 0.3 }}
-    className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6 space-y-6"
+    exit={{ opacity: 0, y: -15 }}
+    transition={{ duration: 0.2 }}
+    className="bg-white rounded-2xl border border-[#e0e2e8] p-5 sm:p-6 space-y-5 shadow-sm hover:border-[#c7cad5] transition-all"
   >
     <div className="flex items-center justify-between">
-      <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-          <span className="text-blue-600 font-bold text-sm">{index + 1}</span>
+      <div className="flex items-center gap-2.5">
+        <div className="w-7 h-7 rounded-full bg-[#ffd02f] text-[#1c1c1e] flex items-center justify-center font-bold text-xs shadow-xs">
+          {index + 1}
         </div>
-        Question {index + 1}
-      </h3>
-      <Button
+        <h3 className="text-base font-bold text-[#1c1c1e]">Question #{index + 1}</h3>
+      </div>
+      <button
         onClick={onDelete}
-        variant="ghost"
-        size="sm"
-        className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full"
+        type="button"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-[#c93b12] bg-[#ffedea] hover:bg-[#ff7347] hover:text-white border border-[#ff7347]/30 transition-all active:scale-95"
       >
-        <Trash2 className="w-4 h-4" />
-      </Button>
+        <Trash2 className="w-3.5 h-3.5" />
+        Remove
+      </button>
     </div>
 
     <ModernTextarea
-      label="Question"
-      placeholder="Enter your question here..."
+      label="Question Statement"
+      placeholder="Enter question statement here..."
       value={question.text}
       onChange={(value) => onUpdate({ ...question, text: value })}
       rows={3}
+      required
     />
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -226,17 +238,20 @@ const QuestionCard = ({ question, onUpdate, onDelete, index }) => (
               options: { ...question.options, [option]: value },
             })
           }
+          required
         />
       ))}
     </div>
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="space-y-2">
-        <Label className="text-sm font-semibold text-gray-700">Correct Answer</Label>
+      <div className="space-y-1.5">
+        <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+          Correct Answer <span className="text-red-500">*</span>
+        </label>
         <select
           value={question.correctAnswer}
           onChange={(e) => onUpdate({ ...question, correctAnswer: e.target.value })}
-          className="w-full h-14 px-4 border-2 border-gray-200 rounded-2xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+          className="w-full h-12 px-3.5 bg-white border border-[#c7cad5] rounded-xl text-[#1c1c1e] font-semibold text-sm focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all"
         >
           <option value="">Select correct answer</option>
           {["A", "B", "C", "D"].map((option) => (
@@ -247,12 +262,14 @@ const QuestionCard = ({ question, onUpdate, onDelete, index }) => (
         </select>
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-sm font-semibold text-gray-700">Difficulty Level</Label>
+      <div className="space-y-1.5">
+        <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+          Difficulty Level <span className="text-red-500">*</span>
+        </label>
         <select
           value={question.difficulty}
           onChange={(e) => onUpdate({ ...question, difficulty: e.target.value })}
-          className="w-full h-14 px-4 border-2 border-gray-200 rounded-2xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+          className="w-full h-12 px-3.5 bg-white border border-[#c7cad5] rounded-xl text-[#1c1c1e] font-semibold text-sm focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all"
         >
           <option value="">Select difficulty</option>
           {["Easy", "Average", "Hard"].map((level) => (
@@ -293,12 +310,10 @@ export default function CreateQuiz() {
   const [currentQuizBankIndex, setCurrentQuizBankIndex] = useState(0)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [selectedFile, setSelectedFile] = useState(null)
-  const [currentStep, setCurrentStep] = useState(0)
   const [activeSource, setActiveSource] = useState(null)
   const [showAIModal, setShowAIModal] = useState(false)
   const navigate = useNavigate()
 
-  // Fetch regions
   useEffect(() => {
     const fetchRegions = async () => {
       try {
@@ -312,60 +327,48 @@ export default function CreateQuiz() {
         setIsLoading(false)
       }
     }
-
     fetchRegions()
   }, [])
 
-  // Update current step based on form completion
-  useEffect(() => {
-    let step = 0
-    if (formData.region) step = 1
-    if (formData.examType) step = 2
-    if (formData.specificClass) step = 3
-    if (formData.subject) step = 4
-    if (formData.chapter) step = 5
-    setCurrentStep(step)
-  }, [formData])
-
   const getExamTypes = () => {
-    if (!selectedRegion) return []
-    return selectedRegion.examTypes?.map((type) => type.name) || []
+    if (!selectedRegion?.examTypes) return []
+    return selectedRegion.examTypes.map((type) => type.name)
   }
 
   const getSpecificClasses = () => {
-    if (!selectedRegion || !formData.examType) return []
-    const selectedExamType = selectedRegion.examTypes.find((et) => et.name === formData.examType)
-    return selectedExamType?.specificClasses?.map((cls) => cls.name) || []
+    if (!formData.examType || !selectedRegion) return []
+    const examTypeObj = selectedRegion.examTypes.find((type) => type.name === formData.examType)
+    return examTypeObj?.specificClasses?.map((cls) => cls.name) || []
   }
 
   const getSubjects = () => {
-    if (!selectedRegion || !formData.examType || !formData.specificClass) return []
-    const selectedExamType = selectedRegion.examTypes.find((et) => et.name === formData.examType)
-    const selectedSpecificClass = selectedExamType?.specificClasses.find((sc) => sc.name === formData.specificClass)
-    return selectedSpecificClass?.subjects?.map((subject) => subject.name) || []
+    if (!formData.specificClass || !selectedRegion) return []
+    const examTypeObj = selectedRegion.examTypes.find((type) => type.name === formData.examType)
+    const classObj = examTypeObj?.specificClasses?.find((cls) => cls.name === formData.specificClass)
+    return classObj?.subjects?.map((sub) => sub.name) || []
   }
 
   const getChapters = () => {
-    if (!selectedRegion || !formData.examType || !formData.specificClass || !formData.subject) return []
-    const selectedExamType = selectedRegion.examTypes.find((et) => et.name === formData.examType)
-    const selectedSpecificClass = selectedExamType?.specificClasses.find((sc) => sc.name === formData.specificClass)
-    const selectedSubject = selectedSpecificClass?.subjects.find((sub) => sub.name === formData.subject)
-    return selectedSubject?.chapters?.map((ch) => ch.name) || []
+    if (!formData.subject || !selectedRegion) return []
+    const examTypeObj = selectedRegion.examTypes.find((type) => type.name === formData.examType)
+    const classObj = examTypeObj?.specificClasses?.find((cls) => cls.name === formData.specificClass)
+    const subjectObj = classObj?.subjects?.find((sub) => sub.name === formData.subject)
+    return subjectObj?.chapters?.map((ch) => ch.name) || []
   }
 
-  // Question management
   const addQuestion = () => {
-    const newQuestion = {
-      id: Date.now(),
-      text: "",
-      image: "",
-      note: "",
-      options: { A: "", B: "", C: "", D: "" },
-      correctAnswer: "",
-      difficulty: "",
-      tags: [],
-    }
-    setQuestions((prev) => (Array.isArray(prev) ? [...prev, newQuestion] : [newQuestion]))
+    setQuestions([
+      ...questions,
+      {
+        text: "",
+        options: { A: "", B: "", C: "", D: "" },
+        correctAnswer: "",
+        difficulty: "Average",
+        tags: [],
+        image: "",
+        note: "",
+      },
+    ])
   }
 
   const updateQuestion = (index, updatedQuestion) => {
@@ -378,66 +381,41 @@ export default function CreateQuiz() {
     setQuestions(questions.filter((_, i) => i !== index))
   }
 
-  // File import handling
+  const isFormComplete =
+    formData.quizTitle &&
+    formData.region &&
+    formData.examType &&
+    formData.specificClass &&
+    formData.subject
+
   const handleFileChange = (e) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files[0]
     if (file) {
       setSelectedFile(file)
-      setActiveSource("fileImport")
       toast.success(`File selected: ${file.name}`)
     }
   }
 
-  const fetchQuestions = async () => {
+  const handleExtractQuestions = async () => {
+    if (!selectedFile) {
+      toast.error("Please select a file first")
+      return
+    }
+
     try {
       setIsLoading(true)
-      const selectedRegionObj = regions.find((region) => region._id === formData.region)
+      const extracted = await extractQuestionsFromFile(selectedFile)
 
-      const payload = {
-        category: {
-          region: selectedRegionObj?.name || "",
-          examType: formData.examType,
-          specificClass: formData.specificClass,
-          subject: formData.subject,
-          chapter: formData.chapter,
-          quizType: "quizbank",
-        },
-      }
-      const response = await getAllQuizQuestions(payload)
-
-      setQuizBankQuestions(response.data)
-      setCurrentQuizBankIndex(0)
-      setActiveSource("quizBank")
-
-      if (response.data.length === 0) {
-        toast.error(`No question found in ${selectedRegionObj?.name || "selected region"}`)
+      if (extracted && extracted.length > 0) {
+        setImportedQuestions(extracted)
+        setCurrentQuestionIndex(0)
+        toast.success(`Extracted ${extracted.length} questions successfully!`)
       } else {
-        toast.success(`${response.data.length} questions loaded from quiz bank`)
+        toast.error("No questions found in the file")
       }
     } catch (error) {
-      toast.error(`Failed to fetch questions.`)
-      console.error(error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleExtractQuestions = async () => {
-    if (!selectedFile) return
-    setIsLoading(true)
-
-    try {
-      const data = await extractQuestionsFromFile(selectedFile)
-      if (data.questions && data.questions.length) {
-        setImportedQuestions(data.questions)
-        setCurrentQuestionIndex(0)
-        setQuestions(data?.questions)
-        toast.success(`Extracted ${data.questions.length} questions successfully!`)
-      } else {
-        toast.error("No questions extracted from the file.")
-      }
-    } catch (err) {
-      toast.error("Failed to extract questions: " + err.message)
+      console.error("Error extracting questions:", error)
+      toast.error("Failed to extract questions: " + (error.message || "Unknown error"))
     } finally {
       setIsLoading(false)
     }
@@ -446,11 +424,8 @@ export default function CreateQuiz() {
   const handleAddImportedQuestion = () => {
     if (importedQuestions.length === 0) return
 
-    setQuestions((prevQuestions) =>
-      Array.isArray(prevQuestions)
-        ? [importedQuestions[currentQuestionIndex], ...prevQuestions]
-        : [importedQuestions[currentQuestionIndex]]
-    )
+    const questionToAdd = importedQuestions[currentQuestionIndex]
+    setQuestions([...questions, questionToAdd])
 
     if (currentQuestionIndex < importedQuestions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1)
@@ -458,18 +433,57 @@ export default function CreateQuiz() {
     } else {
       setImportedQuestions([])
       setCurrentQuestionIndex(0)
-      toast.success("All imported questions added to quiz!")
+      toast.success("All imported questions processed!")
+    }
+  }
+
+  const fetchQuestions = async () => {
+    try {
+      setIsLoading(true)
+      const response = await getAllQuizQuestions()
+      const allQuestions = response?.data || []
+
+      const filtered = allQuestions.filter(
+        (q) =>
+          q.category?.region === selectedRegion?.name &&
+          q.category?.examType === formData.examType &&
+          q.category?.specificClass === formData.specificClass &&
+          q.category?.subject === formData.subject &&
+          (!formData.chapter || q.category?.chapter === formData.chapter)
+      )
+
+      if (filtered.length > 0) {
+        setQuizBankQuestions(filtered)
+        setCurrentQuizBankIndex(0)
+        setActiveSource("quizBank")
+        toast.success(`Found ${filtered.length} questions in Quiz Bank`)
+      } else {
+        toast.info("No matching questions found in Quiz Bank")
+      }
+    } catch (error) {
+      console.error("Error fetching questions:", error)
+      toast.error("Failed to fetch questions from Quiz Bank")
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleAddQuizBankQuestion = () => {
     if (quizBankQuestions.length === 0) return
 
-    setQuestions((prevQuestions) =>
-      Array.isArray(prevQuestions)
-        ? [quizBankQuestions[currentQuizBankIndex], ...prevQuestions]
-        : [quizBankQuestions[currentQuizBankIndex]]
-    )
+    const questionToAdd = quizBankQuestions[currentQuizBankIndex]
+    setQuestions([
+      ...questions,
+      {
+        text: questionToAdd.text,
+        options: questionToAdd.options,
+        correctAnswer: questionToAdd.correctAnswer,
+        difficulty: questionToAdd.difficulty || "Average",
+        tags: questionToAdd.tags || [],
+        image: questionToAdd.image || "",
+        note: questionToAdd.note || "",
+      },
+    ])
 
     if (currentQuizBankIndex < quizBankQuestions.length - 1) {
       setCurrentQuizBankIndex(currentQuizBankIndex + 1)
@@ -478,16 +492,12 @@ export default function CreateQuiz() {
       setQuizBankQuestions([])
       setCurrentQuizBankIndex(0)
       setActiveSource(null)
-      toast.success("All quiz bank questions added to quiz!")
+      toast.success("All quiz bank questions processed!")
     }
   }
 
-  // Create quiz
-  const isFormComplete =
-    formData.region && formData.examType && formData.specificClass && formData.subject && formData.chapter
-
   const handleCreateQuiz = async () => {
-    if (!isFormComplete) {
+    if (!formData.region || !formData.examType || !formData.specificClass || !formData.subject) {
       toast.error("Please complete all category fields")
       return
     }
@@ -497,33 +507,40 @@ export default function CreateQuiz() {
       return
     }
 
+    const invalidQuestions = questions.filter(
+      (q) => !q.text || !q.options.A || !q.options.B || !q.options.C || !q.options.D || !q.correctAnswer
+    )
+
+    if (invalidQuestions.length > 0) {
+      toast.error("Please complete all question fields (text, all 4 options, and correct answer)")
+      return
+    }
+
     try {
       setIsLoading(true)
-      const regionName = selectedRegion?.name || ""
+
       const payload = {
         category: {
           quizTitle: formData.quizTitle,
-          description: formData.description,
-          thumbnailimage: formData.thumbnailimage,
-          language: formData.language,
-          duration: formData.duration,
-          author: formData.author,
-          region: regionName,
+          region: selectedRegion?.name,
           examType: formData.examType,
           specificClass: formData.specificClass,
           subject: formData.subject,
           chapter: formData.chapter,
-          quizType: formData.quizType,
-          approvalStatus: "Approved",
+          duration: formData.duration || 30,
+          author: formData.author || "Admin",
+          quizType: "createquiz",
+          description: formData.description || "",
+          thumbnailimage: formData.thumbnailimage,
         },
         questions: questions.map((q) => ({
           text: q.text,
-          image: q.image || "",
-          note: q.note || "",
           options: q.options,
           correctAnswer: q.correctAnswer,
           difficulty: q.difficulty,
           tags: q.tags || [],
+          image: q.image || "",
+          note: q.note || "",
         })),
       }
 
@@ -531,27 +548,6 @@ export default function CreateQuiz() {
 
       toast.success(`Quiz created successfully with ${questions.length} questions!`)
       navigate("/view-quiz")
-
-      // Reset
-      setQuestions([])
-      setFormData({
-        quizTitle: "",
-        description: "",
-        thumbnailimage: "",
-        region: "",
-        examType: "",
-        duration: "",
-        specificClass: "",
-        subject: "",
-        chapter: "",
-        quizType: "createquiz",
-        author: "",
-        language: "",
-      })
-      setSelectedFile(null)
-      setImportedQuestions([])
-      setQuizBankQuestions([])
-      setCurrentQuizBankIndex(0)
     } catch (error) {
       console.error("Error creating quiz:", error)
       toast.error("Failed to create quiz: " + (error.message || "Server error"))
@@ -561,530 +557,544 @@ export default function CreateQuiz() {
   }
 
   return (
-    <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4 md:p-8">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="flex items-center gap-4 mb-6">
-            <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl">
-              <Sparkles className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Create Quiz</h1>
-              <p className="text-gray-600 text-lg">Build your custom quiz step by step</p>
-            </div>
-          </motion.div>
-
-          <ProgressIndicator currentStep={currentStep} totalSteps={5} />
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-8 px-4 sm:px-6 lg:px-8 xl:px-12 w-full">
+      <div className="w-full space-y-6">
+        
+        {/* Consistent Top Bar (Same as Posts) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e0e2e8]">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Dashboard</span>
+            </button>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#ffd02f] text-[#1c1c1e]">
+              QUIZ STUDIO
+            </span>
+            <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#ffd8f4] text-[#86296b] border border-[#f3bee5]">
+              NEW QUIZ
+            </span>
+          </div>
+          <button
+            onClick={() => navigate("/view-quiz")}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1c1c1e] text-white hover:bg-[#2c2c34] text-sm font-bold transition-all shadow-sm self-start sm:self-auto active:scale-98"
+          >
+            <span>View All Quizzes</span>
+            <Sparkles className="w-4 h-4 text-[#ffd02f]" />
+          </button>
         </div>
 
-        {/* Category Selection Card */}
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.6 }}>
-          <Card className="backdrop-blur-xl bg-white/90 border-0 shadow-2xl rounded-3xl overflow-visible mb-8">
-            <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-8">
-              <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                <Target className="w-7 h-7" />
-                Quiz Configuration
-              </CardTitle>
-            </CardHeader>
+        {/* Page Title & Subtitle */}
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-[#c3faf5] text-[#187574] border border-[#9eece4] mb-1">
+            <Layers className="w-3.5 h-3.5" />
+            <span>STEP-BY-STEP QUIZ BUILDER</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#1c1c1e]">
+            Create Quiz
+          </h1>
+          <p className="text-sm sm:text-base text-[#555a6a]">
+            Configure taxonomy hierarchy, basic parameters, and compile question sets.
+          </p>
+        </div>
 
-            <CardContent className="p-8 space-y-6">
-              {/* Quiz Info Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <ModernInput
-                  label="Quiz Title"
-                  placeholder="Enter quiz title..."
-                  value={formData.quizTitle}
-                  onChange={(value) => setFormData({ ...formData, quizTitle: value })}
-                  icon={Tag}
-                />
+        {/* Loading Indicator */}
+        {isLoading && <MiroLoader message="Processing quiz builder..." />}
 
-                <ModernInput
-                  label="Duration (minutes)"
-                  type="number"
-                  placeholder="Enter duration..."
-                  value={formData.duration || ""}
-                  onChange={(value) => setFormData({ ...formData, duration: value })}
-                  icon={Clock}
-                />
+        {/* Step 1: Configuration Card (Lavender / Blue Accent Palette matching Posts) */}
+        <div className="bg-[#f5f3ff] rounded-2xl border-2 border-[#ddd6fe] shadow-sm p-5 sm:p-7 space-y-5 w-full">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-[#4262ff] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                <Target className="w-4 h-4" />
+              </div>
+              <h2 className="text-base sm:text-lg font-bold text-[#1c1c1e]">Quiz Setup & Taxonomy</h2>
+            </div>
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-white text-[#4262ff] border border-[#ddd6fe]">
+              Step 1 of 2
+            </span>
+          </div>
 
-                <ModernInput
-                  label="Author"
-                  placeholder="Enter author name..."
-                  value={formData.author || ""}
-                  onChange={(value) => setFormData({ ...formData, author: value })}
-                  icon={User}
-                />
+          {/* Basic Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            <ModernInput
+              label="Quiz Title"
+              placeholder="e.g. Thermodynamics Chapter 1 Quiz"
+              value={formData.quizTitle}
+              onChange={(value) => setFormData({ ...formData, quizTitle: value })}
+              icon={Tag}
+              required
+            />
+            <ModernInput
+              label="Duration (minutes)"
+              type="number"
+              placeholder="e.g. 30"
+              value={formData.duration || ""}
+              onChange={(value) => setFormData({ ...formData, duration: value })}
+              icon={Clock}
+              required
+            />
+            <ModernInput
+              label="Author / Faculty"
+              placeholder="e.g. Prof. Sharma"
+              value={formData.author || ""}
+              onChange={(value) => setFormData({ ...formData, author: value })}
+              icon={User}
+            />
+          </div>
+
+          {/* Taxonomy Selectors (Colored Boxes matching Posts createArticles.jsx) */}
+          <div className="pt-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a] mb-2.5">
+              Taxonomy Hierarchy <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+              {/* Region (Yellow tint) */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-white border border-[#ddd6fe]">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#746019]">
+                  1. Region <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.region}
+                  onChange={(e) => {
+                    const selectedRegionId = e.target.value
+                    setFormData({
+                      ...formData,
+                      region: selectedRegionId,
+                      examType: "",
+                      specificClass: "",
+                      subject: "",
+                      chapter: "",
+                    })
+                  }}
+                  className="w-full h-11 px-3 bg-[#fff8e0]/60 border border-[#fde89c] rounded-lg text-[#1c1c1e] font-semibold text-sm focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all"
+                >
+                  <option value="">Choose region...</option>
+                  {regions.map((region) => (
+                    <option key={region._id} value={region._id}>
+                      {region.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {/* Thumbnail + Description */}
-              <div className="grid grid-cols-1 gap-6">
-                <div className="space-y-4">
-                  <ThumbnailUploader
-                    preview={formData.thumbnailimage}
-                    onFileSelect={({ file, dataUrl }) => {
-                      setFormData((prev) => ({ ...prev, thumbnailimage: dataUrl }))
-                    }}
-                    onClear={() => setFormData((prev) => ({ ...prev, thumbnailimage: "" }))}
-                  />
-
-                  <ModernTextarea
-                    label="Description"
-                    placeholder="Write a short description for this quiz..."
-                    value={formData.description || ""}
-                    onChange={(value) => setFormData((prev) => ({ ...prev, description: value }))}
-                    rows={3}
-                  />
-                </div>
+              {/* Exam Type (Teal tint) */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-white border border-[#ddd6fe]">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#187574]">
+                  2. Exam Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.examType}
+                  disabled={!formData.region}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      examType: e.target.value,
+                      specificClass: "",
+                      subject: "",
+                      chapter: "",
+                    })
+                  }
+                  className={`w-full h-11 px-3 bg-[#c3faf5]/40 border border-[#9eece4] rounded-lg text-[#1c1c1e] font-semibold text-sm focus:outline-none focus:border-2 focus:border-[#0fbcb0] transition-all ${
+                    !formData.region ? "opacity-50 cursor-not-allowed bg-gray-50" : ""
+                  }`}
+                >
+                  <option value="">Choose exam type...</option>
+                  {getExamTypes().map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Select Region</Label>
-                  <select
-                    value={formData.region}
-                    onChange={(e) => {
-                      const selectedRegionId = e.target.value
-                      setFormData({
-                        ...formData,
-                        region: selectedRegionId,
-                        examType: "",
-                        specificClass: "",
-                        subject: "",
-                        chapter: "",
-                      })
-                    }}
-                    className="w-full h-14 px-4 border-2 border-gray-200 rounded-2xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                  >
-                    <option value="">Choose region</option>
-                    {regions.map((region) => (
-                      <option key={region._id} value={region._id}>
-                        {region.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <AnimatePresence>
-                  {formData.region && (
-                    <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-2"
-                    >
-                      <Label className="text-sm font-semibold text-gray-700">Class/Exam Type</Label>
-                      <select
-                        value={formData.examType}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            examType: e.target.value,
-                            specificClass: "",
-                            subject: "",
-                            chapter: "",
-                          })
-                        }
-                        className="w-full h-14 px-4 border-2 border-gray-200 rounded-2xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                      >
-                        <option value="">Choose exam type</option>
-                        {getExamTypes().map((type) => (
-                          <option key={type} value={type}>
-                            {type}
-                          </option>
-                        ))}
-                      </select>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <AnimatePresence>
-                  {formData.examType && (
-                    <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-2"
-                    >
-                      <Label className="text-sm font-semibold text-gray-700">Specific Class</Label>
-                      <select
-                        value={formData.specificClass}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            specificClass: e.target.value,
-                            subject: "",
-                            chapter: "",
-                          })
-                        }
-                        className="w-full h-14 px-4 border-2 border-gray-200 rounded-2xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                      >
-                        <option value="">Choose class</option>
-                        {getSpecificClasses().map((cls) => (
-                          <option key={cls} value={cls}>
-                            {cls}
-                          </option>
-                        ))}
-                      </select>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+              {/* Specific Class (Rose tint) */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-white border border-[#ddd6fe]">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#86296b]">
+                  3. Specific Class <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.specificClass}
+                  disabled={!formData.examType}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      specificClass: e.target.value,
+                      subject: "",
+                      chapter: "",
+                    })
+                  }
+                  className={`w-full h-11 px-3 bg-[#ffd8f4]/35 border border-[#f3bee5] rounded-lg text-[#1c1c1e] font-semibold text-sm focus:outline-none focus:border-2 focus:border-[#86296b] transition-all ${
+                    !formData.examType ? "opacity-50 cursor-not-allowed bg-gray-50" : ""
+                  }`}
+                >
+                  <option value="">Choose class...</option>
+                  {getSpecificClasses().map((cls) => (
+                    <option key={cls} value={cls}>
+                      {cls}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <AnimatePresence>
-                {formData.specificClass && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="grid grid-cols-1 md:grid-cols-2 gap-6"
-                  >
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-gray-700">Subject (Category)</Label>
-                      <select
-                        value={formData.subject}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            subject: e.target.value,
-                            chapter: "",
-                          })
-                        }
-                        className="w-full h-14 px-4 border-2 border-gray-200 rounded-2xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                      >
-                        <option value="">Choose subject</option>
-                        {getSubjects().map((subject) => (
-                          <option key={subject} value={subject}>
-                            {subject}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+              {/* Subject (Orange tint) */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-white border border-[#ddd6fe]">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#7c3a00]">
+                  4. Subject <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.subject}
+                  disabled={!formData.specificClass}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      subject: e.target.value,
+                      chapter: "",
+                    })
+                  }
+                  className={`w-full h-11 px-3 bg-[#ffe6cd]/40 border border-[#fcd0a1] rounded-lg text-[#1c1c1e] font-semibold text-sm focus:outline-none focus:border-2 focus:border-[#ff7347] transition-all ${
+                    !formData.specificClass ? "opacity-50 cursor-not-allowed bg-gray-50" : ""
+                  }`}
+                >
+                  <option value="">Choose subject...</option>
+                  {getSubjects().map((subject) => (
+                    <option key={subject} value={subject}>
+                      {subject}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-                    <AnimatePresence>
-                      {formData.subject && getChapters().length > 0 && (
-                        <motion.div
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
-                          transition={{ duration: 0.3 }}
-                          className="space-y-2"
-                        >
-                          <Label className="text-sm font-semibold text-gray-700">Chapter/Topic (Sub Category)</Label>
-                          <select
-                            value={formData.chapter}
-                            onChange={(e) => setFormData({ ...formData, chapter: e.target.value })}
-                            className="w-full h-14 px-4 border-2 border-gray-200 rounded-2xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                          >
-                            <option value="">Choose chapter</option>
-                            {getChapters().map((chapterName) => (
-                              <option key={chapterName} value={chapterName}>
-                                {chapterName}
-                              </option>
-                            ))}
-                          </select>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </CardContent>
-          </Card>
-        </motion.div>
+              {/* Chapter (Lavender tint) */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-white border border-[#ddd6fe]">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#4262ff]">
+                  5. Chapter
+                </label>
+                <select
+                  value={formData.chapter}
+                  disabled={!formData.subject || getChapters().length === 0}
+                  onChange={(e) => setFormData({ ...formData, chapter: e.target.value })}
+                  className={`w-full h-11 px-3 bg-[#f5f3ff] border border-[#ddd6fe] rounded-lg text-[#1c1c1e] font-semibold text-sm focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all ${
+                    !formData.subject || getChapters().length === 0 ? "opacity-50 cursor-not-allowed bg-gray-50" : ""
+                  }`}
+                >
+                  <option value="">Choose chapter (optional)</option>
+                  {getChapters().map((chapterName) => (
+                    <option key={chapterName} value={chapterName}>
+                      {chapterName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
 
-        {/* Quiz Sources */}
+          {/* Description & Thumbnail Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-2">
+            <ThumbnailUploader
+              preview={formData.thumbnailimage}
+              onFileSelect={({ file, dataUrl }) => {
+                setFormData((prev) => ({ ...prev, thumbnailimage: dataUrl }))
+              }}
+              onClear={() => setFormData((prev) => ({ ...prev, thumbnailimage: "" }))}
+            />
+
+            <ModernTextarea
+              label="Quiz Description"
+              placeholder="Write a short summary of instructions, coverage, and scoring rules..."
+              value={formData.description || ""}
+              onChange={(value) => setFormData((prev) => ({ ...prev, description: value }))}
+              rows={4}
+            />
+          </div>
+        </div>
+
+        {/* Step 2: Question Sources & Builder Card (when category complete) */}
         <AnimatePresence>
           {isFormComplete && (
-            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="space-y-8">
-              {/* Question Sources */}
-              <Card className="backdrop-blur-xl bg-white/90 border-0 shadow-2xl rounded-3xl overflow-visible">
-                <CardHeader className="bg-gradient-to-r from-green-500 to-teal-600 text-white p-6">
-                  <CardTitle className="text-xl font-bold flex items-center gap-3">
-                    <Database className="w-6 h-6" />
-                    Question Sources
-                  </CardTitle>
-                </CardHeader>
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl border border-[#e0e2e8] shadow-sm p-5 sm:p-7 space-y-6 w-full"
+            >
+              <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-[#e0e2e8]">
+                <div className="flex items-center gap-2.5">
+                  <BookOpen className="w-5 h-5 text-[#0fbcb0]" />
+                  <h2 className="text-lg sm:text-xl font-bold text-[#1c1c1e]">
+                    Question Set ({questions.length})
+                  </h2>
+                </div>
+                <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#c3faf5] text-[#187574]">
+                  Step 2 of 2
+                </span>
+              </div>
 
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <Button
-                      onClick={fetchQuestions}
-                      variant={activeSource === "quizBank" ? "default" : "outline"}
-                      className={`h-16 rounded-2xl transition-all duration-200 ${
-                        activeSource === "quizBank"
-                          ? "bg-blue-600 hover:bg-blue-700 text-white"
-                          : "border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 bg-transparent"
-                      }`}
-                    >
-                      <Database className="w-5 h-5 mr-2" />
-                      Quiz Bank
-                    </Button>
+              {/* Source Action Pills */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <button
+                  type="button"
+                  onClick={fetchQuestions}
+                  className={`h-12 px-4 rounded-full font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-2 ${
+                    activeSource === "quizBank"
+                      ? "bg-[#1c1c1e] text-white shadow-sm"
+                      : "bg-[#f5f3ff] text-[#4262ff] border border-[#ddd6fe] hover:bg-[#ede9fe]"
+                  }`}
+                >
+                  <Database className="w-4 h-4" />
+                  Quiz Bank
+                </button>
 
-                    <Button
-                      onClick={() => setActiveSource("fileImport")}
-                      variant={activeSource === "fileImport" ? "default" : "outline"}
-                      className={`h-16 rounded-2xl transition-all duration-200 ${
-                        activeSource === "fileImport"
-                          ? "bg-green-600 hover:bg-green-700 text-white"
-                          : "border-2 border-green-200 hover:border-green-400 hover:bg-green-50 bg-transparent"
-                      }`}
-                    >
-                      <FileInput className="w-5 h-5 mr-2" />
-                      Import File
-                    </Button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSource(activeSource === "fileImport" ? null : "fileImport")}
+                  className={`h-12 px-4 rounded-full font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-2 ${
+                    activeSource === "fileImport"
+                      ? "bg-[#1c1c1e] text-white shadow-sm"
+                      : "bg-[#c3faf5]/60 text-[#187574] border border-[#9eece4] hover:bg-[#c3faf5]"
+                  }`}
+                >
+                  <FileInput className="w-4 h-4" />
+                  Import File
+                </button>
 
-                    <Button
-                      onClick={handleExtractQuestions}
-                      disabled={!selectedFile}
-                      variant={activeSource === "extract" ? "default" : "outline"}
-                      className={`h-16 rounded-2xl transition-all duration-200 ${
-                        activeSource === "extract"
-                          ? "bg-purple-600 hover:bg-purple-700 text-white"
-                          : "border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 bg-transparent"
-                      }`}
-                    >
-                      <FileUp className="w-5 h-5 mr-2" />
-                      Extract Questions
-                    </Button>
+                <button
+                  type="button"
+                  onClick={handleExtractQuestions}
+                  disabled={!selectedFile}
+                  className={`h-12 px-4 rounded-full font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-2 ${
+                    activeSource === "extract"
+                      ? "bg-[#1c1c1e] text-white shadow-sm"
+                      : "bg-[#ffe6cd]/60 text-[#7c3a00] border border-[#fcd0a1] hover:bg-[#ffe6cd] disabled:opacity-40"
+                  }`}
+                >
+                  <FileUp className="w-4 h-4" />
+                  Extract Questions
+                </button>
 
-                    <Button
-                      onClick={() => setShowAIModal(true)}
-                      variant="outline"
-                      className={`h-16 rounded-2xl transition-all duration-200 border-2 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50 bg-transparent
-                      `}
-                    >
-                      <Bot className="w-5 h-5 mr-2" />
-                      AI Generator
-                    </Button>
-                  </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAIModal(true)}
+                  className="h-12 px-4 rounded-full font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-2 bg-[#ffd8f4]/60 text-[#86296b] border border-[#f3bee5] hover:bg-[#ffd8f4]"
+                >
+                  <Bot className="w-4 h-4" />
+                  AI Generator
+                </button>
+              </div>
 
-                  {/* File Upload Section */}
-                  {activeSource === "fileImport" && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.3 }} className="mt-6 relative">
-                      <div className="border-2 border-dashed border-blue-400 rounded-2xl p-8 text-center relative">
-                        {/* Red Cross Icon at top right */}
-                        <button
-                          type="button"
-                          onClick={() => setActiveSource(null)}
-                          className="absolute top-3 right-3 text-red-600 hover:text-red-800 focus:outline-none text-2xl font-bold"
-                          aria-label="Close upload area"
-                        >
-                          &#x2715;
-                        </button>
-
-                        <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center justify-center space-y-3">
-                          <input
-                            type="file"
-                            id="file-upload"
-                            className="hidden"
-                            accept=".pdf,.doc,.docx,.xlsx,.csv"
-                            onChange={handleFileChange}
-                          />
-                          <Upload className="w-10 h-10 text-gray-400" />
-                          <p className="font-medium text-blue-600">{selectedFile ? selectedFile.name : "Upload PDF or DOC file"}</p>
-                          <p className="text-base text-gray-700">
-                            {selectedFile ? "Click on the Extract Button to Get Questions" : "Drag & drop or click to browse"}
-                          </p>
-                        </label>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Imported Questions Section */}
-                  {importedQuestions.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      transition={{ duration: 0.3 }}
-                      className="mt-6 border-2 border-dashed border-gray-300 rounded-2xl p-6"
-                    >
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-semibold">
-                          Imported Question {currentQuestionIndex + 1} of {importedQuestions.length}
-                        </h3>
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
-                            disabled={currentQuestionIndex === 0}
-                            variant="outline"
-                            className="bg-gray-100 hover:bg-gray-200"
-                          >
-                            Previous
-                          </Button>
-                          <Button
-                            onClick={() => setCurrentQuestionIndex((prev) => Math.min(importedQuestions.length - 1, prev + 1))}
-                            disabled={currentQuestionIndex === importedQuestions.length - 1}
-                            variant="outline"
-                            className="bg-gray-100 hover:bg-gray-200"
-                          >
-                            Next
-                          </Button>
-                          <Button onClick={handleAddImportedQuestion} className="bg-blue-600 hover:bg-blue-700 text-white">
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add to Quiz
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="bg-gray-50 p-4 rounded-xl">
-                        <p className="font-medium mb-2">{importedQuestions[currentQuestionIndex]?.text}</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {["A", "B", "C", "D"].map((opt) => (
-                            <div key={opt} className="flex items-center gap-2">
-                              <span className="font-bold">{opt}:</span>
-                              <span>{importedQuestions[currentQuestionIndex]?.options[opt]}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="mt-3">
-                          <span className="font-bold">Correct Answer:</span> {importedQuestions[currentQuestionIndex]?.correctAnswer}
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {quizBankQuestions.length > 0 && activeSource === "quizBank" && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      transition={{ duration: 0.3 }}
-                      className="mt-6 border-2 border-dashed border-blue-300 rounded-2xl p-6"
-                    >
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-semibold">
-                          Quiz Bank Question {currentQuizBankIndex + 1} of {quizBankQuestions.length}
-                        </h3>
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => setCurrentQuizBankIndex((prev) => Math.max(0, prev - 1))}
-                            disabled={currentQuizBankIndex === 0}
-                            variant="outline"
-                            className="bg-gray-100 hover:bg-gray-200"
-                          >
-                            Previous
-                          </Button>
-                          <Button
-                            onClick={() => setCurrentQuizBankIndex((prev) => Math.min(quizBankQuestions.length - 1, prev + 1))}
-                            disabled={currentQuizBankIndex === quizBankQuestions.length - 1}
-                            variant="outline"
-                            className="bg-gray-100 hover:bg-gray-200"
-                          >
-                            Skip
-                          </Button>
-                          <Button onClick={handleAddQuizBankQuestion} className="bg-blue-600 hover:bg-blue-700 text-white">
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add to Quiz
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="bg-gray-50 p-4 rounded-xl">
-                        <p className="font-medium mb-3 text-gray-800">{quizBankQuestions[currentQuizBankIndex]?.text}</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                          {["A", "B", "C", "D"].map((opt) => (
-                            <div key={opt} className="flex items-center gap-2 p-2 bg-white rounded border border-gray-200">
-                              <span className="font-bold text-blue-600">{opt}:</span>
-                              <span>{quizBankQuestions[currentQuizBankIndex]?.options?.[opt]}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="flex gap-4">
-                          <div>
-                            <span className="font-bold">Correct Answer:</span> <span className="text-green-600 font-semibold">{quizBankQuestions[currentQuizBankIndex]?.correctAnswer}</span>
-                          </div>
-                          <div>
-                            <span className="font-bold">Difficulty:</span> <span className="text-orange-600 font-semibold">{quizBankQuestions[currentQuizBankIndex]?.difficulty}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Manual Question Builder */}
-              <Card className="backdrop-blur-xl bg-white/90 border-0 shadow-2xl rounded-3xl overflow-visible">
-                <CardHeader className="bg-gradient-to-r from-orange-500 to-red-600 text-white p-6">
-                  <CardTitle className="text-xl font-bold flex items-center gap-3">
-                    <BookOpen className="w-6 h-6" />
-                    Question Builder
-                  </CardTitle>
-                </CardHeader>
-
-                <CardContent className="p-6 space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-semibold text-gray-800">Questions ({questions.length})</h3>
-                  </div>
-
-                  <div className="space-y-6">
-                    <AnimatePresence>
-                      {Array.isArray(questions) &&
-                        questions.map((question, index) => (
-                          <QuestionCard
-                            key={question.id || index}
-                            question={question}
-                            index={index}
-                            onUpdate={(updatedQuestion) => updateQuestion(index, updatedQuestion)}
-                            onDelete={() => deleteQuestion(index)}
-                          />
-                        ))}
-                    </AnimatePresence>
-
-                    {questions.length === 0 && (
-                      <div className="text-center py-12 text-gray-500">
-                        <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                        <p className="text-lg">No questions added yet</p>
-                        <p className="text-sm">Click the button below to add your first question</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Add Questions Button */}
-                  <div className="flex justify-center pt-4 border-t-2 border-gray-100">
-                    <Button
-                      onClick={addQuestion}
-                      className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-2xl px-8 py-6 transition-all duration-200 transform hover:scale-105"
-                    >
-                      <Plus className="w-5 h-5 mr-2" />
-                      Add Questions
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Submit Section */}
-              {questions.length > 0 && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="flex justify-center gap-4">
-                  <Button
-                    onClick={handleCreateQuiz}
-                    disabled={isLoading}
-                    className="h-14 px-8 bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+              {/* File Upload Drop Area */}
+              {activeSource === "fileImport" && (
+                <div className="relative border-2 border-dashed border-[#0fbcb0] bg-[#c3faf5]/15 rounded-2xl p-6 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setActiveSource(null)}
+                    className="absolute top-3 right-3 text-red-500 hover:bg-red-50 p-1.5 rounded-full border border-red-200"
+                    aria-label="Close upload area"
                   >
-                    {isLoading ? "Creating..." : (
-                      <>
-                        <CheckCircle className="w-5 h-5 mr-2" />
-                        Create Quiz
-                      </>
-                    )}
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="h-14 px-8 border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold rounded-2xl hover:bg-gray-50 transform hover:scale-105 transition-all duration-200 bg-transparent"
-                  >
-                    <X className="w-5 h-5 mr-2" />
-                    Cancel
-                  </Button>
-                </motion.div>
+                    <X className="w-4 h-4" />
+                  </button>
+                  <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center justify-center space-y-2">
+                    <input
+                      type="file"
+                      id="file-upload"
+                      className="hidden"
+                      accept=".pdf,.doc,.docx,.xlsx,.csv"
+                      onChange={handleFileChange}
+                    />
+                    <div className="w-10 h-10 rounded-xl bg-white border border-[#9eece4] flex items-center justify-center text-[#0fbcb0]">
+                      <Upload className="w-5 h-5" />
+                    </div>
+                    <p className="font-bold text-sm text-[#1c1c1e]">{selectedFile ? selectedFile.name : "Select PDF or DOC Question File"}</p>
+                    <p className="text-xs text-[#187574]">
+                      {selectedFile ? "Click 'Extract Questions' button above to parse" : "Click or drag file here"}
+                    </p>
+                  </label>
+                </div>
               )}
+
+              {/* Imported Questions Cycler */}
+              {importedQuestions.length > 0 && (
+                <div className="border border-[#9eece4] bg-[#c3faf5]/20 rounded-2xl p-5 space-y-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <h4 className="text-sm font-bold text-[#1c1c1e]">
+                      Imported Question {currentQuestionIndex + 1} of {importedQuestions.length}
+                    </h4>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
+                        disabled={currentQuestionIndex === 0}
+                        className="px-4 py-1.5 rounded-full bg-white border border-[#c7cad5] text-xs font-semibold text-[#1c1c1e] disabled:opacity-40"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCurrentQuestionIndex((prev) => Math.min(importedQuestions.length - 1, prev + 1))}
+                        disabled={currentQuestionIndex === importedQuestions.length - 1}
+                        className="px-4 py-1.5 rounded-full bg-white border border-[#c7cad5] text-xs font-semibold text-[#1c1c1e] disabled:opacity-40"
+                      >
+                        Next
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAddImportedQuestion}
+                        className="px-4 py-1.5 rounded-full bg-[#1c1c1e] text-white text-xs font-bold flex items-center gap-1 active:scale-95"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Add to Quiz
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-xl border border-[#9eece4] space-y-2.5">
+                    <p className="font-semibold text-sm text-[#1c1c1e]">{importedQuestions[currentQuestionIndex]?.text}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {["A", "B", "C", "D"].map((opt) => (
+                        <div key={opt} className="p-2 rounded-lg bg-[#f7f8fa] text-xs flex items-center gap-2">
+                          <span className="font-bold text-[#4262ff]">{opt}:</span>
+                          <span>{importedQuestions[currentQuestionIndex]?.options?.[opt]}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-xs font-bold text-[#1c1c1e]">
+                      Correct Answer: <span className="text-[#0fbcb0] font-black">{importedQuestions[currentQuestionIndex]?.correctAnswer}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Quiz Bank Questions Cycler */}
+              {quizBankQuestions.length > 0 && activeSource === "quizBank" && (
+                <div className="border border-[#ddd6fe] bg-[#f5f3ff] rounded-2xl p-5 space-y-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <h4 className="text-sm font-bold text-[#1c1c1e]">
+                      Quiz Bank Question {currentQuizBankIndex + 1} of {quizBankQuestions.length}
+                    </h4>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentQuizBankIndex((prev) => Math.max(0, prev - 1))}
+                        disabled={currentQuizBankIndex === 0}
+                        className="px-4 py-1.5 rounded-full bg-white border border-[#c7cad5] text-xs font-semibold text-[#1c1c1e] disabled:opacity-40"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCurrentQuizBankIndex((prev) => Math.min(quizBankQuestions.length - 1, prev + 1))}
+                        disabled={currentQuizBankIndex === quizBankQuestions.length - 1}
+                        className="px-4 py-1.5 rounded-full bg-white border border-[#c7cad5] text-xs font-semibold text-[#1c1c1e] disabled:opacity-40"
+                      >
+                        Skip
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAddQuizBankQuestion}
+                        className="px-4 py-1.5 rounded-full bg-[#1c1c1e] text-white text-xs font-bold flex items-center gap-1 active:scale-95"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Add to Quiz
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-xl border border-[#ddd6fe] space-y-2.5">
+                    <p className="font-semibold text-sm text-[#1c1c1e]">{quizBankQuestions[currentQuizBankIndex]?.text}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {["A", "B", "C", "D"].map((opt) => (
+                        <div key={opt} className="p-2 rounded-lg bg-[#f7f8fa] text-xs flex items-center gap-2">
+                          <span className="font-bold text-[#4262ff]">{opt}:</span>
+                          <span>{quizBankQuestions[currentQuizBankIndex]?.options?.[opt]}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Questions List */}
+              <div className="space-y-4">
+                <AnimatePresence>
+                  {questions.map((question, index) => (
+                    <QuestionCard
+                      key={question.id || index}
+                      question={question}
+                      index={index}
+                      onUpdate={(updatedQuestion) => updateQuestion(index, updatedQuestion)}
+                      onDelete={() => deleteQuestion(index)}
+                    />
+                  ))}
+                </AnimatePresence>
+
+                {questions.length === 0 && (
+                  <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-[#c7cad5] bg-[#fafbfc]">
+                    <BookOpen className="w-10 h-10 mx-auto mb-2 text-[#8e91a0]" />
+                    <p className="text-base font-bold text-[#1c1c1e]">No questions added yet</p>
+                    <p className="text-xs text-[#555a6a] mt-0.5">Add questions manually, import from file, or generate with AI.</p>
+                    <button
+                      type="button"
+                      onClick={addQuestion}
+                      className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1c1c1e] text-white text-xs font-bold hover:bg-[#2c2c34] active:scale-95 transition-all"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add First Question
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom Card Actions */}
+              <div className="pt-6 border-t border-[#e0e2e8] flex justify-start">
+                <button
+                  type="button"
+                  onClick={addQuestion}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] font-semibold text-sm transition-all active:scale-95 shadow-2xs"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Another Question</span>
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* Action Buttons Bar matching Posts createArticles.jsx */}
+        {Boolean(formData.subject) && (
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+            <button
+              type="button"
+              onClick={handleCreateQuiz}
+              disabled={isLoading}
+              className="px-8 py-3.5 bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] rounded-full font-extrabold text-sm shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-98"
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-[#1c1c1e]" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Publishing Quiz...</span>
+                </>
+              ) : (
+                <>
+                  <span>Publish Quiz</span>
+                  <Sparkles className="w-4 h-4 text-[#1c1c1e]" />
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/view-quiz")}
+              className="px-8 py-3.5 bg-white border border-[#c7cad5] text-[#1c1c1e] rounded-full hover:bg-[#f7f8fa] font-semibold text-sm transition-all shadow-sm"
+            >
+              Cancel Quiz
+            </button>
+          </div>
+        )}
+
+        {/* AI Popover Modal */}
         <QuizAI
           isOpen={showAIModal}
           onClose={() => setShowAIModal(false)}
@@ -1097,7 +1107,7 @@ export default function CreateQuiz() {
             author: formData.author || "User",
           }}
         />
-      </motion.div>
+      </div>
     </div>
   )
 }

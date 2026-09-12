@@ -1,8 +1,21 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Users, Target, Award, Heart, Globe, Lightbulb, } from 'lucide-react'
-import { getAboutUs} from "../../services/operations/pagesAPI"
+import {
+  Users,
+  Target,
+  Award,
+  Heart,
+  Globe,
+  Lightbulb,
+  ArrowLeft,
+  ArrowRight,
+  Sparkles,
+  Loader2,
+} from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { getAboutUs } from "../../services/operations/pagesAPI"
 
 const iconMap = {
   Heart,
@@ -12,23 +25,27 @@ const iconMap = {
   Target,
   Award,
 }
+
 export default function AboutUs() {
-   const [aboutData, setAboutData] = useState(null)
-   const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
+  const [aboutData, setAboutData] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchAboutUs() {
       try {
         const data = await getAboutUs()
-        data.values = data.values.map((v) => ({
-          ...v,
-          icon: iconMap[v.icon] || Heart,
-        }))
-        data.team = data.team.map((t) => ({
-          ...t,
-          image: t.image || "/placeholder.svg?height=300&width=300",
-        }))
-        setAboutData(data)
+        if (data) {
+          data.values = (data.values || []).map((v) => ({
+            ...v,
+            icon: iconMap[v.icon] || Heart,
+          }))
+          data.team = (data.team || []).map((t) => ({
+            ...t,
+            image: t.image || "/placeholder.svg?height=300&width=300",
+          }))
+          setAboutData(data)
+        }
       } catch (err) {
         console.error("Failed to load About Us:", err)
       } finally {
@@ -41,209 +58,232 @@ export default function AboutUs() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-800">Loading About Us...</h2>
-          <p className="text-gray-600">Please wait while we process our about us</p>
+      <div className="min-h-screen bg-[#f7f8fa] flex flex-col items-center justify-center p-6 text-center font-sans">
+        <div className="w-12 h-12 rounded-2xl bg-[#ffd02f] flex items-center justify-center mb-4 shadow-sm animate-pulse">
+          <Loader2 className="animate-spin h-6 w-6 text-[#1c1c1e]" />
         </div>
+        <p className="text-xs font-bold uppercase tracking-wider text-[#6a6d7c]">Loading story & mission...</p>
       </div>
-    );
+    )
   }
 
-
   return (
-    <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        
-        {/* Hero Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="inline-flex items-center bg-gradient-to-r from-blue-100 to-purple-100 rounded-full px-6 py-3 mb-6"
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-10 px-4 sm:px-6 lg:px-8 xl:px-12 w-full font-sans">
+      <div className="w-full space-y-12">
+        {/* Navigation & Header */}
+        <div>
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#c7cad5] bg-white text-xs font-semibold text-[#1c1c1e] hover:bg-[#ebecf0] transition-colors mb-6 shadow-sm active:scale-95 cursor-pointer"
           >
-            <Users className="h-5 w-5 text-blue-600 mr-2" />
-            <span className="text-blue-600 font-semibold">Our Story</span>
-          </motion.div>
-          
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              {aboutData.hero.title}
-            </span>
-          </h1>
-          
-          <h2 className="text-2xl md:text-3xl font-semibold text-gray-700 mb-6">
-            {aboutData.hero.subtitle}
-          </h2>
-          
-          <p className="text-lg md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-            {aboutData.hero.description}
-          </p>
-        </motion.div>
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </button>
 
-        {/* Stats Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16"
-        >
-          {aboutData.stats.map((stat, index) => (
-            <div key={index} className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 text-center shadow-lg">
-              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                {stat.number}
-              </div>
-              <div className="text-gray-600 font-medium">{stat.label}</div>
+          <div className="text-center w-full space-y-4">
+            <div className="flex items-center justify-center gap-2 flex-wrap mb-2">
+              <span className="px-3 py-1 bg-[#ffd02f] text-[#1c1c1e] text-[11px] font-black uppercase tracking-widest rounded-full shadow-sm">
+                ABOUT CLYS
+              </span>
+              <span className="px-3 py-1 bg-[#c3faf5] text-[#187574] text-[11px] font-bold uppercase tracking-wider rounded-full">
+                ACADEMIC EXCELLENCE
+              </span>
             </div>
-          ))}
-        </motion.div>
 
-        {/* Mission & Vision */}
-        <div className="grid md:grid-cols-2 gap-8 mb-16">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg"
-          >
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mr-4">
-                <Target className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900">{aboutData.mission.title}</h3>
-            </div>
-            <p className="text-gray-600 leading-relaxed">{aboutData.mission.description}</p>
-          </motion.div>
+            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[#1c1c1e] leading-tight">
+              {aboutData?.hero?.title || "Empowering the Next Generation of Learners"}
+            </h1>
 
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg"
-          >
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mr-4">
-                <Award className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900">{aboutData.vision.title}</h3>
-            </div>
-            <p className="text-gray-600 leading-relaxed">{aboutData.vision.description}</p>
-          </motion.div>
+            {aboutData?.hero?.subtitle && (
+              <p className="text-lg sm:text-xl font-bold text-[#4262ff]">
+                {aboutData.hero.subtitle}
+              </p>
+            )}
+
+            <p className="text-sm sm:text-base text-[#6a6d7c] leading-relaxed max-w-4xl mx-auto">
+              {aboutData?.hero?.description ||
+                "Our platform bridges the gap between academic curriculum and high-impact retrieval practice with interactive tools, quizzes, and verified notes."}
+            </p>
+          </div>
         </div>
 
-        {/* Values Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          className="mb-16"
-        >
-          <div className="text-center mb-12">
-            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Our Core Values</h3>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              These values guide everything we do and shape our commitment to educational excellence.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {aboutData.values.map((value, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.7 + index * 0.1 }}
-                className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mb-4">
-                  <value.icon className="h-6 w-6 text-white" />
+        {/* Platform Metrics Bar */}
+        {aboutData?.stats?.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+            {aboutData.stats.map((stat, index) => {
+              const bgColors = ["bg-[#fff4c4]", "bg-[#c3faf5]", "bg-[#ffd8f4]", "bg-[#e1f0ff]"]
+              return (
+                <div
+                  key={index}
+                  className="bg-white border border-[#c7cad5] rounded-2xl p-5 text-center shadow-sm hover:shadow-md transition-all"
+                >
+                  <div
+                    className={`w-10 h-10 ${bgColors[index % bgColors.length]} rounded-xl mx-auto flex items-center justify-center text-[#1c1c1e] font-black mb-3 border border-[#c7cad5]/50`}
+                  >
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-extrabold text-[#1c1c1e] tracking-tight mb-1">
+                    {stat.number}
+                  </div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-[#6a6d7c]">
+                    {stat.label}
+                  </div>
                 </div>
-                <h4 className="text-xl font-bold text-gray-900 mb-3">{value.title}</h4>
-                <p className="text-gray-600 text-sm leading-relaxed">{value.description}</p>
-              </motion.div>
-            ))}
+              )
+            })}
           </div>
-        </motion.div>
+        )}
+
+        {/* Mission & Vision Section */}
+        <div className="grid md:grid-cols-2 gap-6 w-full">
+          {aboutData?.mission && (
+            <div className="bg-white border border-[#c7cad5] rounded-2xl p-6 sm:p-8 shadow-sm space-y-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-xl bg-[#ffd02f] border border-[#fde89c] flex items-center justify-center text-[#1c1c1e] shadow-sm">
+                  <Target className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#746019]">PURPOSE & FOCUS</span>
+                  <h3 className="text-xl font-extrabold text-[#1c1c1e] leading-tight">
+                    {aboutData.mission.title || "Our Mission"}
+                  </h3>
+                </div>
+              </div>
+              <p className="text-sm text-[#6a6d7c] leading-relaxed">
+                {aboutData.mission.description}
+              </p>
+            </div>
+          )}
+
+          {aboutData?.vision && (
+            <div className="bg-white border border-[#c7cad5] rounded-2xl p-6 sm:p-8 shadow-sm space-y-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-xl bg-[#c3faf5] border border-[#9eece4] flex items-center justify-center text-[#187574] shadow-sm">
+                  <Award className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#187574]">LOOKING FORWARD</span>
+                  <h3 className="text-xl font-extrabold text-[#1c1c1e] leading-tight">
+                    {aboutData.vision.title || "Our Vision"}
+                  </h3>
+                </div>
+              </div>
+              <p className="text-sm text-[#6a6d7c] leading-relaxed">
+                {aboutData.vision.description}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Core Values Section */}
+        {aboutData?.values?.length > 0 && (
+          <div className="w-full space-y-6">
+            <div className="text-center space-y-2">
+              <span className="px-3 py-1 bg-[#ffd8f4] text-[#86296b] text-[11px] font-black uppercase tracking-widest rounded-full">
+                FOUNDATIONAL VALUES
+              </span>
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-[#1c1c1e]">What We Stand For</h3>
+              <p className="text-xs sm:text-sm text-[#6a6d7c] max-w-xl mx-auto">
+                These core tenets shape our pedagogical standards and platform features.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {aboutData.values.map((val, idx) => {
+                const IconComponent = val.icon || Heart
+                return (
+                  <div
+                    key={idx}
+                    className="bg-white border border-[#c7cad5] rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-[#f0f1f4] border border-[#c7cad5] flex items-center justify-center text-[#1c1c1e]">
+                      <IconComponent className="w-5 h-5 text-[#4262ff]" />
+                    </div>
+                    <div>
+                      <h4 className="text-base font-extrabold text-[#1c1c1e] mb-1">{val.title}</h4>
+                      <p className="text-xs text-[#6a6d7c] leading-relaxed">{val.description}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Team Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          className="mb-16"
-        >
-          <div className="text-center mb-12">
-            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Meet Our Team</h3>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Passionate educators and technologists working together to revolutionize learning.
-            </p>
+        {aboutData?.team?.length > 0 && (
+          <div className="w-full space-y-6">
+            <div className="text-center space-y-2">
+              <span className="px-3 py-1 bg-[#fff4c4] text-[#746019] text-[11px] font-black uppercase tracking-widest rounded-full">
+                LEADERSHIP & ADVISORS
+              </span>
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-[#1c1c1e]">Meet Our Educators</h3>
+              <p className="text-xs sm:text-sm text-[#6a6d7c] max-w-xl mx-auto">
+                Guided by seasoned academic reviewers and educational technologists.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {aboutData.team.map((member, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white border border-[#c7cad5] rounded-2xl p-6 shadow-sm hover:shadow-md transition-all text-center space-y-4"
+                >
+                  <div className="w-24 h-24 mx-auto rounded-full overflow-hidden border-2 border-[#ffd02f] shadow-sm bg-[#f7f8fa]">
+                    <img
+                      src={
+                        typeof member.image === "string"
+                          ? member.image
+                          : member.image?.secure_url || "/placeholder.svg"
+                      }
+                      alt={member.name || "Team member"}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-extrabold text-[#1c1c1e]">{member.name}</h4>
+                    <p className="text-xs font-bold text-[#4262ff] uppercase tracking-wider mt-0.5">
+                      {member.role}
+                    </p>
+                    {member.description && (
+                      <p className="text-xs text-[#6a6d7c] leading-relaxed mt-2.5">
+                        {member.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
+        )}
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {aboutData.team.map((member, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.9 + index * 0.1 }}
-                className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 text-center"
-              >
-               <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden">
-                      <img
-                        src={
-                          typeof member.image === "string"
-                            ? member.image
-                            : member.image?.secure_url || "/placeholder.svg"
-                        }
-                        alt={member.name || "Team member"}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-
-                <h4 className="text-xl font-bold text-gray-900 mb-2">{member.name}</h4>
-                <p className="text-blue-600 font-semibold mb-3">{member.role}</p>
-                <p className="text-gray-600 text-sm leading-relaxed">{member.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* CTA Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1 }}
-          className="text-center bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl p-8 md:p-12 text-white"
-        >
-          <h3 className="text-3xl md:text-4xl font-bold mb-4">Join Our Educational Journey</h3>
-          <p className="text-xl mb-8 opacity-90">
-            Be part of a community that's shaping the future of education.
+        {/* Bottom CTA Banner */}
+        <div className="w-full bg-[#1c1c1e] text-white rounded-3xl p-8 sm:p-12 text-center space-y-5 shadow-xl">
+          <span className="px-3 py-1 bg-[#ffd02f] text-[#1c1c1e] text-[10px] font-black uppercase tracking-wider rounded-full inline-block">
+            GET STARTED
+          </span>
+          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white max-w-xl mx-auto">
+            Ready to Accelerate Your Academic Journey?
+          </h2>
+          <p className="text-xs sm:text-sm text-white/70 max-w-lg mx-auto">
+            Join thousands of active students competing in live quizzes, downloading verified resources, and mastering difficult concepts.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-                onClick={() => window.location.href = "/login"}
-              className="bg-white text-blue-600 px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => navigate("/signup")}
+              className="w-full sm:w-auto px-7 py-3.5 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] text-xs font-black uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer flex items-center justify-center gap-2"
             >
-              Get Started Today
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => window.location.href = "/contact-us"}
-              className="border-2 border-white text-white px-8 py-4 rounded-2xl font-semibold hover:bg-white hover:text-blue-600 transition-all duration-300"
+              <span>Create Free Account</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => navigate("/contact-us")}
+              className="w-full sm:w-auto px-7 py-3.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
             >
-              Learn More
-            </motion.button>
+              Contact Our Team
+            </button>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   )

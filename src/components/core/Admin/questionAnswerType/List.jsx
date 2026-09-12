@@ -2,10 +2,30 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { format } from "date-fns";
-import { ArrowLeft, BookOpen, Loader2, AlertCircle, Calendar, X, Eye, Filter, ChevronDown, Tag, XCircle, ImageIcon, Maximize2 } from "lucide-react";
-import { getallqnadabyId } from "../../../../services/operations/qandA";
-import { getAllQuestionTypes } from "../../../../services/operations/qandA";
+import {
+  ArrowLeft,
+  BookOpen,
+  Loader2,
+  AlertCircle,
+  Calendar,
+  X,
+  Eye,
+  Filter,
+  ChevronDown,
+  Tag,
+  XCircle,
+  ImageIcon,
+  Maximize2,
+  Plus,
+  Layers,
+  Sparkles,
+  Search,
+  RotateCcw,
+  CheckCircle,
+  HelpCircle,
+  AlertTriangle
+} from "lucide-react";
+import { getallqnadabyId, getAllQuestionTypes } from "../../../../services/operations/qandA";
 
 export default function ListQuestions() {
   const navigate = useNavigate();
@@ -26,19 +46,16 @@ export default function ListQuestions() {
   // Filter states
   const [questionTypes, setQuestionTypes] = useState([]);
   const [selectedQuestionType, setSelectedQuestionType] = useState("all");
-  const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Check if question or answer has images
   const hasQuestionImage = (question) => {
-    return question.questionImage && question.questionImage.trim() !== "";
+    return Boolean(question.questionImage && question.questionImage.trim() !== "");
   };
 
   const hasAnswerImage = (question) => {
-    return question.answerImage && question.answerImage.trim() !== "";
+    return Boolean(question.answerImage && question.answerImage.trim() !== "");
   };
 
-  // Handle image click
   const handleImageClick = (imageUrl, type, alt = "") => {
     setSelectedImage(imageUrl);
     setSelectedImageType(type);
@@ -46,39 +63,32 @@ export default function ListQuestions() {
     setShowImageModal(true);
   };
 
-  // Group questions by questiontype
   const groupQuestionsByType = (questions) => {
     const grouped = {};
-    
     let filteredQuestions = questions || [];
-    
-    // Filter by selected question type
+
     if (selectedQuestionType !== "all") {
-      filteredQuestions = filteredQuestions.filter((item) => 
+      filteredQuestions = filteredQuestions.filter((item) =>
         (item.questiontype || "Uncategorized") === selectedQuestionType
       );
     }
-    
-    // Filter by search query
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      filteredQuestions = filteredQuestions.filter((item) => 
-        item.question?.toLowerCase().includes(query) || 
+      filteredQuestions = filteredQuestions.filter((item) =>
+        item.question?.toLowerCase().includes(query) ||
         item.answer?.toLowerCase().includes(query)
       );
     }
-    
-    // Get unique question types from filtered questions
+
     const availableTypes = new Set();
     filteredQuestions?.forEach((item) => {
       const type = item.questiontype || "Uncategorized";
       availableTypes.add(type);
     });
-    
-    // Only show question types that are actually present in filtered results
+
     const filteredQuestionTypes = Array.from(availableTypes);
-    
-    // Group the filtered questions
+
     filteredQuestions?.forEach((item) => {
       const type = item.questiontype || "Uncategorized";
       if (!grouped[type]) {
@@ -86,34 +96,32 @@ export default function ListQuestions() {
       }
       grouped[type].push(item);
     });
-    
-    // Sort groups by type name
+
     const sortedGrouped = {};
     filteredQuestionTypes.sort().forEach(type => {
       if (grouped[type]) {
         sortedGrouped[type] = grouped[type];
       }
     });
-    
+
     return sortedGrouped;
   };
 
   const hasPendingQuestionReports = (question) => {
-    return question.questionReports?.some(report => 
+    return question.questionReports?.some(report =>
       report.reportstatus?.toLowerCase() === 'pending'
     ) || question.questionReportStatus === 'reported';
   };
 
   const hasPendingAnswerReports = (question) => {
-    return question.answerReports?.some(report => 
+    return question.answerReports?.some(report =>
       report.reportstatus?.toLowerCase() === 'pending'
     ) || question.answerReportStatus === 'reported';
   };
 
   const hasQuestionReports = (question) => {
-    return question.questionReports?.length > 0;
+    return (question.questionReports?.length || 0) > 0;
   };
-
 
   useEffect(() => {
     if (id) {
@@ -126,9 +134,9 @@ export default function ListQuestions() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await getallqnadabyId(id);
-      
+
       if (response?.success) {
         setData(response.data);
       } else {
@@ -155,7 +163,7 @@ export default function ListQuestions() {
 
   const handleViewReport = (question, type) => {
     const reports = type === "question" ? question.questionReports : question.answerReports;
-    
+
     if (reports && reports.length > 0) {
       setSelectedReport({
         type,
@@ -182,6 +190,7 @@ export default function ListQuestions() {
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return "Date not available";
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -192,29 +201,16 @@ export default function ListQuestions() {
     });
   };
 
-  const getStatusIcon = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'pending':
-        return <AlertCircle className="w-4 h-4 text-yellow-600" />;
-      case 'resolved':
-        return <AlertCircle className="w-4 h-4 text-green-600" />;
-      case 'rejected':
-        return <X className="w-4 h-4 text-red-600" />;
-      default:
-        return <AlertCircle className="w-4 h-4 text-yellow-600" />;
-    }
-  };
-
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-[#fffdf5] text-[#b8860b] border border-[#fde89c]';
       case 'resolved':
-        return 'bg-green-100 text-green-800';
+        return 'bg-[#c3faf5] text-[#187574] border border-[#9eece4]';
       case 'rejected':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-[#fbd4d4] text-[#800000] border border-[#e3c5c5]';
       default:
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-[#f7f8fa] text-[#555a6a] border border-[#e0e2e8]';
     }
   };
 
@@ -225,10 +221,11 @@ export default function ListQuestions() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-slate-100 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mx-auto mb-4" />
-          <p className="text-slate-600 text-lg">Loading questions...</p>
+      <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-12 px-4 flex items-center justify-center">
+        <div className="bg-white rounded-2xl border border-[#c7cad5] p-10 text-center space-y-3 shadow-sm max-w-sm w-full">
+          <Loader2 className="w-8 h-8 animate-spin text-[#4262ff] mx-auto" />
+          <h3 className="text-sm font-bold text-[#1c1c1e]">Loading Questions...</h3>
+          <p className="text-xs text-[#555a6a]">Fetching chapter contents and questions</p>
         </div>
       </div>
     );
@@ -236,13 +233,18 @@ export default function ListQuestions() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-slate-100 flex items-center justify-center">
-        <div className="max-w-md text-center">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600 text-lg font-medium mb-6">{error}</p>
+      <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-12 px-4 flex items-center justify-center">
+        <div className="bg-white rounded-2xl border border-[#c7cad5] p-8 text-center space-y-4 shadow-sm max-w-md w-full">
+          <div className="w-12 h-12 rounded-full bg-[#fbd4d4] text-[#800000] flex items-center justify-center mx-auto">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-[#1c1c1e]">Error Loading Questions</h3>
+            <p className="text-xs text-[#800000] mt-1">{error}</p>
+          </div>
           <button
             onClick={fetchQuestions}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+            className="px-5 py-2.5 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] font-extrabold text-xs shadow-sm transition-all"
           >
             Try Again
           </button>
@@ -254,607 +256,445 @@ export default function ListQuestions() {
   const groupedQuestions = groupQuestionsByType(data?.questions);
   const totalQuestions = data?.questions?.length || 0;
   const filteredQuestionCount = Object.values(groupedQuestions).flat().length;
-  
-  // Get question types that are actually present in the current data
+
   const availableQuestionTypes = Array.from(
     new Set(data?.questions?.map(q => q.questiontype).filter(Boolean) || [])
   );
 
   return (
-    <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-white via-slate-50 to-slate-100">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full blur-3xl opacity-20"></div>
-        <div className="absolute bottom-20 left-0 w-96 h-96 bg-gradient-to-tr from-cyan-100 to-blue-100 rounded-full blur-3xl opacity-20"></div>
-      </div>
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-8 px-4 sm:px-6 lg:px-8 xl:px-12 w-full">
+      <div className="w-full space-y-6">
 
-      <div className="relative max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header - Centered without BookOpen icon */}
-        <div className="mb-8">
-          <div className="text-center mb-6">
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent mb-2">
-              Q & A Collection
-            </h1>
-            <p className="text-slate-600 text-lg">
-              {totalQuestions} questions • {data?.chapterName || "hiii"}
-            </p>
+        {/* Top Header Navigation */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e0e2e8]">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => navigate("/view-qa")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Q&amp;A List</span>
+            </button>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#ffd02f] text-[#1c1c1e]">
+              QUESTION INSPECTOR
+            </span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#ffd8f4] text-[#86296b] border border-[#f3bee5]">
+              CURRICULUM VIEW
+            </span>
           </div>
 
-          {/* Category Details Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-            {/* Region Card */}
-            <div className="bg-gradient-to-br from-white to-blue-50 rounded-xl border border-blue-200 p-4 shadow-md hover:shadow-lg transition-all duration-300">
-              <label className="block text-xs font-semibold text-blue-700 mb-2">Region</label>
-              <div className="relative">
-                <select className="w-full px-4 py-2.5 bg-white border border-blue-300 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-700 font-medium">
-                  <option>second</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-blue-500 pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Class/Exam Type Card */}
-            <div className="bg-gradient-to-br from-white to-purple-50 rounded-xl border border-purple-200 p-4 shadow-md hover:shadow-lg transition-all duration-300">
-              <label className="block text-xs font-semibold text-purple-700 mb-2">Class/Exam Type</label>
-              <div className="relative">
-                <select className="w-full px-4 py-2.5 bg-white border border-purple-300 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-slate-700 font-medium">
-                  <option>test</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-purple-500 pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Class Card */}
-            <div className="bg-gradient-to-br from-white to-emerald-50 rounded-xl border border-emerald-200 p-4 shadow-md hover:shadow-lg transition-all duration-300">
-              <label className="block text-xs font-semibold text-emerald-700 mb-2">Class</label>
-              <div className="relative">
-                <select className="w-full px-4 py-2.5 bg-white border border-emerald-300 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-slate-700 font-medium">
-                  <option>upsc</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-emerald-500 pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Subject Card */}
-            <div className="bg-gradient-to-br from-white to-amber-50 rounded-xl border border-amber-200 p-4 shadow-md hover:shadow-lg transition-all duration-300">
-              <label className="block text-xs font-semibold text-amber-700 mb-2">Subject</label>
-              <div className="relative">
-                <select className="w-full px-4 py-2.5 bg-white border border-amber-300 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-slate-700 font-medium">
-                  <option>bpsc</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-amber-500 pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Chapter Card */}
-            <div className="bg-gradient-to-br from-white to-rose-50 rounded-xl border border-rose-200 p-4 shadow-md hover:shadow-lg transition-all duration-300">
-              <label className="block text-xs font-semibold text-rose-700 mb-2">Chapter</label>
-              <div className="relative">
-                <select className="w-full px-4 py-2.5 bg-white border border-rose-300 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-slate-700 font-medium">
-                  <option>hiii</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-rose-500 pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Question Type Card */}
-            <div className="bg-gradient-to-br from-white to-indigo-50 rounded-xl border border-indigo-200 p-4 shadow-md hover:shadow-lg transition-all duration-300">
-              <label className="block text-xs font-semibold text-indigo-700 mb-2">Question Type</label>
-              <div className="relative">
-                <select
-                  value={selectedQuestionType}
-                  onChange={(e) => setSelectedQuestionType(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-white border border-indigo-300 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-700 font-medium"
-                >
-                  <option value="all">All Types ({totalQuestions})</option>
-                  {availableQuestionTypes.sort().map((type) => {
-                    const count = data?.questions?.filter(q => q.questiontype === type).length || 0;
-                    return (
-                      <option key={type} value={type}>
-                        {type} ({count})
-                      </option>
-                    );
-                  })}
-                </select>
-                <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-indigo-500 pointer-events-none" />
-              </div>
-            </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(`/create-qanda/${id}`)}
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] text-xs sm:text-sm font-extrabold shadow-sm transition-all active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add More Questions</span>
+            </button>
           </div>
-
-          {/* Filter Section - With Card Background */}
-          {showFilters && (
-            <div className="bg-gradient-to-br from-white to-indigo-50 border border-indigo-200 rounded-xl p-6 mb-6 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-slate-800">Filter Options</h3>
-                {(selectedQuestionType !== "all") && (
-                  <button
-                    onClick={clearFilters}
-                    className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800"
-                  >
-                    <XCircle className="w-3 h-3" />
-                    Clear Filter
-                  </button>
-                )}
-              </div>
-
-              {/* Results Count */}
-              <div className="text-sm text-slate-600">
-                Showing {filteredQuestionCount} of {totalQuestions} questions
-                {selectedQuestionType !== "all" && ` • Filtered by: ${selectedQuestionType}`}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Questions List - Removed boxes from questions and answers */}
-        <div className="mb-12">
-          {Object.keys(groupedQuestions).length > 0 ? (
-            <div className="space-y-6">
-              {Object.entries(groupedQuestions).map(([questionType, questions]) => (
-                <div key={questionType} className="space-y-4">
-                  {/* Simple One-line Question Type Header */}
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-300">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-6 bg-indigo-500 rounded-full"></div>
-                      <h2 className="text-xl font-bold text-slate-800">{questionType}</h2>
-                      <span className="text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
-                        {questions.length} {questions.length === 1 ? 'question' : 'questions'}
-                      </span>
-                    </div>
-                  </div>
+        {/* Title Header */}
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#1c1c1e]">
+            {data?.chapterName || "Q&A Chapter Collection"}
+          </h1>
+          <p className="text-sm sm:text-base text-[#555a6a]">
+            Review, inspect formulas, solutions, and examine student report logs for this curriculum chapter.
+          </p>
+        </div>
 
-                  {/* Questions under this type - No boxes */}
+        {/* Taxonomy Context Banner (Lavender Miro Card) */}
+        <div className="bg-[#f5f3ff] rounded-2xl border border-[#ddd6fe] p-6 sm:p-7 space-y-4 shadow-sm">
+          <div className="flex items-center justify-between pb-3 border-b border-[#ddd6fe]">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-[#4262ff] text-white">
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <h2 className="text-sm sm:text-base font-bold text-[#1c1c1e]">
+                Curriculum Classification &amp; Metrics
+              </h2>
+            </div>
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-white text-[#4262ff] border border-[#ddd6fe]">
+              {totalQuestions} Total Questions
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+            <div className="bg-white p-3 rounded-xl border border-[#ddd6fe]">
+              <span className="text-[11px] font-bold text-[#555a6a] uppercase block">Region</span>
+              <strong className="text-xs sm:text-sm text-[#1c1c1e] truncate block">
+                {data?.category?.region || "—"}
+              </strong>
+            </div>
+
+            <div className="bg-white p-3 rounded-xl border border-[#ddd6fe]">
+              <span className="text-[11px] font-bold text-[#555a6a] uppercase block">Exam Type</span>
+              <strong className="text-xs sm:text-sm text-[#1c1c1e] truncate block">
+                {data?.category?.examType || "—"}
+              </strong>
+            </div>
+
+            <div className="bg-white p-3 rounded-xl border border-[#ddd6fe]">
+              <span className="text-[11px] font-bold text-[#555a6a] uppercase block">Class</span>
+              <strong className="text-xs sm:text-sm text-[#1c1c1e] truncate block">
+                {data?.category?.specificClass || "—"}
+              </strong>
+            </div>
+
+            <div className="bg-white p-3 rounded-xl border border-[#ddd6fe]">
+              <span className="text-[11px] font-bold text-[#555a6a] uppercase block">Subject</span>
+              <strong className="text-xs sm:text-sm text-[#1c1c1e] truncate block">
+                {data?.category?.subject || "—"}
+              </strong>
+            </div>
+
+            <div className="bg-white p-3 rounded-xl border border-[#ddd6fe] col-span-2 sm:col-span-1">
+              <span className="text-[11px] font-bold text-[#555a6a] uppercase block">Chapter Title</span>
+              <strong className="text-xs sm:text-sm text-[#4262ff] truncate block">
+                {data?.chapterName || "—"}
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        {/* Filter & Search Bar */}
+        <div className="bg-white rounded-2xl border border-[#c7cad5] p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-[#4262ff]" />
+              <h3 className="text-sm font-bold text-[#1c1c1e]">
+                Filter &amp; Search Questions
+              </h3>
+            </div>
+
+            {(selectedQuestionType !== "all" || searchQuery) && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-[#800000] bg-[#fbd4d4] hover:bg-[#f8bebe] self-start sm:self-auto"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Reset Filters</span>
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2 relative">
+              <Search className="w-4 h-4 text-[#555a6a] absolute left-3.5 top-3.5" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search within questions or solution text..."
+                className="w-full h-11 min-h-[44px] pl-10 pr-4 rounded-xl border border-[#c7cad5] bg-[#fffdf5] text-[#1c1c1e] text-sm font-semibold focus:outline-none focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 transition-all placeholder-[#8e92a0]"
+              />
+            </div>
+
+            <div>
+              <select
+                value={selectedQuestionType}
+                onChange={(e) => setSelectedQuestionType(e.target.value)}
+                className="w-full h-11 min-h-[44px] px-3.5 rounded-xl border border-[#c7cad5] bg-[#fffdf5] text-[#1c1c1e] text-sm font-semibold focus:outline-none focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 transition-all"
+              >
+                <option value="all">All Types ({totalQuestions})</option>
+                {availableQuestionTypes.sort().map((type) => {
+                  const count = data?.questions?.filter(q => q.questiontype === type).length || 0;
+                  return (
+                    <option key={type} value={type}>
+                      {type} ({count})
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          </div>
+
+          <div className="text-xs text-[#555a6a] pt-1">
+            Showing <strong>{filteredQuestionCount}</strong> of <strong>{totalQuestions}</strong> questions
+            {selectedQuestionType !== "all" && ` • Filtered by type: "${selectedQuestionType}"`}
+          </div>
+        </div>
+
+        {/* Grouped Questions Display */}
+        {Object.keys(groupedQuestions).length > 0 ? (
+          <div className="space-y-8">
+            {Object.entries(groupedQuestions).map(([questionType, questions]) => (
+              <div key={questionType} className="space-y-4">
+                
+                {/* Type Header Pill */}
+                <div className="flex items-center justify-between pb-3 border-b border-[#e0e2e8]">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-6 rounded-full bg-[#4262ff]" />
+                    <h2 className="text-lg sm:text-xl font-bold text-[#1c1c1e]">
+                      {questionType}
+                    </h2>
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#f5f3ff] text-[#4262ff] border border-[#ddd6fe]">
+                      {questions.length} {questions.length === 1 ? 'question' : 'questions'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Question Cards */}
+                <div className="space-y-4">
                   {questions.map((item, index) => {
                     const isQuestionPending = hasPendingQuestionReports(item);
                     const isAnswerPending = hasPendingAnswerReports(item);
-                    const questionHasImage = hasQuestionImage(item);
-                    const answerHasImage = hasAnswerImage(item);
+                    const questionHasImg = hasQuestionImage(item);
+                    const answerHasImg = hasAnswerImage(item);
 
                     return (
                       <div
                         key={item._id || index}
-                        className={`group bg-white border border-slate-200 rounded-xl p-8 hover:shadow-xl hover:border-indigo-200 transition-all duration-300 backdrop-blur-sm bg-opacity-80 w-full relative`}
+                        className="bg-white rounded-2xl border border-[#c7cad5] p-6 sm:p-8 space-y-6 shadow-sm hover:border-[#1c1c1e] transition-colors"
                       >
-                        {/* Question Section - No box */}
-                        <div className="mb-6">
-                          {/* Number Badge - Only red if question has pending reports */}
-                          <div 
-                            onClick={() => hasQuestionReports(item) && handleViewReport(item, "question")}
-                            className={`absolute -left-4 top-6 w-10 h-10 rounded-full flex items-center justify-center shadow-lg cursor-pointer ${hasQuestionReports(item) ? 'cursor-pointer hover:scale-110 transition-transform' : ''} ${
-                              isQuestionPending
-                                ? 'bg-gradient-to-br from-red-500 to-red-600'
-                                : 'bg-gradient-to-br from-blue-500 to-indigo-600'
-                            }`}
-                            title={hasQuestionReports(item) ? "Click to view reports" : "No reports"}
-                          >
-                            <span className="text-white font-bold text-sm">{index + 1}</span>
-                          </div>
-                          
-                          {/* Question Content - No box */}
-                          <div className="ml-8">
-                            <div className="mb-4 text-left">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-sm font-semibold text-blue-600">
-                                  Question:
-                                </span>
-                                {/* ONLY show label if there are PENDING reports */}
-                                {isQuestionPending && (
-                                  <button
-                                    onClick={() => handleViewReport(item, "question")}
-                                    className="flex items-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded-full text-xs font-medium transition-colors duration-200 cursor-pointer"
-                                  >
-                                    <Eye className="w-3 h-3" />
-                                    <span>Reported ({item.questionReports?.length || 0})</span>
-                                  </button>
-                                )}
-                              </div>
-                              {/* Removed the box wrapper div - just plain text and image */}
-                              <div>
-                                <div 
-                                  className="text-base text-left font-medium text-slate-800 leading-relaxed mb-3"
-                                  dangerouslySetInnerHTML={{ __html: item.question }}
-                                />
-                                
-                                {/* Question Image - Small Preview */}
-                                {questionHasImage && (
-                                  <div className="mt-4">
-                                    <div className="flex items-center justify-between mb-2">
-                                      <div className="flex items-center gap-2">
-                                        <ImageIcon className="w-4 h-4 text-blue-500" />
-                                        <span className="text-sm font-medium text-blue-600">
-                                          Question Image:
-                                        </span>
-                                      </div>
-                                      <button
-                                        onClick={() => handleImageClick(item.questionImage, "question", `Question ${index + 1}`)}
-                                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
-                                      >
-                                        <Maximize2 className="w-3 h-3" />
-                                        <span>View Full</span>
-                                      </button>
-                                    </div>
-                                    <div 
-                                      className="relative group cursor-pointer bg-gray-50 rounded-lg border border-blue-200 p-2 hover:bg-blue-50 transition-all duration-200"
-                                      onClick={() => handleImageClick(item.questionImage, "question", `Question ${index + 1}`)}
-                                    >
-                                      <div className="flex items-center justify-center">
-                                        <img
-                                          src={item.questionImage}
-                                          alt={`Question ${index + 1}`}
-                                          className="max-h-40 w-auto object-contain rounded transition-transform duration-300 group-hover:scale-105"
-                                          onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.src = "https://via.placeholder.com/300x150?text=Image+Not+Found";
-                                          }}
-                                        />
-                                      </div>
-                                      <div className="absolute inset-0 bg-blue-900 bg-opacity-0 group-hover:bg-opacity-5 transition-all duration-300 rounded-lg"></div>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
+                        {/* Question Item Top Bar */}
+                        <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#e0e2e8]">
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-black ${
+                                isQuestionPending || isAnswerPending
+                                  ? "bg-[#fbd4d4] text-[#800000] border border-[#e3c5c5]"
+                                  : "bg-[#ffd02f] text-[#1c1c1e]"
+                              }`}
+                            >
+                              {index + 1}
+                            </span>
+                            <div>
+                              <span className="text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                                Question #{index + 1}
+                              </span>
+                              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#f5f3ff] text-[#4262ff]">
+                                {item.questiontype || "Standard"}
+                              </span>
                             </div>
                           </div>
+
+                          {/* Student Report Indicator */}
+                          {(isQuestionPending || isAnswerPending) && (
+                            <button
+                              type="button"
+                              onClick={() => handleViewReport(item, isQuestionPending ? "question" : "answer")}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#fbd4d4] hover:bg-[#f8bebe] text-[#800000] text-xs font-bold transition-all"
+                            >
+                              <AlertTriangle className="w-3.5 h-3.5" />
+                              <span>Report Flagged</span>
+                            </button>
+                          )}
                         </div>
 
-                        {/* Answer Section - No box */}
-                        <div className="ml-8">
-                          <div className="flex items-center justify-between mb-3">
-                            <h4 className="text-sm font-medium text-slate-900">Answer:</h4>
-                            {/* ONLY show label if there are PENDING reports */}
-                            {isAnswerPending && (
-                              <button
-                                onClick={() => handleViewReport(item, "answer")}
-                                className="flex items-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded-full text-xs font-medium transition-colors duration-200 cursor-pointer"
-                              >
-                                <Eye className="w-3 h-3" />
-                                <span>Reported ({item.answerReports?.length || 0})</span>
-                              </button>
-                            )}
-                          </div>
-                          {/* Removed the box wrapper div - just plain text and image */}
-                          <div>
-                            <div 
-                              className="text-slate-700 text-left leading-relaxed font-medium mb-3"
-                              dangerouslySetInnerHTML={{ __html: item.answer }}
-                            />
-                            
-                            {/* Answer Image - Small Preview */}
-                            {answerHasImage && (
-                              <div className="mt-4">
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center gap-2">
-                                    <ImageIcon className="w-4 h-4 text-emerald-500" />
-                                    <span className="text-sm font-medium text-emerald-600">
-                                      Answer Image:
-                                    </span>
-                                  </div>
-                                  <button
-                                    onClick={() => handleImageClick(item.answerImage, "answer", `Answer ${index + 1}`)}
-                                    className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-800"
-                                  >
-                                    <Maximize2 className="w-3 h-3" />
-                                    <span>View Full</span>
-                                  </button>
-                                </div>
-                                <div 
-                                  className="relative group cursor-pointer bg-gray-50 rounded-lg border border-emerald-200 p-2 hover:bg-emerald-50 transition-all duration-200"
-                                  onClick={() => handleImageClick(item.answerImage, "answer", `Answer ${index + 1}`)}
+                        {/* Question Statement */}
+                        <div className="space-y-2">
+                          <span className="text-xs font-bold uppercase tracking-wider text-[#4262ff] block">
+                            Question Statement:
+                          </span>
+                          <div
+                            className="text-sm sm:text-base font-medium text-[#1c1c1e] leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: item.question }}
+                          />
+
+                          {/* Question Diagram Thumbnail */}
+                          {questionHasImg && (
+                            <div className="pt-2">
+                              <div className="flex items-center justify-between pb-1.5">
+                                <span className="text-xs font-bold text-[#555a6a] flex items-center gap-1.5">
+                                  <ImageIcon className="w-3.5 h-3.5 text-[#4262ff]" />
+                                  <span>Attached Diagram</span>
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleImageClick(item.questionImage, "question", `Question ${index + 1}`)}
+                                  className="inline-flex items-center gap-1 text-xs font-bold text-[#4262ff] hover:underline"
                                 >
-                                  <div className="flex items-center justify-center">
-                                    <img
-                                      src={item.answerImage}
-                                      alt={`Answer ${index + 1}`}
-                                      className="max-h-40 w-auto object-contain rounded transition-transform duration-300 group-hover:scale-105"
-                                      onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = "https://via.placeholder.com/300x150?text=Image+Not+Found";
-                                      }}
-                                    />
-                                  </div>
-                                  <div className="absolute inset-0 bg-emerald-900 bg-opacity-0 group-hover:bg-opacity-5 transition-all duration-300 rounded-lg"></div>
-                                </div>
+                                  <Maximize2 className="w-3 h-3" />
+                                  <span>Enlarge Image</span>
+                                </button>
                               </div>
-                            )}
-                          </div>
+                              <div
+                                onClick={() => handleImageClick(item.questionImage, "question", `Question ${index + 1}`)}
+                                className="inline-block p-2 rounded-xl border border-[#c7cad5] bg-[#f7f8fa] hover:bg-[#fffdf5] cursor-pointer transition-colors max-w-sm"
+                              >
+                                <img
+                                  src={item.questionImage}
+                                  alt="Question diagram"
+                                  className="max-h-48 rounded-lg object-contain"
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
 
-                        {/* Created At - Right bottom corner */}
-                        <div className="absolute bottom-4 right-4 flex items-center gap-2 text-xs text-slate-500">
-                          <Calendar className="text-yellow-500 w-3 h-3" />
-                          <span className="bg-white text-green-500 px-3 py-1 rounded-full border border-slate-200 shadow-sm">
-                            {format(new Date(item.createdAt), "MMM dd, yyyy")}
-                          </span>
-                          <span className="bg-white text-blue-500 px-3 py-1 rounded-full border border-slate-200 shadow-sm">
-                            {format(new Date(item.createdAt), "hh:mm a")}
-                          </span>
+                        {/* Answer / Solution Box */}
+                        <div className="bg-[#fffdf5] border border-[#fde89c] rounded-xl p-5 sm:p-6 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-[#187574] text-white flex items-center justify-center text-xs font-bold">
+                              A
+                            </span>
+                            <span className="text-xs font-bold uppercase tracking-wider text-[#187574]">
+                              Step-by-Step Solution &amp; Answer:
+                            </span>
+                          </div>
+
+                          <div
+                            className="text-sm text-[#1c1c1e] leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: item.answer }}
+                          />
+
+                          {/* Answer Diagram Thumbnail */}
+                          {answerHasImg && (
+                            <div className="pt-2 border-t border-[#fde89c]">
+                              <div className="flex items-center justify-between pb-1.5">
+                                <span className="text-xs font-bold text-[#555a6a] flex items-center gap-1.5">
+                                  <ImageIcon className="w-3.5 h-3.5 text-[#187574]" />
+                                  <span>Solution Figure</span>
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleImageClick(item.answerImage, "answer", `Solution ${index + 1}`)}
+                                  className="inline-flex items-center gap-1 text-xs font-bold text-[#187574] hover:underline"
+                                >
+                                  <Maximize2 className="w-3 h-3" />
+                                  <span>Enlarge Figure</span>
+                                </button>
+                              </div>
+                              <div
+                                onClick={() => handleImageClick(item.answerImage, "answer", `Solution ${index + 1}`)}
+                                className="inline-block p-2 rounded-xl border border-[#fde89c] bg-white hover:bg-[#f7f8fa] cursor-pointer transition-colors max-w-sm"
+                              >
+                                <img
+                                  src={item.answerImage}
+                                  alt="Solution figure"
+                                  className="max-h-48 rounded-lg object-contain"
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
+
                       </div>
                     );
                   })}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
-              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Filter className="w-8 h-8 text-slate-400" />
-              </div>
-              <p className="text-slate-500 text-lg">No questions found</p>
-              {(selectedQuestionType !== "all") && (
-                <p className="text-slate-400 mt-2">
-                  No questions match your filter criteria.
-                  <button
-                    onClick={clearFilters}
-                    className="ml-2 text-indigo-600 hover:text-indigo-800 font-medium"
-                  >
-                    Clear filters to see all questions
-                  </button>
-                </p>
-              )}
-            </div>
-          )}
-        </div>
 
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-[#c7cad5] p-12 text-center space-y-3 shadow-sm">
+            <BookOpen className="w-10 h-10 text-[#8e92a0] mx-auto" />
+            <h3 className="text-base font-bold text-[#1c1c1e]">No Questions Match Filter</h3>
+            <p className="text-xs text-[#555a6a]">
+              Try resetting your search query or question type filter.
+            </p>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] text-xs font-bold hover:bg-[#f7f8fa]"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Clear Filter</span>
+            </button>
+          </div>
+        )}
 
       </div>
 
-      {/* Full Screen Image Modal */}
-      {showImageModal && selectedImage && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
-          <div className="relative w-full max-w-6xl max-h-[95vh]">
-            {/* Close Button */}
-            <button
-              onClick={handleCloseModal}
-              className="absolute -top-12 right-0 p-3 text-white hover:text-gray-300 transition-colors bg-black/50 rounded-full hover:bg-black/70"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            
-            {/* Header */}
-            <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent z-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                    <ImageIcon className="w-5 h-5 text-white" />
+      {/* Image Preview Modal */}
+      {showImageModal && (
+        <div className="fixed inset-0 z-50 bg-[#1c1c1e]/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-[#c7cad5] max-w-3xl w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e0e2e8]">
+              <h3 className="text-sm sm:text-base font-bold text-[#1c1c1e]">
+                {selectedImageAlt || "Enlarged Diagram View"}
+              </h3>
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="p-1.5 rounded-full hover:bg-[#f7f8fa] text-[#555a6a]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex items-center justify-center p-2 bg-[#f7f8fa] rounded-xl">
+              <img
+                src={selectedImage}
+                alt={selectedImageAlt}
+                className="max-h-[70vh] w-auto object-contain rounded-lg"
+              />
+            </div>
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="px-5 py-2.5 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] font-extrabold text-xs shadow-sm"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Student Report Modal */}
+      {showReportModal && selectedReport && (
+        <div className="fixed inset-0 z-50 bg-[#1c1c1e]/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-[#c7cad5] max-w-2xl w-full p-6 sm:p-7 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e0e2e8]">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-[#fbd4d4] text-[#800000]">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+                <h3 className="text-base font-bold text-[#1c1c1e]">
+                  Student Reports Log
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="p-1.5 rounded-full hover:bg-[#f7f8fa] text-[#555a6a]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {selectedReport.reports.map((report, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 rounded-xl bg-[#f7f8fa] border border-[#e0e2e8] space-y-2 text-xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(report.reportstatus)}`}>
+                      {report.reportstatus || "Pending"}
+                    </span>
+                    <span className="text-[#555a6a]">{formatDate(report.reportedAt)}</span>
                   </div>
                   <div>
-                    <h3 className="text-white font-semibold text-lg">
-                      {selectedImageType === "question" ? "Question Image" : "Answer Image"}
-                    </h3>
-                    <p className="text-white/70 text-sm">{selectedImageAlt}</p>
+                    <strong className="text-[#1c1c1e]">Reason: </strong>
+                    <span className="text-[#555a6a]">{report.reason || "N/A"}</span>
+                  </div>
+                  <div>
+                    <strong className="text-[#1c1c1e]">Details: </strong>
+                    <span className="text-[#555a6a]">{report.description || "N/A"}</span>
                   </div>
                 </div>
-                <button
-                  onClick={() => window.open(selectedImage, '_blank')}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-colors"
-                >
-                  <Maximize2 className="w-4 h-4" />
-                  <span className="text-sm">Open in New Tab</span>
-                </button>
-              </div>
+              ))}
             </div>
-            
-            {/* Image Container */}
-            <div className="relative h-full flex items-center justify-center">
-              <div className="relative w-full h-full flex items-center justify-center">
-                <img
-                  src={selectedImage}
-                  alt={selectedImageAlt}
-                  className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "https://via.placeholder.com/800x600?text=Image+Not+Found";
-                  }}
-                />
-                
-              </div>
-            </div>
-            
-            {/* Click Outside to Close */}
-            <div 
-              className="absolute inset-0 -z-10"
-              onClick={handleCloseModal}
-            />
-          </div>
-        </div>
-      )}
 
-      {/* Report Details Modal - Updated to show question image */}
-      {showReportModal && selectedReport && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border-l-4 border-red-500"
-            style={{
-              background: 'linear-gradient(to right, #fff 0%, #fef2f2 100%)'
-            }}>
-            <div className="p-6">
-              {/* Modal Header */}
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-red-100 to-red-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <AlertCircle className="w-4 h-4 text-red-600" />
-                    </div>
-                    <h2 className="text-xl font-bold text-gray-900">
-                      {reportType === "question" ? "Question Report Details" : "Answer Report Details"}
-                    </h2>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 ml-11">
-                    <span className="text-xs text-slate-600">
-                      {selectedReport.reports.length} report{selectedReport.reports.length !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={handleCloseModal}
-                  className="p-2 hover:bg-slate-100 rounded-lg ml-2 flex-shrink-0"
-                >
-                  <X className="w-5 h-5 text-slate-600" />
-                </button>
-              </div>
-
-              {/* Content Preview */}
-              <div className="mb-6 space-y-4">
-                {/* Question - Left aligned text */}
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-5 h-5 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-xs font-bold">Q</span>
-                    </div>
-                    <p className="text-sm text-blue-600 font-medium">Question:</p>
-                  </div>
-                  <div className="ml-7 p-3 bg-white rounded border border-blue-100">
-                    <div className="text-gray-900 font-medium text-left" dangerouslySetInnerHTML={{ __html: selectedReport.question }} />
-                  </div>
-                  
-                  {/* Question Image in Modal if exists */}
-                  {selectedReport.questionImage && (
-                    <div className="ml-7 mt-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <ImageIcon className="w-4 h-4 text-blue-600" />
-                          <p className="text-sm text-blue-600 font-medium">Question Image:</p>
-                        </div>
-                        <button
-                          onClick={() => handleImageClick(selectedReport.questionImage, "question", "Question Image")}
-                          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
-                        >
-                          <Maximize2 className="w-3 h-3" />
-                          <span>View Full</span>
-                        </button>
-                      </div>
-                      <div 
-                        className="relative group cursor-pointer bg-gray-50 rounded-lg border border-blue-200 p-2 hover:bg-blue-50 transition-all duration-200"
-                        onClick={() => handleImageClick(selectedReport.questionImage, "question", "Question Image")}
-                      >
-                        <div className="flex items-center justify-center">
-                          <img
-                            src={selectedReport.questionImage}
-                            alt="Question"
-                            className="max-h-40 w-auto object-contain rounded transition-transform duration-300 group-hover:scale-105"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = "https://via.placeholder.com/300x150?text=Image+Not+Found";
-                            }}
-                          />
-                        </div>
-                        <div className="absolute inset-0 bg-blue-900 bg-opacity-0 group-hover:bg-opacity-5 transition-all duration-300 rounded-lg"></div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Answer - Only show for answer reports - Left aligned text */}
-                {reportType === "answer" && (
-                  <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-5 h-5 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-white text-xs font-bold">A</span>
-                      </div>
-                      <p className="text-sm text-green-600 font-medium">Answer:</p>
-                    </div>
-                    <div className="ml-7 p-3 bg-white rounded border border-green-100">
-                      <div className="text-gray-900 font-medium text-left" dangerouslySetInnerHTML={{ __html: selectedReport.answer }} />
-                    </div>
-                    
-                    {/* Answer Image in Modal if exists */}
-                    {selectedReport.answerImage && (
-                      <div className="ml-7 mt-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <ImageIcon className="w-4 h-4 text-green-600" />
-                            <p className="text-sm text-green-600 font-medium">Answer Image:</p>
-                          </div>
-                          <button
-                            onClick={() => handleImageClick(selectedReport.answerImage, "answer", "Answer Image")}
-                            className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800"
-                          >
-                            <Maximize2 className="w-3 h-3" />
-                            <span>View Full</span>
-                          </button>
-                        </div>
-                        <div 
-                          className="relative group cursor-pointer bg-gray-50 rounded-lg border border-green-200 p-2 hover:bg-green-50 transition-all duration-200"
-                          onClick={() => handleImageClick(selectedReport.answerImage, "answer", "Answer Image")}
-                        >
-                          <div className="flex items-center justify-center">
-                            <img
-                              src={selectedReport.answerImage}
-                              alt="Answer"
-                              className="max-h-40 w-auto object-contain rounded transition-transform duration-300 group-hover:scale-105"
-                              onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = "https://via.placeholder.com/300x150?text=Image+Not+Found";
-                              }}
-                            />
-                          </div>
-                          <div className="absolute inset-0 bg-green-900 bg-opacity-0 group-hover:bg-opacity-5 transition-all duration-300 rounded-lg"></div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Reports List */}
-              <div className="mb-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Report History</h3>
-                
-                {selectedReport.reports.length === 0 ? (
-                  <div className="text-center py-6 bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg border border-slate-200">
-                    <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                    <p className="text-slate-600">No reports found</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {selectedReport.reports.map((report, index) => (
-                      <div
-                        key={index}
-                        className="p-4 bg-gradient-to-r from-white to-slate-50 rounded-lg border border-slate-200 hover:border-red-300 transition-colors duration-200"
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${getStatusColor(report.reportstatus)}`}>
-                              {getStatusIcon(report.reportstatus)}
-                            </div>
-                            <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(report.reportstatus)}`}>
-                              {report.reportstatus || 'Pending'}
-                            </span>
-                          </div>
-                          <span className="text-xs text-slate-500">
-                            {report.reportedAt ? formatDate(report.reportedAt) : 'Date not available'}
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-2 text-left">
-                          <div className="flex items-start">
-                            <span className="text-sm font-medium text-slate-700 mr-2 min-w-[60px]">Reason:</span>
-                            <span className="text-slate-900 text-sm flex-1 text-left">{report.reason}</span>
-                          </div>
-                          
-                          <div className="flex items-start">
-                            <span className="text-sm font-medium text-slate-700 mr-2 min-w-[60px]">Description:</span>
-                            <span className="text-slate-900 text-sm flex-1 text-left">{report.description}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Modal Actions */}
-              <div className="flex justify-end">
-                <button
-                  onClick={handleCloseModal}
-                  className="px-5 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg font-medium transition-all duration-200"
-                >
-                  Close
-                </button>
-              </div>
+            <div className="flex justify-end pt-3 border-t border-[#e0e2e8]">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="px-5 py-2.5 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] font-bold text-xs hover:bg-[#f7f8fa]"
+              >
+                Close Window
+              </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }

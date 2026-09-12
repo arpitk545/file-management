@@ -1,79 +1,102 @@
-"use client"
-import { useState } from "react"
-import { Plus, MapPin, Tag, Grid3X3, Trash2 } from "lucide-react"
-import { createQAndARegion } from "../../../../services/operations/qandA"
-import { toast } from "react-hot-toast"
+"use client";
+
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Plus,
+  ChevronRight,
+  MapPin,
+  Tag,
+  Grid3X3,
+  BookOpen,
+  Trash2,
+  ArrowLeft,
+  Layers,
+  Sparkles,
+  CheckCircle,
+  Loader2
+} from "lucide-react";
+import { createQAndARegion } from "../../../../services/operations/qandA";
+import { toast } from "react-hot-toast";
 
 const QandARegion = () => {
-  const [regions, setRegions] = useState([])
-  const [newRegion, setNewRegion] = useState("")
-  const [selectedRegionIndex, setSelectedRegionIndex] = useState(null)
-  const [selectedExamTypeIndex, setSelectedExamTypeIndex] = useState(null)
-  const [selectedSpecificClassIndex, setSelectedSpecificClassIndex] = useState(null)
-  const [selectedSubjectIndex, setSelectedSubjectIndex] = useState(null)
-  const [newExamType, setNewExamType] = useState("")
-  const [newSpecificClass, setNewSpecificClass] = useState("")
-  const [newSubject, setNewSubject] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const navigate = useNavigate();
+  const [regions, setRegions] = useState([]);
+  const [newRegion, setNewRegion] = useState("");
+  const [selectedRegionIndex, setSelectedRegionIndex] = useState(null);
+  const [selectedExamTypeIndex, setSelectedExamTypeIndex] = useState(null);
+  const [selectedSpecificClassIndex, setSelectedSpecificClassIndex] = useState(null);
+  const [newExamType, setNewExamType] = useState("");
+  const [newSpecificClass, setNewSpecificClass] = useState("");
+  const [newSubject, setNewSubject] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const selectedRegion = selectedRegionIndex !== null ? regions[selectedRegionIndex] : null
+  const selectedRegion =
+    selectedRegionIndex !== null ? regions[selectedRegionIndex] : null;
   const selectedExamType =
-    selectedExamTypeIndex !== null && selectedRegion ? selectedRegion.examTypes[selectedExamTypeIndex] : null
+    selectedExamTypeIndex !== null && selectedRegion
+      ? selectedRegion.examTypes[selectedExamTypeIndex]
+      : null;
   const selectedSpecificClass =
     selectedSpecificClassIndex !== null && selectedExamType
       ? selectedExamType.specificClasses[selectedSpecificClassIndex]
-      : null
-  const selectedSubject =
-    selectedSubjectIndex !== null && selectedSpecificClass ? selectedSpecificClass.subjects[selectedSubjectIndex] : null
+      : null;
 
   const handleAddRegion = () => {
     if (newRegion.trim()) {
       const region = {
         name: newRegion.trim(),
         examTypes: [],
-      }
-      setRegions([...regions, region])
-      setNewRegion("")
-      setSelectedRegionIndex(regions.length)
-      setSelectedExamTypeIndex(null)
-      setSelectedSpecificClassIndex(null)
-      setSelectedSubjectIndex(null)
+      };
+      const updated = [...regions, region];
+      setRegions(updated);
+      setNewRegion("");
+      setSelectedRegionIndex(updated.length - 1);
+      setSelectedExamTypeIndex(null);
+      setSelectedSpecificClassIndex(null);
     }
-  }
+  };
 
   const handleAddExamType = () => {
     if (newExamType.trim() && selectedRegionIndex !== null) {
       const examType = {
         name: newExamType.trim(),
         specificClasses: [],
-      }
-      const updatedRegions = [...regions]
-      updatedRegions[selectedRegionIndex].examTypes.push(examType)
-      setRegions(updatedRegions)
-      setNewExamType("")
-      setSelectedExamTypeIndex(updatedRegions[selectedRegionIndex].examTypes.length - 1)
-      setSelectedSpecificClassIndex(null)
-      setSelectedSubjectIndex(null)
+      };
+      const updatedRegions = [...regions];
+      updatedRegions[selectedRegionIndex].examTypes.push(examType);
+      setRegions(updatedRegions);
+      setNewExamType("");
+      setSelectedExamTypeIndex(
+        updatedRegions[selectedRegionIndex].examTypes.length - 1
+      );
+      setSelectedSpecificClassIndex(null);
     }
-  }
+  };
 
   const handleAddSpecificClass = () => {
-    if (newSpecificClass.trim() && selectedRegionIndex !== null && selectedExamTypeIndex !== null) {
-      const updatedRegions = [...regions]
+    if (
+      newSpecificClass.trim() &&
+      selectedRegionIndex !== null &&
+      selectedExamTypeIndex !== null
+    ) {
+      const updatedRegions = [...regions];
       const specificClass = {
         name: newSpecificClass.trim(),
         subjects: [],
-      }
+      };
 
-      updatedRegions[selectedRegionIndex].examTypes[selectedExamTypeIndex].specificClasses.push(specificClass)
-      setRegions(updatedRegions)
-      setNewSpecificClass("")
+      updatedRegions[selectedRegionIndex].examTypes[
+        selectedExamTypeIndex
+      ].specificClasses.push(specificClass);
+      setRegions(updatedRegions);
+      setNewSpecificClass("");
       setSelectedSpecificClassIndex(
-        updatedRegions[selectedRegionIndex].examTypes[selectedExamTypeIndex].specificClasses.length - 1,
-      )
-      setSelectedSubjectIndex(null)
+        updatedRegions[selectedRegionIndex].examTypes[selectedExamTypeIndex]
+          .specificClasses.length - 1
+      );
     }
-  }
+  };
 
   const handleAddSubject = () => {
     if (
@@ -82,569 +105,553 @@ const QandARegion = () => {
       selectedExamTypeIndex !== null &&
       selectedSpecificClassIndex !== null
     ) {
-      const updatedRegions = [...regions]
+      const updatedRegions = [...regions];
       const subject = {
         name: newSubject.trim(),
-      }
+      };
 
-      updatedRegions[selectedRegionIndex].examTypes[selectedExamTypeIndex].specificClasses[
-        selectedSpecificClassIndex
-      ].subjects.push(subject)
-      setRegions(updatedRegions)
-      setNewSubject("")
-      setSelectedSubjectIndex(
-        updatedRegions[selectedRegionIndex].examTypes[selectedExamTypeIndex].specificClasses[selectedSpecificClassIndex]
-          .subjects.length - 1,
-      )
+      updatedRegions[selectedRegionIndex].examTypes[
+        selectedExamTypeIndex
+      ].specificClasses[selectedSpecificClassIndex].subjects.push(subject);
+      setRegions(updatedRegions);
+      setNewSubject("");
     }
-  }
+  };
+
+  const handleDeleteRegion = (index, e) => {
+    e.stopPropagation();
+    const updated = regions.filter((_, i) => i !== index);
+    setRegions(updated);
+    if (selectedRegionIndex === index) {
+      setSelectedRegionIndex(null);
+      setSelectedExamTypeIndex(null);
+      setSelectedSpecificClassIndex(null);
+    } else if (selectedRegionIndex > index) {
+      setSelectedRegionIndex(selectedRegionIndex - 1);
+    }
+  };
+
+  const handleDeleteExamType = (index, e) => {
+    e.stopPropagation();
+    if (selectedRegionIndex === null) return;
+    const updatedRegions = [...regions];
+    updatedRegions[selectedRegionIndex].examTypes.splice(index, 1);
+    setRegions(updatedRegions);
+    if (selectedExamTypeIndex === index) {
+      setSelectedExamTypeIndex(null);
+      setSelectedSpecificClassIndex(null);
+    } else if (selectedExamTypeIndex > index) {
+      setSelectedExamTypeIndex(selectedExamTypeIndex - 1);
+    }
+  };
+
+  const handleDeleteSpecificClass = (index, e) => {
+    e.stopPropagation();
+    if (selectedRegionIndex === null || selectedExamTypeIndex === null) return;
+    const updatedRegions = [...regions];
+    updatedRegions[selectedRegionIndex].examTypes[
+      selectedExamTypeIndex
+    ].specificClasses.splice(index, 1);
+    setRegions(updatedRegions);
+    if (selectedSpecificClassIndex === index) {
+      setSelectedSpecificClassIndex(null);
+    } else if (selectedSpecificClassIndex > index) {
+      setSelectedSpecificClassIndex(selectedSpecificClassIndex - 1);
+    }
+  };
+
+  const handleDeleteSubject = (index, e) => {
+    e.stopPropagation();
+    if (
+      selectedRegionIndex === null ||
+      selectedExamTypeIndex === null ||
+      selectedSpecificClassIndex === null
+    )
+      return;
+    const updatedRegions = [...regions];
+    updatedRegions[selectedRegionIndex].examTypes[
+      selectedExamTypeIndex
+    ].specificClasses[selectedSpecificClassIndex].subjects.splice(index, 1);
+    setRegions(updatedRegions);
+  };
 
   const handleSubmitToServer = async () => {
     if (regions.length === 0) {
-      toast.error("Please add at least one region before submitting")
-      return
+      toast.error("Please add at least one region before submitting");
+      return;
     }
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      const response = await createQAndARegion(regions)
+      const response = await createQAndARegion(regions);
 
       if (response.message) {
-        toast.success(response.message)
-        setRegions([])
-        setNewRegion("")
-        setSelectedRegionIndex(null)
-        setSelectedExamTypeIndex(null)
-        setSelectedSpecificClassIndex(null)
-        setSelectedSubjectIndex(null)
+        toast.success(response.message);
+        setRegions([]);
+        setNewRegion("");
+        setSelectedRegionIndex(null);
+        setSelectedExamTypeIndex(null);
+        setSelectedSpecificClassIndex(null);
+        navigate("/view-qa");
       } else {
-        throw new Error("Unexpected response from server")
+        throw new Error("Unexpected response from server");
       }
     } catch (error) {
-      console.error("Submission error:", error)
-      toast.error(error.response?.data?.error || "Failed to submit regions")
+      console.error("Submission error:", error);
+      toast.error(error.response?.data?.error || "Failed to submit regions");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
-  const selectRegion = (index) => {
-    setSelectedRegionIndex(index)
-    setSelectedExamTypeIndex(null)
-    setSelectedSpecificClassIndex(null)
-    setSelectedSubjectIndex(null)
-  }
-
-  const selectExamType = (index) => {
-    setSelectedExamTypeIndex(index)
-    setSelectedSpecificClassIndex(null)
-    setSelectedSubjectIndex(null)
-  }
-
-  const selectSpecificClass = (index) => {
-    setSelectedSpecificClassIndex(index)
-    setSelectedSubjectIndex(null)
-  }
-
-  const selectSubject = (index) => {
-    setSelectedSubjectIndex(index)
-  }
-
-  const updateRegionName = (e, index) => {
-    const newName = e.target.value
-    setRegions((prev) => prev.map((region, i) => (i === index ? { ...region, name: newName } : region)))
-  }
-
-  const updateCategoryName = (categoryType, index, e) => {
-    const newName = e.target.value
-    setRegions((prev) =>
-      prev.map((region, i) => {
-        if (i !== selectedRegionIndex) return region
-
-        if (categoryType === "examType") {
-          const updatedExamTypes = [...region.examTypes]
-          updatedExamTypes[index] = { ...updatedExamTypes[index], name: newName }
-          return { ...region, examTypes: updatedExamTypes }
-        }
-        if (categoryType === "specificClass") {
-          return {
-            ...region,
-            examTypes: region.examTypes.map((examType, idx1) => {
-              if (idx1 !== selectedExamTypeIndex) return examType
-              const updatedSpecificClasses = [...examType.specificClasses]
-              updatedSpecificClasses[index] = { ...updatedSpecificClasses[index], name: newName }
-              return { ...examType, specificClasses: updatedSpecificClasses }
-            }),
-          }
-        }
-        if (categoryType === "subject") {
-          return {
-            ...region,
-            examTypes: region.examTypes.map((examType, idx1) => {
-              if (idx1 !== selectedExamTypeIndex) return examType
-              return {
-                ...examType,
-                specificClasses: examType.specificClasses.map((specificClass, idx2) => {
-                  if (idx2 !== selectedSpecificClassIndex) return specificClass
-                  const updatedSubjects = [...specificClass.subjects]
-                  updatedSubjects[index] = { ...updatedSubjects[index], name: newName }
-                  return { ...specificClass, subjects: updatedSubjects }
-                }),
-              }
-            }),
-          }
-        }
-        return region
-      }),
-    )
-  }
-
-  const deleteRegion = (index, e) => {
-    e.stopPropagation()
-    setRegions((prev) => prev.filter((_, i) => i !== index))
-    if (selectedRegionIndex === index) {
-      setSelectedRegionIndex(null)
-      setSelectedExamTypeIndex(null)
-      setSelectedSpecificClassIndex(null)
-      setSelectedSubjectIndex(null)
-    } else if (selectedRegionIndex > index) {
-      setSelectedRegionIndex(selectedRegionIndex - 1)
-    }
-  }
-
-  const deleteCategory = (categoryType, index, e) => {
-    e.stopPropagation()
-    setRegions((prev) =>
-      prev.map((region, i) => {
-        if (i !== selectedRegionIndex) return region
-        if (categoryType === "examType") {
-          return {
-            ...region,
-            examTypes: region.examTypes.filter((_, i) => i !== index),
-          }
-        }
-        if (categoryType === "specificClass") {
-          return {
-            ...region,
-            examTypes: region.examTypes.map((examType, idx1) => {
-              if (idx1 !== selectedExamTypeIndex) return examType
-              return {
-                ...examType,
-                specificClasses: examType.specificClasses.filter((_, i) => i !== index),
-              }
-            }),
-          }
-        }
-        if (categoryType === "subject") {
-          return {
-            ...region,
-            examTypes: region.examTypes.map((examType, idx1) => {
-              if (idx1 !== selectedExamTypeIndex) return examType
-              return {
-                ...examType,
-                specificClasses: examType.specificClasses.map((specificClass, idx2) => {
-                  if (idx2 !== selectedSpecificClassIndex) return specificClass
-                  return {
-                    ...specificClass,
-                    subjects: specificClass.subjects.filter((_, i) => i !== index),
-                  }
-                }),
-              }
-            }),
-          }
-        }
-        return region
-      }),
-    )
-  }
+  // Count totals
+  const totalExamTypes = regions.reduce(
+    (sum, r) => sum + (r.examTypes?.length || 0),
+    0
+  );
+  const totalClasses = regions.reduce(
+    (sum, r) =>
+      sum +
+      (r.examTypes?.reduce(
+        (eSum, e) => eSum + (e.specificClasses?.length || 0),
+        0
+      ) || 0),
+    0
+  );
+  const totalSubjects = regions.reduce(
+    (sum, r) =>
+      sum +
+      (r.examTypes?.reduce(
+        (eSum, e) =>
+          eSum +
+          (e.specificClasses?.reduce(
+            (cSum, c) => cSum + (c.subjects?.length || 0),
+            0
+          ) || 0),
+        0
+      ) || 0),
+    0
+  );
 
   return (
-    <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-teal-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 p-2 sm:p-4 md:p-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-4 sm:mb-6 md:mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-teal-500 via-blue-500 to-indigo-500 rounded-full mb-2 sm:mb-4">
-            <MapPin className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-white" />
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-8 px-4 sm:px-6 lg:px-8 xl:px-12 w-full">
+      <div className="w-full space-y-6">
+
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e0e2e8]">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-xs active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Dashboard</span>
+            </button>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#ffd02f] text-[#1c1c1e]">
+              Q&amp;A TAXONOMY
+            </span>
+            <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#f5f3ff] text-[#4262ff] border border-[#ddd6fe]">
+              CANVAS STUDIO
+            </span>
           </div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent mb-1 sm:mb-2">
-            Q & A Region Management
+          <button
+            onClick={() => navigate("/edit-qa-region")}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1c1c1e] text-white hover:bg-[#2c2c34] text-sm font-semibold transition-all shadow-xs self-start sm:self-auto active:scale-98"
+          >
+            <span>Edit Existing Regions</span>
+            <ChevronRight className="w-4 h-4 text-[#ffd02f]" />
+          </button>
+        </div>
+
+        {/* Page Title */}
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-[#c3faf5] text-[#187574] border border-[#9eece4] mb-1">
+            <Layers className="w-3.5 h-3.5" />
+            <span>4-TIER HIERARCHY</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#1c1c1e]">
+            Q&amp;A Regional Management
           </h1>
-          <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300">
-            Organize your Q & A content with regions and categories
+          <p className="text-sm sm:text-base text-[#555a6a]">
+            Organize academic territories, exam types, classes, and specific subjects for Q&amp;A curation.
           </p>
         </div>
 
-        {/* Main Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-          {/* Card Header */}
-          <div className="bg-gradient-to-r from-teal-500 via-blue-500 to-indigo-500 p-3 sm:p-4 md:p-6">
-            <h2 className="text-base sm:text-lg md:text-xl font-semibold text-white flex items-center gap-2">
-              <Grid3X3 className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="text-sm sm:text-base md:text-lg">Hierarchical Structure</span>
-            </h2>
-            <p className="text-teal-100 text-xs sm:text-sm mt-1">Build your organizational tree</p>
+        {/* Main Structure Card */}
+        <div className="bg-white rounded-2xl border border-[#e0e2e8] shadow-xs p-5 sm:p-7 space-y-6 w-full">
+
+          {/* Level 1: Region Level (Canary Yellow Theme) */}
+          <div className="p-5 rounded-2xl bg-[#fff8e0] border-2 border-[#fde89c] space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-full bg-[#ffd02f] text-[#1c1c1e] flex items-center justify-center font-bold text-xs shadow-xs">
+                  1
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-[#1c1c1e]">Region Level</h2>
+                  <p className="text-xs text-[#746019]">Top-level territory, state, or educational board</p>
+                </div>
+              </div>
+              <span className="text-xs font-bold px-3 py-1 rounded-full bg-white text-[#746019] border border-[#fde89c] shadow-2xs">
+                {regions.length} {regions.length === 1 ? "Region" : "Regions"}
+              </span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full items-stretch">
+              <input
+                type="text"
+                value={newRegion}
+                onChange={(e) => setNewRegion(e.target.value)}
+                placeholder="Enter region name (e.g. CBSE, ICSE, JEE, NEET, Maharashtra Board)..."
+                className="w-full sm:flex-1 h-12 min-h-[48px] shrink-0 px-4 py-3 bg-white border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] focus:outline-hidden focus:border-2 focus:border-[#4262ff] transition-all text-sm font-medium leading-normal shadow-2xs"
+                onKeyDown={(e) => e.key === "Enter" && handleAddRegion()}
+              />
+              <button
+                onClick={handleAddRegion}
+                disabled={!newRegion.trim()}
+                className="w-full sm:w-auto h-12 min-h-[48px] shrink-0 px-6 rounded-xl sm:rounded-full bg-[#ffd02f] text-[#1c1c1e] hover:bg-[#fcb900] disabled:opacity-40 disabled:cursor-not-allowed font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-2xs active:scale-98"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Region</span>
+              </button>
+            </div>
+
+            {/* Existing Regions Grid */}
+            {regions.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 pt-1">
+                {regions.map((region, index) => {
+                  const isSelected = selectedRegionIndex === index;
+                  return (
+                    <div
+                      key={index}
+                      onClick={() => {
+                        setSelectedRegionIndex(index);
+                        setSelectedExamTypeIndex(null);
+                        setSelectedSpecificClassIndex(null);
+                      }}
+                      className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                        isSelected
+                          ? "bg-white border-2 border-[#4262ff] shadow-md ring-2 ring-[#4262ff]/20"
+                          : "bg-white/90 border-[#fde89c] hover:border-[#ffd02f] hover:bg-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <MapPin
+                          className={`w-4 h-4 shrink-0 ${
+                            isSelected ? "text-[#4262ff]" : "text-[#746019]"
+                          }`}
+                        />
+                        <span className="font-bold text-[#1c1c1e] text-sm truncate">
+                          {region.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#fff4c4] text-[#746019]">
+                          {region.examTypes?.length || 0}
+                        </span>
+                        <button
+                          onClick={(e) => handleDeleteRegion(index, e)}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete Region"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          <div className="p-3 sm:p-4 md:p-6">
-            {/* Level 1: Region */}
-            <div className="space-y-4 sm:space-y-6">
-              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
-                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full"></div>
-                <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-800 dark:text-white">Region</h3>
+          {/* Level 2: Exam Type Level (Teal Theme) */}
+          {selectedRegion && (
+            <div className="p-5 rounded-2xl bg-[#c3faf5]/40 border-2 border-[#9eece4] space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full bg-[#0fbcb0] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    2
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-[#1c1c1e]">
+                      Exam Types{" "}
+                      <span className="text-sm font-semibold text-[#187574]">
+                        in "{selectedRegion.name}"
+                      </span>
+                    </h3>
+                    <p className="text-xs text-[#187574]">
+                      Entrance exams, Board exams, or Academic streams
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-bold px-3 py-1 rounded-full bg-white text-[#187574] border border-[#9eece4]">
+                  {selectedRegion.examTypes?.length || 0} Exam Types
+                </span>
               </div>
 
-              <div className="flex flex-col gap-2 sm:gap-3">
+              <div className="flex flex-col sm:flex-row gap-3 w-full items-stretch">
                 <input
                   type="text"
-                  value={newRegion}
-                  onChange={(e) => setNewRegion(e.target.value)}
-                  placeholder="Enter region name..."
-                  className="w-full px-3 py-2 sm:px-4 sm:py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 transition-all duration-200 text-sm sm:text-base"
-                  onKeyPress={(e) => e.key === "Enter" && handleAddRegion()}
+                  value={newExamType}
+                  onChange={(e) => setNewExamType(e.target.value)}
+                  placeholder={`Enter exam type for "${selectedRegion.name}" (e.g. Board Exams, Mains, Advanced)...`}
+                  className="w-full sm:flex-1 h-12 min-h-[48px] shrink-0 px-4 py-3 bg-white border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] focus:outline-hidden focus:border-2 focus:border-[#0fbcb0] transition-all text-sm font-medium leading-normal shadow-2xs"
+                  onKeyDown={(e) => e.key === "Enter" && handleAddExamType()}
                 />
                 <button
-                  onClick={handleAddRegion}
-                  disabled={!newRegion.trim()}
-                  className="w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-teal-500 to-blue-500 text-white rounded-lg hover:from-teal-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
+                  onClick={handleAddExamType}
+                  disabled={!newExamType.trim()}
+                  className="w-full sm:w-auto h-12 min-h-[48px] shrink-0 px-6 rounded-xl sm:rounded-full bg-[#0fbcb0] text-white hover:bg-[#187574] disabled:opacity-40 disabled:cursor-not-allowed font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-2xs active:scale-98"
                 >
-                  <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                  Add Region
+                  <Plus className="w-4 h-4" />
+                  <span>Add Exam Type</span>
                 </button>
               </div>
 
-              {/* Existing Regions */}
-              {regions.length > 0 && (
-                <div className="space-y-1 sm:space-y-2">
-                  {regions.map((region, index) => (
+              {/* Existing Exam Types Grid */}
+              {selectedRegion.examTypes?.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 pt-1">
+                  {selectedRegion.examTypes.map((examType, index) => {
+                    const isSelected = selectedExamTypeIndex === index;
+                    return (
+                      <div
+                        key={index}
+                        onClick={() => {
+                          setSelectedExamTypeIndex(index);
+                          setSelectedSpecificClassIndex(null);
+                        }}
+                        className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                          isSelected
+                            ? "bg-white border-2 border-[#0fbcb0] shadow-md ring-2 ring-[#0fbcb0]/20"
+                            : "bg-white/90 border-[#9eece4] hover:border-[#0fbcb0] hover:bg-white"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Tag
+                            className={`w-4 h-4 shrink-0 ${
+                              isSelected ? "text-[#0fbcb0]" : "text-[#187574]"
+                            }`}
+                          />
+                          <span className="font-bold text-[#1c1c1e] text-sm truncate">
+                            {examType.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#c3faf5] text-[#187574]">
+                            {examType.specificClasses?.length || 0}
+                          </span>
+                          <button
+                            onClick={(e) => handleDeleteExamType(index, e)}
+                            className="p-1 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete Exam Type"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Level 3: Specific Class Level (Rose Theme) */}
+          {selectedExamType && (
+            <div className="p-5 rounded-2xl bg-[#ffd8f4]/35 border-2 border-[#f3bee5] space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full bg-[#86296b] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    3
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-[#1c1c1e]">
+                      Specific Classes{" "}
+                      <span className="text-sm font-semibold text-[#86296b]">
+                        in "{selectedExamType.name}"
+                      </span>
+                    </h3>
+                    <p className="text-xs text-[#86296b]">
+                      Grade 10, Grade 12, Class 11th, Foundation, etc.
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-bold px-3 py-1 rounded-full bg-white text-[#86296b] border border-[#f3bee5]">
+                  {selectedExamType.specificClasses?.length || 0} Classes
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 w-full items-stretch">
+                <input
+                  type="text"
+                  value={newSpecificClass}
+                  onChange={(e) => setNewSpecificClass(e.target.value)}
+                  placeholder={`Enter class for "${selectedExamType.name}" (e.g. Class 12, Class 10, Dropper)...`}
+                  className="w-full sm:flex-1 h-12 min-h-[48px] shrink-0 px-4 py-3 bg-white border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] focus:outline-hidden focus:border-2 focus:border-[#86296b] transition-all text-sm font-medium leading-normal shadow-2xs"
+                  onKeyDown={(e) => e.key === "Enter" && handleAddSpecificClass()}
+                />
+                <button
+                  onClick={handleAddSpecificClass}
+                  disabled={!newSpecificClass.trim()}
+                  className="w-full sm:w-auto h-12 min-h-[48px] shrink-0 px-6 rounded-xl sm:rounded-full bg-[#86296b] text-white hover:bg-[#6e2257] disabled:opacity-40 disabled:cursor-not-allowed font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-2xs active:scale-98"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Class</span>
+                </button>
+              </div>
+
+              {/* Existing Classes Grid */}
+              {selectedExamType.specificClasses?.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 pt-1">
+                  {selectedExamType.specificClasses.map((specificClass, index) => {
+                    const isSelected = selectedSpecificClassIndex === index;
+                    return (
+                      <div
+                        key={index}
+                        onClick={() => setSelectedSpecificClassIndex(index)}
+                        className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                          isSelected
+                            ? "bg-white border-2 border-[#86296b] shadow-md ring-2 ring-[#86296b]/20"
+                            : "bg-white/90 border-[#f3bee5] hover:border-[#86296b] hover:bg-white"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Grid3X3
+                            className={`w-4 h-4 shrink-0 ${
+                              isSelected ? "text-[#86296b]" : "text-[#86296b]/70"
+                            }`}
+                          />
+                          <span className="font-bold text-[#1c1c1e] text-sm truncate">
+                            {specificClass.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#ffd8f4] text-[#86296b]">
+                            {specificClass.subjects?.length || 0}
+                          </span>
+                          <button
+                            onClick={(e) => handleDeleteSpecificClass(index, e)}
+                            className="p-1 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete Class"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Level 4: Subject Level (Lavender Theme) */}
+          {selectedSpecificClass && (
+            <div className="p-5 rounded-2xl bg-[#f5f3ff] border-2 border-[#ddd6fe] space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full bg-[#4262ff] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    4
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-[#1c1c1e]">
+                      Subjects{" "}
+                      <span className="text-sm font-semibold text-[#4262ff]">
+                        in "{selectedSpecificClass.name}"
+                      </span>
+                    </h3>
+                    <p className="text-xs text-[#4262ff]">
+                      Physics, Mathematics, Biology, Chemistry, English, etc.
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-bold px-3 py-1 rounded-full bg-white text-[#4262ff] border border-[#ddd6fe]">
+                  {selectedSpecificClass.subjects?.length || 0} Subjects
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 w-full items-stretch">
+                <input
+                  type="text"
+                  value={newSubject}
+                  onChange={(e) => setNewSubject(e.target.value)}
+                  placeholder={`Enter subject for "${selectedSpecificClass.name}" (e.g. Physics, Chemistry, Biology)...`}
+                  className="w-full sm:flex-1 h-12 min-h-[48px] shrink-0 px-4 py-3 bg-white border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] focus:outline-hidden focus:border-2 focus:border-[#4262ff] transition-all text-sm font-medium leading-normal shadow-2xs"
+                  onKeyDown={(e) => e.key === "Enter" && handleAddSubject()}
+                />
+                <button
+                  onClick={handleAddSubject}
+                  disabled={!newSubject.trim()}
+                  className="w-full sm:w-auto h-12 min-h-[48px] shrink-0 px-6 rounded-xl sm:rounded-full bg-[#4262ff] text-white hover:bg-[#3350e0] disabled:opacity-40 disabled:cursor-not-allowed font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-2xs active:scale-98"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Subject</span>
+                </button>
+              </div>
+
+              {/* Existing Subjects Grid */}
+              {selectedSpecificClass.subjects?.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 pt-1">
+                  {selectedSpecificClass.subjects.map((subject, index) => (
                     <div
                       key={index}
-                      onClick={() => selectRegion(index)}
-                      className={`p-2 sm:p-3 rounded-md sm:rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                        selectedRegionIndex === index
-                          ? "border-teal-500 bg-teal-50 dark:bg-teal-900/20"
-                          : "border-gray-200 dark:border-gray-600 hover:border-teal-300 dark:hover:border-teal-600"
-                      }`}
+                      className="p-3 rounded-xl border border-[#ddd6fe] bg-white hover:border-[#4262ff] transition-all flex items-center justify-between gap-2 shadow-2xs"
                     >
-                      <div className="flex items-center gap-1 sm:gap-2">
-                        <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-teal-500 flex-shrink-0" />
-                        <input
-                          type="text"
-                          value={region.name}
-                          onChange={(e) => updateRegionName(e, index)}
-                          className="flex-1 bg-transparent border-b border-transparent focus:border-teal-300 focus:outline-none px-1 font-medium text-gray-800 dark:text-white text-sm sm:text-base min-w-0"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <button
-                          onClick={(e) => deleteRegion(index, e)}
-                          className="ml-auto p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded flex-shrink-0"
-                        >
-                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                        </button>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <BookOpen className="w-4 h-4 text-[#4262ff] shrink-0" />
+                        <span className="font-bold text-[#1c1c1e] text-sm truncate">
+                          {subject.name}
+                        </span>
                       </div>
+                      <button
+                        onClick={(e) => handleDeleteSubject(index, e)}
+                        className="p-1 text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                        title="Delete Subject"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   ))}
                 </div>
               )}
-
-              {/* Categories for selected region */}
-              {selectedRegionIndex !== null && (
-                <div className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-                  {/* Exam Types */}
-                  <div className="ml-2 sm:ml-4 md:ml-6 border-l-2 border-teal-300 pl-2 sm:pl-4 md:pl-6 space-y-2 sm:space-y-4">
-                    <div className="flex flex-wrap items-center gap-1 sm:gap-2 md:gap-3 mb-2 sm:mb-4">
-                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
-                      <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-800 dark:text-white">
-                        Class/Exam Types
-                      </h3>
-                      <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 break-all">
-                        in {regions[selectedRegionIndex].name}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-col gap-2 sm:gap-3">
-                      <input
-                        type="text"
-                        value={newExamType}
-                        onChange={(e) => setNewExamType(e.target.value)}
-                        placeholder="Enter Exam Type name..."
-                        className="w-full px-3 py-2 sm:px-4 sm:py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-200 text-sm sm:text-base"
-                        onKeyPress={(e) => e.key === "Enter" && handleAddExamType()}
-                      />
-                      <button
-                        onClick={handleAddExamType}
-                        disabled={!newExamType.trim()}
-                        className="w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:from-blue-600 hover:to-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
-                      >
-                        <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                        Add Class/Exam Type
-                      </button>
-                    </div>
-
-                    {/* Existing Exam Types */}
-                    {regions[selectedRegionIndex].examTypes.length > 0 && (
-                      <div className="space-y-1 sm:space-y-2">
-                        {regions[selectedRegionIndex].examTypes.map((examType, index) => (
-                          <div
-                            key={index}
-                            onClick={() => selectExamType(index)}
-                            className={`p-2 sm:p-3 rounded-md sm:rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                              selectedExamTypeIndex === index
-                                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                                : "border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-600"
-                            }`}
-                          >
-                            <div className="flex items-center gap-1 sm:gap-2">
-                              <Tag className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
-                              <input
-                                type="text"
-                                value={examType.name}
-                                onChange={(e) => updateCategoryName("examType", index, e)}
-                                className="flex-1 bg-transparent border-b border-transparent focus:border-blue-300 focus:outline-none px-1 font-medium text-gray-800 dark:text-white text-sm sm:text-base min-w-0"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                              <button
-                                onClick={(e) => deleteCategory("examType", index, e)}
-                                className="ml-auto p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded flex-shrink-0"
-                              >
-                                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Specific Classes */}
-                  {selectedExamTypeIndex !== null && (
-                    <div className="ml-4 sm:ml-6 md:ml-8 border-l-2 border-blue-300 pl-2 sm:pl-4 md:pl-6 space-y-2 sm:space-y-4">
-                      <div className="flex flex-wrap items-center gap-1 sm:gap-2 md:gap-3 mb-2 sm:mb-4">
-                        <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
-                        <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-800 dark:text-white">
-                          Specific Classes
-                        </h3>
-                        <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 break-all">
-                          in {selectedRegion.examTypes[selectedExamTypeIndex]?.name}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col gap-2 sm:gap-3">
-                        <input
-                          type="text"
-                          value={newSpecificClass}
-                          onChange={(e) => setNewSpecificClass(e.target.value)}
-                          placeholder="Enter Specific Class name..."
-                          className="w-full px-3 py-2 sm:px-4 sm:py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200 text-sm sm:text-base"
-                          onKeyPress={(e) => e.key === "Enter" && handleAddSpecificClass()}
-                        />
-                        <button
-                          onClick={handleAddSpecificClass}
-                          disabled={!newSpecificClass.trim()}
-                          className="w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
-                        >
-                          <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                          Add Specific Class
-                        </button>
-                      </div>
-
-                      {/* Existing Specific Classes */}
-                      {selectedRegion.examTypes[selectedExamTypeIndex]?.specificClasses.length > 0 && (
-                        <div className="space-y-1 sm:space-y-2">
-                          {selectedRegion.examTypes[selectedExamTypeIndex]?.specificClasses.map(
-                            (specificClass, index) => (
-                              <div
-                                key={index}
-                                onClick={() => selectSpecificClass(index)}
-                                className={`p-2 sm:p-3 rounded-md sm:rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                                  selectedSpecificClassIndex === index
-                                    ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20"
-                                    : "border-gray-200 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-600"
-                                }`}
-                              >
-                                <div className="flex items-center gap-1 sm:gap-2">
-                                  <Tag className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-500 flex-shrink-0" />
-                                  <input
-                                    type="text"
-                                    value={specificClass.name}
-                                    onChange={(e) => updateCategoryName("specificClass", index, e)}
-                                    className="flex-1 bg-transparent border-b border-transparent focus:border-indigo-300 focus:outline-none px-1 font-medium text-gray-800 dark:text-white text-sm sm:text-base min-w-0"
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
-                                  <button
-                                    onClick={(e) => deleteCategory("specificClass", index, e)}
-                                    className="ml-auto p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded flex-shrink-0"
-                                  >
-                                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                                  </button>
-                                </div>
-                              </div>
-                            ),
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Subjects */}
-                  {selectedSpecificClassIndex !== null && (
-                    <div className="ml-6 sm:ml-8 md:ml-10 border-l-2 border-indigo-300 pl-2 sm:pl-4 md:pl-6 space-y-2 sm:space-y-4">
-                      <div className="flex flex-wrap items-center gap-1 sm:gap-2 md:gap-3 mb-2 sm:mb-4">
-                        <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
-                        <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-800 dark:text-white">
-                          Subjects
-                        </h3>
-                        <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 break-all">
-                          in {selectedExamType.specificClasses[selectedSpecificClassIndex].name}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col gap-2 sm:gap-3">
-                        <input
-                          type="text"
-                          value={newSubject}
-                          onChange={(e) => setNewSubject(e.target.value)}
-                          placeholder="Enter Subject name..."
-                          className="w-full px-3 py-2 sm:px-4 sm:py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 transition-all duration-200 text-sm sm:text-base"
-                          onKeyPress={(e) => e.key === "Enter" && handleAddSubject()}
-                        />
-                        <button
-                          onClick={handleAddSubject}
-                          disabled={!newSubject.trim()}
-                          className="w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
-                        >
-                          <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                          Add Subject
-                        </button>
-                      </div>
-
-                      {/* Existing Subjects */}
-                      {selectedExamType.specificClasses[selectedSpecificClassIndex].subjects.length > 0 && (
-                        <div className="space-y-1 sm:space-y-2">
-                          {selectedExamType.specificClasses[selectedSpecificClassIndex].subjects.map(
-                            (subject, index) => (
-                              <div
-                                key={index}
-                                onClick={() => selectSubject(index)}
-                                className={`p-2 sm:p-3 rounded-md sm:rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                                  selectedSubjectIndex === index
-                                    ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                                    : "border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-600"
-                                }`}
-                              >
-                                <div className="flex items-center gap-1 sm:gap-2">
-                                  <Tag className="w-3 h-3 sm:w-4 sm:h-4 text-purple-500 flex-shrink-0" />
-                                  <input
-                                    type="text"
-                                    value={subject.name}
-                                    onChange={(e) => updateCategoryName("subject", index, e)}
-                                    className="flex-1 bg-transparent border-b border-transparent focus:border-purple-300 focus:outline-none px-1 font-medium text-gray-800 dark:text-white text-sm sm:text-base min-w-0"
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
-                                  <button
-                                    onClick={(e) => deleteCategory("subject", index, e)}
-                                    className="ml-auto p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded flex-shrink-0"
-                                  >
-                                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                                  </button>
-                                </div>
-                              </div>
-                            ),
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
-          </div>
+          )}
+
         </div>
 
-        {/* Summary Card */}
+        {/* Summary & Submit Card */}
         {regions.length > 0 && (
-          <div className="mt-4 sm:mt-6 bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-md sm:shadow-lg border border-gray-100 dark:border-gray-700 p-3 sm:p-4 md:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white mb-3 sm:mb-4 flex items-center gap-2">
-              <div className="w-2 h-2 bg-gradient-to-r from-teal-500 to-indigo-500 rounded-full"></div>
-              Structure Summary
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
-              <div className="text-center p-2 sm:p-4 bg-teal-50 dark:bg-teal-900/20 rounded-lg">
-                <div className="text-lg sm:text-2xl font-bold text-teal-600 dark:text-teal-400">{regions.length}</div>
-                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">Regions</div>
-              </div>
-              <div className="text-center p-2 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <div className="text-lg sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {regions.reduce((sum, region) => sum + region.examTypes.length, 0)}
-                </div>
-                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">Class/Exam Types</div>
-              </div>
-              <div className="text-center p-2 sm:p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
-                <div className="text-lg sm:text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                  {regions.reduce(
-                    (sum, region) =>
-                      sum + region.examTypes.reduce((s, examType) => s + examType.specificClasses.length, 0),
-                    0,
-                  )}
-                </div>
-                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">Specific Classes</div>
-              </div>
-              <div className="text-center p-2 sm:p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                <div className="text-lg sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
-                  {regions.reduce(
-                    (sum, region) =>
-                      sum +
-                      region.examTypes.reduce(
-                        (s, examType) =>
-                          s +
-                          examType.specificClasses.reduce((s2, specificClass) => s2 + specificClass.subjects.length, 0),
-                        0,
-                      ),
-                    0,
-                  )}
-                </div>
-                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">Subjects</div>
-              </div>
+          <div className="bg-white rounded-2xl border border-[#e0e2e8] shadow-xs p-5 sm:p-7 flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
+            <div className="space-y-1">
+              <h3 className="font-bold text-base sm:text-lg text-[#1c1c1e]">
+                Ready to Publish Hierarchy
+              </h3>
+              <p className="text-xs sm:text-sm text-[#555a6a]">
+                {regions.length} Regions &bull; {totalExamTypes} Exam Types &bull; {totalClasses} Classes &bull; {totalSubjects} Subjects prepared
+              </p>
             </div>
-            {/* Submit Button */}
-            <div className="mt-4 sm:mt-6 flex justify-center sm:justify-end">
-              <button
-                onClick={handleSubmitToServer}
-                disabled={isSubmitting}
-                className="w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
-              >
-                {isSubmitting ? (
-                  <>
-                    <svg
-                      className="animate-spin -ml-1 mr-2 h-3 w-3 sm:h-4 sm:w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Submitting...
-                  </>
-                ) : (
-                  "Submit Structure"
-                )}
-              </button>
-            </div>
+            <button
+              onClick={handleSubmitToServer}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] font-bold text-sm shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-98"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="animate-spin h-4 w-4 text-[#1c1c1e]" />
+                  <span>Submitting Regions...</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Submit Q&amp;A Regions to Database</span>
+                </>
+              )}
+            </button>
           </div>
         )}
+
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default QandARegion
+export default QandARegion;

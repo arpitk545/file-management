@@ -1,8 +1,21 @@
 "use client"
+
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { AlertTriangle, Info, BookOpen, Users, Shield, ExternalLink } from "lucide-react"
+import {
+  AlertTriangle,
+  Info,
+  BookOpen,
+  Users,
+  Shield,
+  ExternalLink,
+  ArrowLeft,
+  ArrowRight,
+  Loader2,
+} from "lucide-react"
+import { useNavigate } from "react-router-dom"
 import { getDisclaimer } from "../../services/operations/pagesAPI"
+
 const iconMap = {
   Info: Info,
   BookOpen: BookOpen,
@@ -13,19 +26,24 @@ const iconMap = {
 }
 
 export default function Disclaimer() {
+  const navigate = useNavigate()
   const [disclaimer, setDisclaimer] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  const disclaimerSections = disclaimer ? disclaimer.sections.map(section => ({
-    ...section,
-    icon: iconMap[section.icon] || Info, 
-  })) : []
+  const disclaimerSections = disclaimer
+    ? disclaimer.sections.map((section) => ({
+        ...section,
+        icon: iconMap[section.icon] || Info,
+      }))
+    : []
 
   useEffect(() => {
     const fetchDisclaimer = async () => {
       try {
         const res = await getDisclaimer()
-        setDisclaimer(res) 
+        if (res) {
+          setDisclaimer(res)
+        }
       } catch (error) {
         console.error("Failed to fetch disclaimer:", error)
       } finally {
@@ -35,132 +53,124 @@ export default function Disclaimer() {
 
     fetchDisclaimer()
   }, [])
-  
+
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-800">Loading our Disclaimer...</h2>
-          <p className="text-gray-600">Please wait while we process our disclaimer</p>
+      <div className="min-h-screen bg-[#f7f8fa] flex flex-col items-center justify-center p-6 text-center font-sans">
+        <div className="w-12 h-12 rounded-2xl bg-[#ffd02f] flex items-center justify-center mb-4 shadow-sm animate-pulse">
+          <Loader2 className="animate-spin h-6 w-6 text-[#1c1c1e]" />
         </div>
+        <p className="text-xs font-bold uppercase tracking-wider text-[#6a6d7c]">Loading legal disclaimer...</p>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-orange-200 via-red-200 to-pink-200 ">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12 md:mb-16"
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="inline-flex items-center bg-gradient-to-r from-orange-100 to-red-100 rounded-full px-6 py-3 mb-6"
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-10 px-4 sm:px-6 lg:px-8 xl:px-12 w-full font-sans">
+      <div className="w-full space-y-10">
+        {/* Navigation & Header */}
+        <div>
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#c7cad5] bg-white text-xs font-semibold text-[#1c1c1e] hover:bg-[#ebecf0] transition-colors mb-6 shadow-sm active:scale-95 cursor-pointer"
           >
-            <AlertTriangle className="h-5 w-5 text-orange-600 mr-2" />
-            <span className="text-orange-600 font-semibold">Important Notice</span>
-          </motion.div>
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </button>
 
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
-            <span className="bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 bg-clip-text text-transparent">
-              {disclaimer?.header?.title}
-            </span>
-          </h1>
-          <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            {disclaimer?.header?.description}
-          </p>
-          <p className="text-sm text-gray-500 mt-4">Effective Date: {new Date().toLocaleDateString()}</p>
-        </motion.div>
+          <div className="text-center w-full space-y-4">
+            <div className="flex items-center justify-center gap-2 flex-wrap mb-2">
+              <span className="px-3 py-1 bg-[#ffd02f] text-[#1c1c1e] text-[11px] font-black uppercase tracking-widest rounded-full shadow-sm">
+                LEGAL COMPLIANCE
+              </span>
+              <span className="px-3 py-1 bg-[#fbd4d4] text-[#800000] text-[11px] font-bold uppercase tracking-wider rounded-full">
+                TERMS & DISCLAIMER
+              </span>
+            </div>
 
-        {/* Disclaimer Sections */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: {},
-            visible: {
-              transition: {
-                staggerChildren: 0.1,
-              },
-            },
-          }}
-          className="grid gap-6 md:gap-8 max-w-4xl mx-auto"
-        >
-          {disclaimerSections.map((section, index) => (
-            <motion.div
-              key={index}
-              variants={{
-                hidden: { opacity: 0, y: 50 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              transition={{ duration: 0.6 }}
-              className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 md:p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20"
-            >
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center flex-shrink-0">
-                  <section.icon className="h-6 w-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">{section.title}</h2>
-                  <p className="text-gray-600 leading-relaxed text-sm md:text-base">{section.content}</p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[#1c1c1e] leading-tight">
+              {disclaimer?.header?.title || "Platform Disclaimer"}
+            </h1>
 
-        {/* Important Notice */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          className="mt-12 md:mt-16 bg-gradient-to-r from-orange-100 to-red-100 rounded-3xl p-6 md:p-8 max-w-4xl mx-auto border-l-4 border-orange-500"
-        >
-          <div className="flex items-start space-x-4">
-            <AlertTriangle className="h-8 w-8 text-orange-600 flex-shrink-0 mt-1" />
-            <div>
-              <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">Important Reminder</h3>
-              <p className="text-gray-700 leading-relaxed text-sm md:text-base mb-4">
-                This disclaimer is subject to change without notice. We recommend reviewing this page periodically to
-                stay informed of any updates. Your continued use of our platform constitutes acceptance of any changes
-                to this disclaimer.
-              </p>
-              <p className="text-gray-700 leading-relaxed text-sm md:text-base">
-                If you do not agree with any part of this disclaimer, please discontinue use of our platform
-                immediately.
-              </p>
+            <p className="text-sm sm:text-base text-[#6a6d7c] leading-relaxed max-w-4xl mx-auto">
+              {disclaimer?.header?.description ||
+                "Please read this disclaimer carefully before using CLYS platform resources, quizzes, and educational materials."}
+            </p>
+
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-[#c7cad5] text-[11px] font-bold text-[#6a6d7c] shadow-2xs">
+              <Shield className="w-3.5 h-3.5 text-[#746019]" />
+              <span>Effective Date: {new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Contact Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1 }}
-          className="text-center mt-12 md:mt-16 bg-white/60 backdrop-blur-sm rounded-3xl p-6 md:p-8 max-w-2xl mx-auto"
-        >
-          <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">Questions or Concerns?</h3>
-          <p className="text-gray-600 mb-6 text-sm md:text-base">
-            If you have any questions about this disclaimer or need clarification on any points, please contact our
-            support team.
+        {/* Highlight Warning Banner */}
+        <div className="w-full bg-[#fff8e0] border border-[#fde89c] rounded-2xl p-5 sm:p-6 shadow-sm flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl bg-[#ffd02f] border border-[#fde89c] flex items-center justify-center text-[#1c1c1e] shrink-0 shadow-2xs mt-0.5">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <div className="space-y-1 text-xs sm:text-sm text-[#746019]">
+            <h4 className="font-extrabold text-sm uppercase tracking-wider text-[#1c1c1e]">Important Notice to Users</h4>
+            <p className="leading-relaxed">
+              All materials, question banks, study guides, and contest items published on CLYS are created for supplementary study and peer learning purposes. They do not constitute official examination papers of government or university boards unless explicitly cited.
+            </p>
+          </div>
+        </div>
+
+        {/* Disclaimer Sections */}
+        <div className="w-full space-y-5">
+          {disclaimerSections.map((section, index) => {
+            const IconComponent = section.icon || Info
+
+            return (
+              <div
+                key={index}
+                className="bg-white border border-[#c7cad5] rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-all space-y-4"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 rounded-xl bg-[#fff4c4] border border-[#fde89c] flex items-center justify-center text-[#746019] shrink-0 shadow-2xs">
+                    <IconComponent className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <h2 className="text-lg sm:text-xl font-extrabold text-[#1c1c1e]">
+                        {section.title}
+                      </h2>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-[#6a6d7c] px-2 py-0.5 rounded-md bg-[#f0f1f4]">
+                        Clause 0{index + 1}
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-[#555a6a] leading-relaxed whitespace-pre-line">
+                      {section.content}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Bottom Questions Card */}
+        <div className="w-full bg-[#1c1c1e] text-white rounded-3xl p-8 sm:p-10 text-center space-y-4 shadow-xl">
+          <span className="px-3 py-1 bg-[#ffd02f] text-[#1c1c1e] text-[10px] font-black uppercase tracking-wider rounded-full inline-block">
+            LEGAL CLARIFICATIONS
+          </span>
+          <h3 className="text-xl sm:text-3xl font-extrabold text-white">
+            Have Questions About This Disclaimer?
+          </h3>
+          <p className="text-xs sm:text-sm text-white/70 max-w-lg mx-auto leading-relaxed">
+            If you represent an academic publisher, educational board, or have copyright queries, reach out to our legal department.
           </p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => window.location.href = "/contact-us"}
-            className="bg-gradient-to-r from-orange-600 to-red-600 text-white px-6 md:px-8 py-3 md:py-4 rounded-2xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300"
-          >
-            Contact Support
-          </motion.button>
-        </motion.div>
+          <div className="pt-2">
+            <button
+              onClick={() => navigate("/contact-us")}
+              className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] text-xs font-black uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer"
+            >
+              <span>Contact Legal Support</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

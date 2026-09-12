@@ -1,42 +1,63 @@
 "use client"
 
-import { useState,useEffect } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Save, Plus, X, Users, Target, Award, Heart, Globe, Lightbulb } from "lucide-react"
-import { getAboutUs,updateAboutUs } from "../../../../services/operations/pagesAPI"
+import { useNavigate } from "react-router-dom"
+import { Save, Plus, Trash2, Users, Target, Award, Heart, Globe, Lightbulb, ArrowLeft, BookOpen, Layers } from "lucide-react"
+import { getAboutUs, updateAboutUs } from "../../../../services/operations/pagesAPI"
 import toast from "react-hot-toast"
 
+const MiroLoader = ({ message = "Loading page content..." }) => (
+  <div className="flex flex-col items-center justify-center py-20 gap-3">
+    <div className="relative w-12 h-12">
+      <div className="w-12 h-12 rounded-full border-4 border-[#eef0f3] border-t-[#ffd02f] border-r-[#1c1c1e] animate-spin" />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-3 h-3 rounded-full bg-[#ffd02f]" />
+      </div>
+    </div>
+    <span className="text-xs font-bold uppercase tracking-wider text-[#555a6a]">{message}</span>
+  </div>
+)
+
 export default function EditAboutUs() {
+  const navigate = useNavigate()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [aboutData, setAboutData] = useState({
     hero: {
-    title: "",
-    subtitle: "",
-    description: "",
-  },
-  mission: {
-    title: "",
-    description: "",
-  },
-  vision: {
-    title: "",
-    description: "",
-  },
-  values: [],
-  stats: [],
-  team: [],
+      title: "",
+      subtitle: "",
+      description: "",
+    },
+    mission: {
+      title: "",
+      description: "",
+    },
+    vision: {
+      title: "",
+      description: "",
+    },
+    values: [],
+    stats: [],
+    team: [],
   })
- useEffect(() => {
-  const fetchAboutUs = async () => {
-    try {
-      const data = await getAboutUs()
-      setAboutData(data)
-    } catch (error) {
-      console.error("Failed to fetch About Us:", error)
+
+  useEffect(() => {
+    const fetchAboutUs = async () => {
+      try {
+        setIsLoading(true)
+        const data = await getAboutUs()
+        if (data) setAboutData(data)
+      } catch (error) {
+        console.error("Failed to fetch About Us:", error)
+        toast.error("Failed to load About Us content")
+      } finally {
+        setIsLoading(false)
+      }
     }
-  }
-  fetchAboutUs()
-}, [])
+    fetchAboutUs()
+  }, [])
+
   const iconOptions = [
     { value: "Heart", label: "Heart", icon: Heart },
     { value: "Users", label: "Users", icon: Users },
@@ -118,387 +139,372 @@ export default function EditAboutUs() {
   }
 
   const handleImageUpload = (file, memberIndex) => {
-    setAboutData((prev) => {
-      const newData = { ...prev }
-      newData.team[memberIndex].image = file
-      return newData
-    })
+    if (file) {
+      setAboutData((prev) => {
+        const newTeam = [...prev.team]
+        newTeam[memberIndex].image = file
+        return { ...prev, team: newTeam }
+      })
+    }
   }
 
   const handleSubmit = async (e) => {
-  e.preventDefault()
-  setIsSubmitting(true)
-
-  const toastId = toast.loading("Updating About Us...")
-
-  try {
-    await updateAboutUs(aboutData)
-    toast.success("About Us page updated successfully!", { id: toastId })
-  } catch (error) {
-    console.error("Error updating About Us:", error)
-    toast.error("Failed to update About Us.", { id: toastId })
-  } finally {
-    setIsSubmitting(false)
+    e.preventDefault()
+    setIsSubmitting(true)
+    try {
+      await updateAboutUs(aboutData)
+      toast.success("About Us page updated successfully!")
+    } catch (error) {
+      console.error("Failed to update About Us:", error)
+      toast.error("Failed to update About Us page")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
-}
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#f7f8fa] flex items-center justify-center">
+        <MiroLoader message="Loading page builder..." />
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-            Edit About Us
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-8 px-4 sm:px-6 lg:px-8 xl:px-12 w-full">
+      <div className="w-full space-y-6">
+        
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e0e2e8]">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Dashboard</span>
+            </button>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#ffd02f] text-[#1c1c1e]">
+              PAGE BUILDER
+            </span>
+            <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#ffd8f4] text-[#86296b] border border-[#f3bee5]">
+              ABOUT US
+            </span>
+          </div>
+        </div>
+
+        {/* Page Title */}
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#1c1c1e]">
+            Edit About Us Page
           </h1>
-          <p className="text-gray-600 text-lg">Update your organization's story and information</p>
-        </motion.div>
+          <p className="text-sm sm:text-base text-[#555a6a]">
+            Manage hero statements, organizational vision, mission highlights, statistical achievements, and team profiles.
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Hero Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-3xl shadow-lg p-8"
-          >
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-              <Users className="w-6 h-6 mr-2 text-blue-600" />
-              Hero Section
-            </h2>
-
-            <div className="grid gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Title</label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Hero Section Card */}
+          <div className="bg-white rounded-2xl border border-[#c7cad5] shadow-sm p-5 sm:p-7 space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-[#e0e2e8]">
+              <Layers className="w-5 h-5 text-[#4262ff]" />
+              <h2 className="text-base sm:text-lg font-bold text-[#1c1c1e]">
+                Hero Section
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                  Hero Title
+                </label>
                 <input
                   type="text"
-                  value={aboutData?.hero?.title}
+                  value={aboutData.hero?.title || ""}
                   onChange={(e) => handleInputChange("hero", "title", e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200"
+                  className="w-full h-11 min-h-[44px] px-3.5 text-sm font-semibold rounded-xl border border-[#c7cad5] bg-[#fffdf5] text-[#1c1c1e] focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 focus:outline-none transition-all"
+                  placeholder="e.g., Transforming Digital Learning"
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Subtitle</label>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                  Hero Subtitle
+                </label>
                 <input
                   type="text"
-                  value={aboutData?.hero?.subtitle}
+                  value={aboutData.hero?.subtitle || ""}
                   onChange={(e) => handleInputChange("hero", "subtitle", e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                <textarea
-                  value={aboutData?.hero?.description}
-                  onChange={(e) => handleInputChange("hero", "description", e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 resize-none"
+                  className="w-full h-11 min-h-[44px] px-3.5 text-sm font-semibold rounded-xl border border-[#c7cad5] bg-[#fffdf5] text-[#1c1c1e] focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 focus:outline-none transition-all"
+                  placeholder="e.g., Empowering students across the nation"
                 />
               </div>
             </div>
-          </motion.div>
-
-          {/* Mission & Vision */}
-          <div className="grid md:grid-cols-2 gap-8">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-white rounded-3xl shadow-lg p-8"
-            >
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                <Target className="w-6 h-6 mr-2 text-blue-600" />
-                Mission
-              </h2>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Title</label>
-                  <input
-                    type="text"
-                    value={aboutData?.mission?.title}
-                    onChange={(e) => handleInputChange("mission", "title", e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                  <textarea
-                    value={aboutData?.mission?.description}
-                    onChange={(e) => handleInputChange("mission", "description", e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 resize-none"
-                  />
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-white rounded-3xl shadow-lg p-8"
-            >
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                <Award className="w-6 h-6 mr-2 text-purple-600" />
-                Vision
-              </h2>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Title</label>
-                  <input
-                    type="text"
-                    value={aboutData?.vision?.title}
-                    onChange={(e) => handleInputChange("vision", "title", e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                  <textarea
-                    value={aboutData?.vision?.description}
-                    onChange={(e) => handleInputChange("vision", "description", e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 resize-none"
-                  />
-                </div>
-              </div>
-            </motion.div>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                Description
+              </label>
+              <textarea
+                value={aboutData.hero?.description || ""}
+                onChange={(e) => handleInputChange("hero", "description", e.target.value)}
+                rows={3}
+                className="w-full px-3.5 py-3 text-sm font-semibold rounded-xl border border-[#c7cad5] bg-white text-[#1c1c1e] focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 focus:outline-none transition-all resize-none"
+                placeholder="Detailed hero introduction..."
+              />
+            </div>
           </div>
 
-          {/* Stats Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-3xl shadow-lg p-8"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                <Award className="w-6 h-6 mr-2 text-green-600" />
-                Statistics
+          {/* Mission & Vision Card */}
+          <div className="bg-white rounded-2xl border border-[#c7cad5] shadow-sm p-5 sm:p-7 space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-[#e0e2e8]">
+              <Target className="w-5 h-5 text-[#187574]" />
+              <h2 className="text-base sm:text-lg font-bold text-[#1c1c1e]">
+                Mission & Vision
               </h2>
-              <button
-                type="button"
-                onClick={addStat}
-                className="flex items-center px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors duration-200"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Stat
-              </button>
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Mission */}
+              <div className="bg-[#f4fbfb] border border-[#d2f3ee] rounded-xl p-4 space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[#187574]">Our Mission</h3>
+                <input
+                  type="text"
+                  value={aboutData.mission?.title || ""}
+                  onChange={(e) => handleInputChange("mission", "title", e.target.value)}
+                  className="w-full h-11 min-h-[44px] px-3.5 text-sm font-semibold rounded-xl border border-[#c7cad5] bg-white text-[#1c1c1e] focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 focus:outline-none transition-all"
+                  placeholder="Mission title"
+                />
+                <textarea
+                  value={aboutData.mission?.description || ""}
+                  onChange={(e) => handleInputChange("mission", "description", e.target.value)}
+                  rows={3}
+                  className="w-full px-3.5 py-2.5 text-sm font-semibold rounded-xl border border-[#c7cad5] bg-white text-[#1c1c1e] focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 focus:outline-none transition-all resize-none"
+                  placeholder="Mission description..."
+                />
+              </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
-              {aboutData?.stats?.map((stat, index) => (
-                <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
-                  <div className="flex-1 space-y-2">
-                    <input
-                      type="text"
-                      placeholder="Number (e.g., 50K+)"
-                      value={stat.number}
-                      onChange={(e) => handleInputChange("stats", "number", e.target.value, index)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Label (e.g., Active Users)"
-                      value={stat.label}
-                      onChange={(e) => handleInputChange("stats", "label", e.target.value, index)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeStat(index)}
-                    className="w-8 h-8 bg-red-100 hover:bg-red-200 rounded-lg flex items-center justify-center transition-colors duration-200"
-                  >
-                    <X className="w-4 h-4 text-red-600" />
-                  </button>
-                </div>
-              ))}
+              {/* Vision */}
+              <div className="bg-[#f5f3ff] border border-[#ddd6fe] rounded-xl p-4 space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[#4262ff]">Our Vision</h3>
+                <input
+                  type="text"
+                  value={aboutData.vision?.title || ""}
+                  onChange={(e) => handleInputChange("vision", "title", e.target.value)}
+                  className="w-full h-11 min-h-[44px] px-3.5 text-sm font-semibold rounded-xl border border-[#c7cad5] bg-white text-[#1c1c1e] focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 focus:outline-none transition-all"
+                  placeholder="Vision title"
+                />
+                <textarea
+                  value={aboutData.vision?.description || ""}
+                  onChange={(e) => handleInputChange("vision", "description", e.target.value)}
+                  rows={3}
+                  className="w-full px-3.5 py-2.5 text-sm font-semibold rounded-xl border border-[#c7cad5] bg-white text-[#1c1c1e] focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 focus:outline-none transition-all resize-none"
+                  placeholder="Vision description..."
+                />
+              </div>
             </div>
-          </motion.div>
+          </div>
 
-          {/* Values Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-3xl shadow-lg p-8"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                <Heart className="w-6 h-6 mr-2 text-red-600" />
-                Core Values
-              </h2>
+          {/* Core Values Card */}
+          <div className="bg-white rounded-2xl border border-[#c7cad5] shadow-sm p-5 sm:p-7 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-[#e0e2e8]">
+              <div className="flex items-center gap-2">
+                <Heart className="w-5 h-5 text-[#86296b]" />
+                <h2 className="text-base sm:text-lg font-bold text-[#1c1c1e]">
+                  Core Values ({aboutData.values?.length || 0})
+                </h2>
+              </div>
               <button
                 type="button"
                 onClick={addValue}
-                className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors duration-200"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] text-xs font-bold transition-all shadow-sm active:scale-95"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Value
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Value</span>
               </button>
             </div>
 
-            <div className="grid gap-6">
-              {aboutData?.values?.map((value, index) => (
-                <div key={index} className="p-6 bg-gray-50 rounded-xl">
-                  <div className="flex items-start justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Value {index + 1}</h3>
-                    <button
-                      type="button"
-                      onClick={() => removeValue(index)}
-                      className="w-8 h-8 bg-red-100 hover:bg-red-200 rounded-lg flex items-center justify-center transition-colors duration-200"
-                    >
-                      <X className="w-4 h-4 text-red-600" />
-                    </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {aboutData.values?.map((val, index) => (
+                <div key={index} className="bg-[#f7f8fa] border border-[#e0e2e8] rounded-xl p-4 space-y-3 relative">
+                  <button
+                    type="button"
+                    onClick={() => removeValue(index)}
+                    className="absolute top-3 right-3 p-1 rounded-full text-[#800000] hover:bg-[#fbd4d4] transition-all"
+                    title="Remove Value"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <div className="pr-8 space-y-1.5">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                      Value Title
+                    </label>
+                    <input
+                      type="text"
+                      value={val.title}
+                      onChange={(e) => handleInputChange("values", "title", e.target.value, index)}
+                      className="w-full h-10 min-h-[40px] px-3 text-sm font-semibold rounded-xl border border-[#c7cad5] bg-white text-[#1c1c1e] focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 focus:outline-none transition-all"
+                      placeholder="e.g., Integrity & Excellence"
+                    />
                   </div>
-
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Icon</label>
-                      <select
-                        value={value.icon}
-                        onChange={(e) => handleInputChange("values", "icon", e.target.value, index)}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                      >
-                        {iconOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-                      <input
-                        type="text"
-                        value={value.title}
-                        onChange={(e) => handleInputChange("values", "title", e.target.value, index)}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                      <textarea
-                        value={value.description}
-                        onChange={(e) => handleInputChange("values", "description", e.target.value, index)}
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 resize-none"
-                      />
-                    </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                      Description
+                    </label>
+                    <textarea
+                      value={val.description}
+                      onChange={(e) => handleInputChange("values", "description", e.target.value, index)}
+                      rows={2}
+                      className="w-full px-3 py-2 text-sm font-semibold rounded-xl border border-[#c7cad5] bg-white text-[#1c1c1e] focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 focus:outline-none transition-all resize-none"
+                      placeholder="Brief description..."
+                    />
                   </div>
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
 
-          {/* Team Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-3xl shadow-lg p-8"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                <Users className="w-6 h-6 mr-2 text-purple-600" />
-                Team Members
-              </h2>
+          {/* Stats Card */}
+          <div className="bg-white rounded-2xl border border-[#c7cad5] shadow-sm p-5 sm:p-7 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-[#e0e2e8]">
+              <div className="flex items-center gap-2">
+                <Award className="w-5 h-5 text-[#b8860b]" />
+                <h2 className="text-base sm:text-lg font-bold text-[#1c1c1e]">
+                  Key Statistics ({aboutData.stats?.length || 0})
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={addStat}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] text-xs font-bold transition-all shadow-sm active:scale-95"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Statistic</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              {aboutData.stats?.map((stat, index) => (
+                <div key={index} className="bg-[#fffdf5] border border-[#fde89c] rounded-xl p-3.5 space-y-2 relative">
+                  <button
+                    type="button"
+                    onClick={() => removeStat(index)}
+                    className="absolute top-2 right-2 p-1 rounded-full text-[#800000] hover:bg-[#fbd4d4] transition-all"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                  <input
+                    type="text"
+                    value={stat.number}
+                    onChange={(e) => handleInputChange("stats", "number", e.target.value, index)}
+                    className="w-full h-10 px-3 text-sm font-bold rounded-lg border border-[#c7cad5] bg-white text-[#1c1c1e] focus:border-[#1c1c1e] focus:outline-none"
+                    placeholder="e.g., 50K+"
+                  />
+                  <input
+                    type="text"
+                    value={stat.label}
+                    onChange={(e) => handleInputChange("stats", "label", e.target.value, index)}
+                    className="w-full h-9 px-3 text-xs font-semibold rounded-lg border border-[#c7cad5] bg-white text-[#555a6a] focus:border-[#1c1c1e] focus:outline-none"
+                    placeholder="e.g., Active Students"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Team Members Card */}
+          <div className="bg-white rounded-2xl border border-[#c7cad5] shadow-sm p-5 sm:p-7 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-[#e0e2e8]">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-[#4262ff]" />
+                <h2 className="text-base sm:text-lg font-bold text-[#1c1c1e]">
+                  Team Members ({aboutData.team?.length || 0})
+                </h2>
+              </div>
               <button
                 type="button"
                 onClick={addTeamMember}
-                className="flex items-center px-4 py-2 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-colors duration-200"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] text-xs font-bold transition-all shadow-sm active:scale-95"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Member
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Member</span>
               </button>
             </div>
 
-            <div className="grid gap-6">
-              {aboutData?.team?.map((member, index) => (
-                <div key={index} className="p-6 bg-gray-50 rounded-xl">
-                  <div className="flex items-start justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Team Member {index + 1}</h3>
-                    <button
-                      type="button"
-                      onClick={() => removeTeamMember(index)}
-                      className="w-8 h-8 bg-red-100 hover:bg-red-200 rounded-lg flex items-center justify-center transition-colors duration-200"
-                    >
-                      <X className="w-4 h-4 text-red-600" />
-                    </button>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                      <input
-                        type="text"
-                        value={member.name}
-                        onChange={(e) => handleInputChange("team", "name", e.target.value, index)}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
-                      <input
-                        type="text"
-                        value={member.role}
-                        onChange={(e) => handleInputChange("team", "role", e.target.value, index)}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                    <textarea
-                      value={member.description}
-                      onChange={(e) => handleInputChange("team", "description", e.target.value, index)}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-100 resize-none"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {aboutData.team?.map((member, index) => (
+                <div key={index} className="bg-[#f7f8fa] border border-[#e0e2e8] rounded-xl p-4 space-y-3 relative">
+                  <button
+                    type="button"
+                    onClick={() => removeTeamMember(index)}
+                    className="absolute top-3 right-3 p-1 rounded-full text-[#800000] hover:bg-[#fbd4d4] transition-all"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <div className="grid grid-cols-2 gap-3 pr-8">
+                    <input
+                      type="text"
+                      value={member.name}
+                      onChange={(e) => handleInputChange("team", "name", e.target.value, index)}
+                      className="w-full h-10 px-3 text-sm font-semibold rounded-lg border border-[#c7cad5] bg-white text-[#1c1c1e] focus:border-[#1c1c1e] focus:outline-none"
+                      placeholder="Full Name"
+                    />
+                    <input
+                      type="text"
+                      value={member.role}
+                      onChange={(e) => handleInputChange("team", "role", e.target.value, index)}
+                      className="w-full h-10 px-3 text-sm font-semibold rounded-lg border border-[#c7cad5] bg-white text-[#1c1c1e] focus:border-[#1c1c1e] focus:outline-none"
+                      placeholder="Role / Title"
                     />
                   </div>
-
+                  <textarea
+                    value={member.description}
+                    onChange={(e) => handleInputChange("team", "description", e.target.value, index)}
+                    rows={2}
+                    className="w-full px-3 py-2 text-sm font-semibold rounded-lg border border-[#c7cad5] bg-white text-[#1c1c1e] focus:border-[#1c1c1e] focus:outline-none resize-none"
+                    placeholder="Short bio or responsibilities..."
+                  />
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Profile Image</label>
-                    <div className="flex items-center space-x-4">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e.target.files[0], index)}
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
-                      />
-                      {member.image && <div className="text-sm text-green-600 font-medium">✓ {member.image.name}</div>}
-                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e.target.files[0], index)}
+                      className="text-xs text-[#555a6a] file:mr-3 file:py-1.5 file:px-3.5 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#ffd02f] file:text-[#1c1c1e] hover:file:bg-[#fcb900] cursor-pointer"
+                    />
+                    {member.image && (
+                      <span className="text-xs text-[#187574] font-semibold ml-2">
+                        ✓ Image selected
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
 
-          {/* Submit Button */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center">
+          {/* Centered Bottom Action Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard")}
+              className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] font-semibold text-sm shadow-sm transition-all active:scale-95 text-center"
+            >
+              Cancel
+            </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="w-full sm:w-auto px-10 py-3.5 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] font-extrabold text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
-                <div className="flex items-center">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Updating...
-                </div>
+                <>
+                  <div className="w-4 h-4 border-2 border-[#1c1c1e] border-t-transparent rounded-full animate-spin" />
+                  <span>Updating About Us...</span>
+                </>
               ) : (
-                <div className="flex items-center">
-                  <Save className="w-5 h-5 mr-2" />
-                  Update About Us
-                </div>
+                <>
+                  <Save className="w-4 h-4 text-[#1c1c1e]" />
+                  <span>Update About Us</span>
+                </>
               )}
             </button>
-          </motion.div>
+          </div>
         </form>
       </div>
     </div>

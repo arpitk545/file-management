@@ -2,11 +2,19 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Upload, Plus, X, ImageIcon, FileText, MapPin,  MessageSquare } from "lucide-react"
+import { Upload, Plus, X, ImageIcon, FileText, MapPin, MessageSquare, ArrowLeft, Sparkles } from "lucide-react"
 import { getAllRegionsWithStructure, createArticle } from "../../../services/operations/articelsAPI"
 import { toast } from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
 import ArticlesEditor from "../Admin/Articles/articles-editor"
+
+const TAG_COLOR_PALETTES = [
+  { bg: "bg-[#fff4c4]", text: "text-[#746019]", border: "border-[#fde89c]" }, // Yellow
+  { bg: "bg-[#c3faf5]", text: "text-[#187574]", border: "border-[#9eece4]" }, // Teal
+  { bg: "bg-[#ffd8f4]", text: "text-[#86296b]", border: "border-[#f3bee5]" }, // Rose
+  { bg: "bg-[#ffe6cd]", text: "text-[#7c3a00]", border: "border-[#fcd0a1]" }, // Orange
+  { bg: "bg-[#f5f3ff]", text: "text-[#4262ff]", border: "border-[#ddd6fe]" }, // Blue
+]
 
 const CreateArticles = () => {
   const [selectedRegion, setSelectedRegion] = useState(null)
@@ -33,7 +41,7 @@ const CreateArticles = () => {
     const fetchRegions = async () => {
       try {
         const data = await getAllRegionsWithStructure()
-        setRegionsData(data.regions || data)
+        setRegionsData(data.regions || data || [])
       } catch (err) {
         console.error("Failed loading regions:", err)
         toast.error("Failed to load regions data")
@@ -43,21 +51,21 @@ const CreateArticles = () => {
   }, [])
 
   const getCategoriesForRegion = (regionId) => {
-    const region = regionsData.find(r => r._id === regionId)
+    const region = regionsData.find((r) => r._id === regionId)
     return region ? region.category : []
   }
 
   const getSubcategoriesForCategory = (regionId, categoryId) => {
-    const region = regionsData.find(r => r._id === regionId)
+    const region = regionsData.find((r) => r._id === regionId)
     if (!region) return []
-    
-    const category = region.category.find(cat => cat._id === categoryId)
+
+    const category = region.category.find((cat) => cat._id === categoryId)
     return category ? category.subCategory : []
   }
 
   const handleRegionChange = (e) => {
     const regionId = e.target.value
-    const region = regionsData.find(r => r._id === regionId)
+    const region = regionsData.find((r) => r._id === regionId)
     setSelectedRegion(region || null)
     setSelectedCategory(null)
     setSelectedSubcategory(null)
@@ -66,8 +74,8 @@ const CreateArticles = () => {
   const handleCategoryChange = (e) => {
     const categoryId = e.target.value
     if (!selectedRegion) return
-    
-    const category = selectedRegion.category.find(cat => cat._id === categoryId)
+
+    const category = selectedRegion.category.find((cat) => cat._id === categoryId)
     setSelectedCategory(category || null)
     setSelectedSubcategory(null)
   }
@@ -75,12 +83,12 @@ const CreateArticles = () => {
   const handleSubcategoryChange = (e) => {
     const subcategoryId = e.target.value
     if (!selectedRegion || !selectedCategory) return
-    
-    const subcategory = selectedCategory.subCategory.find(sub => sub._id === subcategoryId)
+
+    const subcategory = selectedCategory.subCategory.find((sub) => sub._id === subcategoryId)
     setSelectedSubcategory(subcategory || null)
   }
 
-  // Tag management functions
+  // Tag management
   const addTag = () => {
     if (tagInput.trim() && !articleData.tags.includes(tagInput.trim())) {
       setArticleData({
@@ -105,34 +113,6 @@ const CreateArticles = () => {
     }
   }
 
-  // Content management functions
-  const addContentPart = (type, afterId = null) => {
-    const newPart = {
-      type,
-      content: type === "text" ? "" : null,
-      id: Date.now(),
-    }
-
-    if (afterId) {
-      const index = contentParts.findIndex((part) => part.id === afterId)
-      const newParts = [...contentParts]
-      newParts.splice(index + 1, 0, newPart)
-      setContentParts(newParts)
-    } else {
-      setContentParts([...contentParts, newPart])
-    }
-  }
-
-  const updateContentPart = (id, content) => {
-    setContentParts(contentParts.map((part) => (part.id === id ? { ...part, content } : part)))
-  }
-
-  // const removeContentPart = (id) => {
-  //   if (contentParts.length > 1) {
-  //     setContentParts(contentParts.filter((part) => part.id !== id))
-  //   }
-  // }
-
   const addImageBlock = () => {
     const newBlock = {
       id: Date.now(),
@@ -145,29 +125,21 @@ const CreateArticles = () => {
     setImageBlocks(imageBlocks.filter((block) => block.id !== id))
   }
 
-  const updateImageBlock = (id, field, value) => {
-    setImageBlocks(imageBlocks.map((block) => (block.id === id ? { ...block, [field]: value } : block)))
-  }
-
   const handleFileUpload = (file, blockId = null) => {
     if (blockId) {
-      updateImageBlock(blockId, "image", file)
+      setImageBlocks(imageBlocks.map((block) => (block.id === blockId ? { ...block, [blockId]: file, image: file } : block)))
     } else {
       setArticleData({ ...articleData, thumbnail: file })
     }
   }
-
-  // const handleContentImageUpload = (file, partId) => {
-  //   updateContentPart(partId, file)
-  // }
 
   const handleEditorContentChange = (content) => {
     setArticleData({ ...articleData, content })
   }
 
   const handleSubmit = async () => {
-    if (!selectedRegion || !selectedCategory || !selectedSubcategory || !articleData.title) {
-      toast.error("Please fill in all required fields")
+    if (!selectedRegion || !selectedCategory || !selectedSubcategory || !articleData.title.trim()) {
+      toast.error("Please fill in all required fields (Region, Category, Subcategory, and Title)")
       return
     }
 
@@ -190,7 +162,7 @@ const CreateArticles = () => {
       formData.append("region", selectedRegion.name)
       formData.append("category", selectedCategory.name)
       formData.append("subCategory", selectedSubcategory.name)
-      formData.append("title", articleData.title)
+      formData.append("title", articleData.title.trim())
       formData.append("tags", articleData.tags.join(","))
       formData.append("content", finalContent)
       formData.append("status", "approved")
@@ -245,7 +217,7 @@ const CreateArticles = () => {
     setImageBlocks([])
   }
 
-  const FileUploadArea = ({ onFileSelect, placeholder = "Upload file", blockId = null, partId = null }) => {
+  const FileUploadArea = ({ onFileSelect, placeholder = "Upload file", blockId = null }) => {
     const [isDragOver, setIsDragOver] = useState(false)
 
     const handleDrop = (e) => {
@@ -253,22 +225,14 @@ const CreateArticles = () => {
       setIsDragOver(false)
       const files = Array.from(e.dataTransfer.files)
       if (files.length > 0) {
-        if (partId) {
-          onFileSelect(files[0], partId)
-        } else {
-          onFileSelect(files[0], blockId)
-        }
+        onFileSelect(files[0], blockId)
       }
     }
 
     const handleFileInput = (e) => {
       const files = Array.from(e.target.files)
       if (files.length > 0) {
-        if (partId) {
-          onFileSelect(files[0], partId)
-        } else {
-          onFileSelect(files[0], blockId)
-        }
+        onFileSelect(files[0], blockId)
       }
     }
 
@@ -280,8 +244,10 @@ const CreateArticles = () => {
           setIsDragOver(true)
         }}
         onDragLeave={() => setIsDragOver(false)}
-        className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200 cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 ${
-          isDragOver ? "border-blue-500 bg-blue-50" : "border-gray-300"
+        className={`relative border-2 border-dashed rounded-2xl p-6 sm:p-8 text-center transition-all cursor-pointer ${
+          isDragOver
+            ? "border-[#0fbcb0] bg-[#c3faf5]/30"
+            : "border-[#0fbcb0]/50 bg-[#c3faf5]/10 hover:border-[#0fbcb0] hover:bg-[#c3faf5]/25"
         }`}
       >
         <input
@@ -291,12 +257,12 @@ const CreateArticles = () => {
           accept="image/*"
         />
         <div className="flex flex-col items-center gap-3">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-            <Upload className="w-8 h-8 text-white" />
+          <div className="w-12 h-12 rounded-2xl bg-white border border-[#9eece4] flex items-center justify-center text-[#187574] shadow-xs">
+            <Upload className="w-6 h-6 text-[#0fbcb0]" />
           </div>
           <div>
-            <p className="text-lg font-semibold text-gray-900">{placeholder}</p>
-            <p className="text-sm text-gray-500 mt-1">Drag & drop or click to browse</p>
+            <p className="text-sm sm:text-base font-bold text-[#1c1c1e]">{placeholder}</p>
+            <p className="text-xs text-[#187574] mt-0.5">Drag & drop or click to browse image</p>
           </div>
         </div>
       </div>
@@ -304,39 +270,70 @@ const CreateArticles = () => {
   }
 
   return (
-    <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-blue-100 via-white to-purple-100 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-8 px-4 sm:px-6 lg:px-8 xl:px-12 w-full">
+      <div className="w-full space-y-6">
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e0e2e8]">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Dashboard</span>
+            </button>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#ffd02f] text-[#1c1c1e]">
+              POST STUDIO
+            </span>
+            <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#ffd8f4] text-[#86296b] border border-[#f3bee5]">
+              NEW ARTICLE
+            </span>
+          </div>
+          <button
+            onClick={() => navigate("/articles/news")}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1c1c1e] text-white hover:bg-[#2c2c34] text-sm font-bold transition-all shadow-sm self-start sm:self-auto active:scale-98"
+          >
+            <span>View All Posts</span>
+            <Sparkles className="w-4 h-4 text-[#ffd02f]" />
+          </button>
+        </div>
+
+        {/* Page Title */}
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#1c1c1e]">
             Create Post
           </h1>
-          <p className="text-gray-600 text-lg">Share your knowledge with the world</p>
-        </motion.div>
+          <p className="text-sm sm:text-base text-[#555a6a]">
+            Share your knowledge with the world through structured regions and categories.
+          </p>
+        </div>
 
-        {/* Selection Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white rounded-3xl shadow-2xl p-8 mb-8 backdrop-blur-xl"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-white" />
+        {/* Details Card: Lavender / Blue Palette */}
+        <div className="bg-[#f5f3ff] rounded-2xl border-2 border-[#ddd6fe] shadow-sm p-5 sm:p-7 space-y-4 w-full">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-[#4262ff] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                <MapPin className="w-4 h-4" />
+              </div>
+              <h2 className="text-base sm:text-lg font-bold text-[#1c1c1e]">Taxonomy Details</h2>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">Post Details</h2>
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-white text-[#4262ff] border border-[#ddd6fe]">
+              Step 1 of 2
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Select Region</label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            {/* Region (Yellow tint accent) */}
+            <div className="space-y-1.5 p-3 rounded-xl bg-white border border-[#ddd6fe]">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#746019]">
+                1. Select Region <span className="text-red-500">*</span>
+              </label>
               <select
                 value={selectedRegion?._id || ""}
                 onChange={handleRegionChange}
-                className="w-full h-14 px-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 text-gray-900 font-medium"
+                className="w-full h-11 px-3 bg-[#fff8e0]/60 border border-[#fde89c] rounded-lg text-[#1c1c1e] font-semibold focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all text-sm"
               >
-                <option value="">Choose region</option>
+                <option value="">Choose region...</option>
                 {regionsData.map((region) => (
                   <option key={region._id} value={region._id}>
                     {region.name}
@@ -344,17 +341,21 @@ const CreateArticles = () => {
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Select Category</label>
+
+            {/* Category (Teal tint accent) */}
+            <div className="space-y-1.5 p-3 rounded-xl bg-white border border-[#ddd6fe]">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#187574]">
+                2. Select Category <span className="text-red-500">*</span>
+              </label>
               <select
                 value={selectedCategory?._id || ""}
                 onChange={handleCategoryChange}
                 disabled={!selectedRegion}
-                className={`w-full h-14 px-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 text-gray-900 font-medium ${
-                  !selectedRegion ? "opacity-50 cursor-not-allowed" : ""
+                className={`w-full h-11 px-3 bg-[#c3faf5]/40 border border-[#9eece4] rounded-lg text-[#1c1c1e] font-semibold focus:outline-none focus:border-2 focus:border-[#0fbcb0] transition-all text-sm ${
+                  !selectedRegion ? "opacity-50 cursor-not-allowed bg-gray-50" : ""
                 }`}
               >
-                <option value="">Choose category</option>
+                <option value="">Choose category...</option>
                 {selectedRegion &&
                   getCategoriesForRegion(selectedRegion._id).map((category) => (
                     <option key={category._id} value={category._id}>
@@ -363,17 +364,21 @@ const CreateArticles = () => {
                   ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Select Subcategory</label>
+
+            {/* Subcategory (Rose tint accent) */}
+            <div className="space-y-1.5 p-3 rounded-xl bg-white border border-[#ddd6fe]">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#86296b]">
+                3. Select Subcategory <span className="text-red-500">*</span>
+              </label>
               <select
                 value={selectedSubcategory?._id || ""}
                 onChange={handleSubcategoryChange}
                 disabled={!selectedCategory}
-                className={`w-full h-14 px-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 text-gray-900 font-medium ${
-                  !selectedCategory ? "opacity-50 cursor-not-allowed" : ""
+                className={`w-full h-11 px-3 bg-[#ffd8f4]/35 border border-[#f3bee5] rounded-lg text-[#1c1c1e] font-semibold focus:outline-none focus:border-2 focus:border-[#86296b] transition-all text-sm ${
+                  !selectedCategory ? "opacity-50 cursor-not-allowed bg-gray-50" : ""
                 }`}
               >
-                <option value="">Choose subcategory</option>
+                <option value="">Choose subcategory...</option>
                 {selectedRegion &&
                   selectedCategory &&
                   getSubcategoriesForCategory(selectedRegion._id, selectedCategory._id).map((subcategory) => (
@@ -384,130 +389,136 @@ const CreateArticles = () => {
               </select>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Upload Article Card */}
+        {/* Upload Article Card (when subcategory selected) */}
         <AnimatePresence>
           {selectedSubcategory && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="bg-white rounded-3xl shadow-2xl p-8 mb-8 backdrop-blur-xl"
+              className="bg-white rounded-2xl border border-[#e0e2e8] shadow-sm p-5 sm:p-7 space-y-6 w-full"
             >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-600 rounded-2xl flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-white" />
+              <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-[#e0e2e8]">
+                <div className="flex items-center gap-2.5">
+                  <FileText className="w-5 h-5 text-[#0fbcb0]" />
+                  <h2 className="text-lg sm:text-xl font-bold text-[#1c1c1e]">Post Content & Media</h2>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">Upload Post</h2>
+                <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#c3faf5] text-[#187574]">
+                  Step 2 of 2
+                </span>
               </div>
 
-              <div className="grid gap-6">
+              <div className="space-y-6">
                 {/* Title */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">Post Title</label>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                    Post Title <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     value={articleData.title}
                     onChange={(e) => setArticleData({ ...articleData, title: e.target.value })}
-                    placeholder="Enter your Post title"
-                    className="w-full h-14 px-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 text-gray-900 font-medium"
+                    placeholder="Enter an engaging post title..."
+                    className="w-full h-12 px-4 bg-white border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all text-sm font-semibold"
                   />
                 </div>
 
                 {/* Thumbnail */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">Post Thumbnail</label>
-                  <FileUploadArea onFileSelect={handleFileUpload} placeholder="Upload thumbnail image" />
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#187574]">
+                    Post Cover Thumbnail
+                  </label>
+                  <FileUploadArea onFileSelect={handleFileUpload} placeholder="Upload cover thumbnail" />
                   {articleData.thumbnail && (
-                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-xl relative">
-                      <p className="text-sm text-green-700 font-medium">✓ {articleData.thumbnail.name}</p>
+                    <div className="mt-3 p-3 bg-[#c3faf5]/30 border border-[#9eece4] rounded-xl relative flex items-center gap-3">
                       <img
                         src={URL.createObjectURL(articleData.thumbnail)}
                         alt="Thumbnail Preview"
-                        className="mt-2 rounded-md max-h-40"
+                        className="w-16 h-16 rounded-lg object-cover border border-[#9eece4]"
                       />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-[#1c1c1e] truncate">{articleData.thumbnail.name}</p>
+                        <p className="text-xs text-[#187574]">Cover image ready</p>
+                      </div>
                       <button
-                       type="button"
+                        type="button"
                         onClick={() => setArticleData({ ...articleData, thumbnail: null })}
-                        className="absolute top-2 right-2 w-6 h-6 bg-red-100 hover:bg-red-200 rounded-full flex items-center justify-center transition-colors duration-200">
-                         <X className="w-4 h-4 text-red-600" />
-                        </button>
+                        className="p-1.5 rounded-full bg-white text-red-500 hover:bg-red-50 border border-red-200"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
                   )}
                 </div>
 
-                {/* Tags */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">Tags</label>
-                  <div className="flex gap-2 mb-3">
+                {/* Tags (Multicolor Pills) */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">Tags & Keywords</label>
+                  <div className="flex gap-2">
                     <input
                       type="text"
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
                       onKeyPress={handleTagInputKeyPress}
                       placeholder="Enter a tag and press Enter"
-                      className="flex-1 h-12 px-4 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 text-gray-900"
+                      className="flex-1 h-12 px-4 bg-white border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all text-sm font-medium"
                     />
                     <button
                       type="button"
                       onClick={addTag}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors duration-200"
+                      className="h-12 px-6 rounded-full bg-[#1c1c1e] text-white hover:bg-[#2c2c34] font-bold text-sm transition-all flex items-center justify-center gap-1 shadow-sm"
                     >
                       <Plus className="w-4 h-4" />
+                      <span>Add</span>
                     </button>
                   </div>
 
                   {articleData.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {articleData.tags.map((tag, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
-                        >
-                          {tag}
-                          <button
-                            type="button"
-                            onClick={() => removeTag(tag)}
-                            className="w-4 h-4 bg-blue-200 hover:bg-blue-300 rounded-full flex items-center justify-center transition-colors duration-200"
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {articleData.tags.map((tag, index) => {
+                        const palette = TAG_COLOR_PALETTES[index % TAG_COLOR_PALETTES.length]
+                        return (
+                          <span
+                            key={index}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${palette.bg} ${palette.text} border ${palette.border}`}
                           >
-                            <X className="w-2 h-2" />
-                          </button>
-                        </span>
-                      ))}
+                            #{tag}
+                            <button
+                              type="button"
+                              onClick={() => removeTag(tag)}
+                              className="p-0.5 hover:bg-black/10 rounded-full"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
 
                 {/* Content Editor */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">Post Content</label>
-                  <ArticlesEditor
-                    content={articleData.content}
-                    onChange={handleEditorContentChange}
-                    placeholder="Write your Post content here..."
-                  />
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                    Post Content <span className="text-red-500">*</span>
+                  </label>
+                  <div className="rounded-xl border border-[#c7cad5] overflow-hidden bg-white focus-within:border-2 focus-within:border-[#4262ff]">
+                    <ArticlesEditor
+                      content={articleData.content}
+                      onChange={handleEditorContentChange}
+                      placeholder="Write your Post content here..."
+                    />
+                  </div>
                 </div>
 
-                {/* Additional Images */}
-                <div className="flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => setShowImageUpload(!showImageUpload)}
-                    className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-lg"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Add Additional Images
-                  </button>
-                </div>
-
-                {/* Comments Toggle */}
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
+                {/* Comments Toggle (Orange Light Accent) */}
+                <div className="flex items-center justify-between p-4 bg-[#ffe6cd]/30 rounded-xl border border-[#fcd0a1]">
                   <div className="flex items-center gap-3">
-                    <MessageSquare className="w-5 h-5 text-gray-600" />
+                    <MessageSquare className="w-5 h-5 text-[#7c3a00]" />
                     <div>
-                      <h4 className="font-medium text-gray-900">Comments</h4>
-                      <p className="text-sm text-gray-500">Allow readers to comment on this Post</p>
+                      <h4 className="font-bold text-sm text-[#1c1c1e]">Reader Comments</h4>
+                      <p className="text-xs text-[#7c3a00]">Allow community readers to comment on this Post</p>
                     </div>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -522,86 +533,74 @@ const CreateArticles = () => {
                       }
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1c1c1e]"></div>
                   </label>
                 </div>
 
-                {/* Image Upload Section */}
+                {/* Additional Images Toggle */}
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowImageUpload(!showImageUpload)}
+                    className="px-5 py-2.5 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
+                  >
+                    <Plus className="w-4 h-4 text-[#86296b]" />
+                    <span>{showImageUpload ? "Hide Additional Images" : "Add Additional Images"}</span>
+                  </button>
+                </div>
+
+                {/* Additional Images Section (Rose Tint) */}
                 <AnimatePresence>
                   {showImageUpload && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="p-6 bg-gray-50 rounded-2xl border-2 border-gray-200"
+                      className="p-4 bg-[#ffd8f4]/20 rounded-xl border border-[#f3bee5] space-y-4"
                     >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-                            <ImageIcon className="w-4 h-4 text-white" />
-                          </div>
-                          <h3 className="text-lg font-semibold text-gray-900">Additional Images</h3>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <ImageIcon className="w-4 h-4 text-[#86296b]" />
+                          <span className="text-xs font-bold uppercase tracking-wider text-[#86296b]">
+                            Gallery Blocks ({imageBlocks.length})
+                          </span>
                         </div>
                         <button
                           type="button"
-                          onClick={() => setShowImageUpload(false)}
-                          className="w-8 h-8 bg-red-100 hover:bg-red-200 rounded-xl flex items-center justify-center transition-colors duration-200"
-                        >
-                          <X className="w-4 h-4 text-red-600" />
-                        </button>
-                      </div>
-
-                      <div className="mb-4">
-                        <button
-                          type="button"
                           onClick={addImageBlock}
-                          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors duration-200"
+                          className="px-3.5 py-1.5 rounded-full bg-[#86296b] text-white hover:bg-[#6e2257] text-xs font-bold transition-all flex items-center gap-1"
                         >
-                          <Plus className="w-4 h-4" />
-                          Add Image
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add Image</span>
                         </button>
                       </div>
 
-                      <div className="grid gap-4">
-                        <AnimatePresence>
-                          {imageBlocks.map((block, index) => (
-                            <motion.div
-                              key={block.id}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -20 }}
-                              transition={{ duration: 0.3 }}
-                              className="p-4 bg-white rounded-xl border border-gray-200"
-                            >
-                              <div className="flex items-center justify-between mb-3">
-                                <h4 className="text-md font-medium text-gray-900">Additional Image {index + 1}</h4>
-                                <button
-                                  type="button"
-                                  onClick={() => removeImageBlock(block.id)}
-                                  className="w-6 h-6 bg-red-100 hover:bg-red-200 rounded-lg flex items-center justify-center transition-colors duration-200"
-                                >
-                                  <X className="w-3 h-3 text-red-600" />
-                                </button>
-                              </div>
-                              <FileUploadArea
-                                onFileSelect={handleFileUpload}
-                                placeholder="Upload image"
-                                blockId={block.id}
-                              />
-                              {block.image && (
-                                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-xl">
-                                  <p className="text-sm text-green-700 font-medium">✓ {block.image.name}</p>
-                                  <img
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {imageBlocks.map((block, index) => (
+                          <div key={block.id} className="p-3 bg-white rounded-xl border border-[#f3bee5] space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-[#1c1c1e]">Image {index + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeImageBlock(block.id)}
+                                className="p-1 rounded hover:bg-red-50 text-red-500"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <FileUploadArea onFileSelect={handleFileUpload} placeholder="Upload image" blockId={block.id} />
+                            {block.image && (
+                              <div className="p-2 bg-[#ffd8f4]/30 rounded-lg flex items-center gap-2">
+                                <img
                                   src={URL.createObjectURL(block.image)}
-                                   alt={block.image.name}
-                                  className="mt-2 max-w-full h-auto rounded-lg"
-                                 />
-                                </div>
-                              )}
-                            </motion.div>
-                          ))}
-                        </AnimatePresence>
+                                  alt={block.image.name}
+                                  className="w-12 h-12 rounded object-cover"
+                                />
+                                <span className="text-xs font-medium text-[#1c1c1e] truncate">{block.image.name}</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     </motion.div>
                   )}
@@ -611,39 +610,38 @@ const CreateArticles = () => {
           )}
         </AnimatePresence>
 
-        {/* Action Buttons */}
-        <AnimatePresence>
-          {selectedSubcategory && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.1 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
+        {/* Action Buttons Bar */}
+        {selectedSubcategory && (
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="px-8 py-3.5 bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] rounded-full font-extrabold text-sm shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-98"
             >
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="px-8 py-4 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-2xl hover:from-green-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 shadow-lg font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              >
-                {isSubmitting ? (
-                  <div className="flex items-center gap-3">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Publishing...
-                  </div>
-                ) : (
-                  "Publish Post"
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/articles/news")}
-                className="px-8 py-4 bg-white border-2 border-gray-300 text-gray-700 rounded-2xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 transform hover:scale-105 shadow-lg font-semibold text-lg"
-              >
-                Cancel Post
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              {isSubmitting ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-[#1c1c1e]" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Publishing...</span>
+                </>
+              ) : (
+                <>
+                  <span>Publish Post</span>
+                  <Sparkles className="w-4 h-4 text-[#1c1c1e]" />
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/articles/news")}
+              className="px-8 py-3.5 bg-white border border-[#c7cad5] text-[#1c1c1e] rounded-full hover:bg-[#f7f8fa] font-semibold text-sm transition-all shadow-sm"
+            >
+              Cancel Post
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

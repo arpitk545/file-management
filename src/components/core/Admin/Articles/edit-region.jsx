@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, ChevronRight, MapPin, Tag, Grid3X3, Trash2, Edit, Save } from "lucide-react"
+import { Plus, ChevronRight, MapPin, Tag, Grid3X3, Trash2, Edit, Save, ArrowLeft, Layers, Sparkles } from "lucide-react"
 import { getAllRegionsWithStructure, updateRegionByName, deleteRegionByName } from "../../../../services/operations/articelsAPI"
 import { toast } from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
@@ -48,10 +48,10 @@ const EditRegion = () => {
     try {
       const payload = {
         name: (newRegionName.trim() || selectedRegion.name)?.trim(),
-        category: selectedRegion.category.map(cat => ({
+        category: selectedRegion.category.map((cat) => ({
           name: cat.name,
-          subCategory: cat.subCategory.map(sub => ({ name: sub.name }))
-        }))
+          subCategory: cat.subCategory.map((sub) => ({ name: sub.name })),
+        })),
       }
 
       const response = await updateRegionByName(selectedRegion.name, payload)
@@ -76,6 +76,10 @@ const EditRegion = () => {
   const handleDeleteRegion = async () => {
     if (!selectedRegion) {
       toast.error("Please select a region to delete")
+      return
+    }
+
+    if (!window.confirm(`Are you sure you want to permanently delete region "${selectedRegion.name}"?`)) {
       return
     }
 
@@ -114,81 +118,81 @@ const EditRegion = () => {
 
   const updateCategoryName = (categoryId, e) => {
     const newName = e.target.value
-    setSelectedRegion(prev => ({
+    setSelectedRegion((prev) => ({
       ...prev,
-      category: prev.category.map(cat =>
+      category: prev.category.map((cat) =>
         cat._id === categoryId ? { ...cat, name: newName } : cat
-      )
+      ),
     }))
     if (selectedCategory?._id === categoryId) {
-      setSelectedCategory(prev => ({ ...prev, name: newName }))
+      setSelectedCategory((prev) => ({ ...prev, name: newName }))
     }
   }
 
   const updateSubcategoryName = (categoryId, subcategoryId, e) => {
     const newName = e.target.value
-    setSelectedRegion(prev => ({
+    setSelectedRegion((prev) => ({
       ...prev,
-      category: prev.category.map(cat =>
+      category: prev.category.map((cat) =>
         cat._id === categoryId
           ? {
               ...cat,
-              subCategory: cat.subCategory.map(sub =>
+              subCategory: cat.subCategory.map((sub) =>
                 sub._id === subcategoryId ? { ...sub, name: newName } : sub
-              )
+              ),
             }
           : cat
-      )
+      ),
     }))
     if (selectedCategory?._id === categoryId) {
-      setSelectedCategory(prev => ({
+      setSelectedCategory((prev) => ({
         ...prev,
-        subCategory: prev.subCategory.map(sub =>
+        subCategory: prev.subCategory.map((sub) =>
           sub._id === subcategoryId ? { ...sub, name: newName } : sub
-        )
+        ),
       }))
     }
   }
 
   const addNewCategory = () => {
-    const newCategory = {
+    const newCat = {
       _id: `temp-${Date.now()}`,
       name: "",
-      subCategory: []
+      subCategory: [],
     }
-    setSelectedRegion(prev => ({
+    setSelectedRegion((prev) => ({
       ...prev,
-      category: [...prev.category, newCategory]
+      category: [...prev.category, newCat],
     }))
-    setSelectedCategory(newCategory)
+    setSelectedCategory(newCat)
   }
 
   const addNewSubcategory = () => {
     if (!selectedCategory) return
 
-    const newSubcategory = {
+    const newSub = {
       _id: `temp-${Date.now()}`,
-      name: ""
+      name: "",
     }
-    setSelectedRegion(prev => ({
+    setSelectedRegion((prev) => ({
       ...prev,
-      category: prev.category.map(cat =>
+      category: prev.category.map((cat) =>
         cat._id === selectedCategory._id
-          ? { ...cat, subCategory: [...cat.subCategory, newSubcategory] }
+          ? { ...cat, subCategory: [...cat.subCategory, newSub] }
           : cat
-      )
+      ),
     }))
-    setSelectedCategory(prev => ({
+    setSelectedCategory((prev) => ({
       ...prev,
-      subCategory: [...prev.subCategory, newSubcategory]
+      subCategory: [...prev.subCategory, newSub],
     }))
   }
 
   const deleteCategory = (categoryId, e) => {
     e.stopPropagation()
-    setSelectedRegion(prev => ({
+    setSelectedRegion((prev) => ({
       ...prev,
-      category: prev.category.filter(cat => cat._id !== categoryId)
+      category: prev.category.filter((cat) => cat._id !== categoryId),
     }))
     if (selectedCategory?._id === categoryId) {
       setSelectedCategory(null)
@@ -197,295 +201,335 @@ const EditRegion = () => {
 
   const deleteSubcategory = (categoryId, subcategoryId, e) => {
     e?.stopPropagation()
-    setSelectedRegion(prev => ({
+    setSelectedRegion((prev) => ({
       ...prev,
-      category: prev.category.map(cat =>
+      category: prev.category.map((cat) =>
         cat._id === categoryId
           ? {
               ...cat,
-              subCategory: cat.subCategory.filter(sub => sub._id !== subcategoryId)
+              subCategory: cat.subCategory.filter((sub) => sub._id !== subcategoryId),
             }
           : cat
-      )
+      ),
     }))
     if (selectedCategory?._id === categoryId) {
-      setSelectedCategory(prev => ({
+      setSelectedCategory((prev) => ({
         ...prev,
-        subCategory: prev.subCategory.filter(sub => sub._id !== subcategoryId)
+        subCategory: prev.subCategory.filter((sub) => sub._id !== subcategoryId),
       }))
     }
   }
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-teal-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 p-4 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
+      <div className="min-h-screen bg-[#f7f8fa] flex items-center justify-center p-6">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-4 border-[#ffd02f] border-t-[#1c1c1e] rounded-full animate-spin mx-auto" />
+          <p className="text-sm font-semibold text-[#555a6a]">Loading regions...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-teal-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-teal-500 via-blue-500 to-indigo-500 rounded-full mb-3">
-            <Edit className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-8 px-4 sm:px-6 lg:px-8 xl:px-12 w-full">
+      <div className="w-full space-y-6">
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e0e2e8]">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Dashboard</span>
+            </button>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#ffd02f] text-[#1c1c1e]">
+              POSTS TAXONOMY
+            </span>
           </div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent mb-1">
+          <button
+            onClick={() => navigate("/create-region")}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1c1c1e] text-white hover:bg-[#2c2c34] text-sm font-bold transition-all shadow-sm self-start sm:self-auto active:scale-98"
+          >
+            <Plus className="w-4 h-4 text-[#ffd02f]" />
+            <span>Create New Region</span>
+          </button>
+        </div>
+
+        {/* Page Title */}
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-[#fff4c4] text-[#746019] border border-[#fde89c] mb-1">
+            <Edit className="w-3.5 h-3.5" />
+            <span>LIVE TAXONOMY EDITOR</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#1c1c1e]">
             Edit Regional Structure
           </h1>
-          <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base">
-            Modify existing regions, categories, and subcategories
+          <p className="text-sm sm:text-base text-[#555a6a]">
+            Select a region to rename, modify nested categories, or reorganize subcategories in real-time.
           </p>
         </div>
 
         {/* Main Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl md:rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
-          {/* Card Header */}
-          <div className="bg-gradient-to-r from-teal-500 via-blue-500 to-indigo-500 p-4 md:p-6">
-            <h2 className="text-lg md:text-xl font-semibold text-white flex items-center gap-2">
-              <Grid3X3 className="w-4 h-4 md:w-5 md:h-5" />
-              Edit Hierarchical Structure
-            </h2>
-            <p className="text-teal-100 text-xs md:text-sm mt-1">Update your organizational tree</p>
-          </div>
-
-          {/* Card Content */}
-          <div className="p-4 md:p-6">
-            <div className="space-y-4 md:space-y-6">
-              {/* Regions */}
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-2 h-2 md:w-3 md:h-3 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full"></div>
-                <h3 className="text-base md:text-lg font-semibold text-gray-800 dark:text-white">Region</h3>
+        <div className="bg-white rounded-2xl border border-[#e0e2e8] shadow-sm p-5 sm:p-7 space-y-6 w-full">
+          {/* Level 1: Region Selection (Yellow Theme) */}
+          <div className="p-5 rounded-2xl bg-[#fff8e0] border-2 border-[#fde89c] space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-full bg-[#ffd02f] text-[#1c1c1e] flex items-center justify-center font-bold text-xs shadow-sm">
+                  1
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-[#1c1c1e]">Select Region</h2>
+                  <p className="text-xs text-[#746019]">Pick a region to reveal its nested hierarchy</p>
+                </div>
               </div>
+              <span className="text-xs font-bold px-3 py-1 rounded-full bg-white text-[#746019] border border-[#fde89c]">
+                {regions.length} {regions.length === 1 ? "Region" : "Regions"}
+              </span>
+            </div>
 
-              {regions.length > 0 ? (
-                <div className="space-y-2">
-                  {regions.map((region) => (
+            {regions.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
+                {regions.map((region) => {
+                  const isSelected = selectedRegion?._id === region._id
+                  return (
                     <div
                       key={region._id}
                       onClick={() => selectRegion(region)}
-                      className={`p-2 md:p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                        selectedRegion?._id === region._id
-                          ? "border-teal-500 bg-teal-50 dark:bg-teal-900/20"
-                          : "border-gray-200 dark:border-gray-600 hover:border-teal-300 dark:hover:border-teal-600"
+                      className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                        isSelected
+                          ? "bg-white border-2 border-[#4262ff] shadow-md ring-2 ring-[#4262ff]/20"
+                          : "bg-white/90 border-[#fde89c] hover:border-[#ffd02f] hover:bg-white"
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-3 h-3 md:w-4 md:h-4 text-teal-500" />
-                        <span className="text-sm md:text-base font-medium text-gray-800 dark:text-white">
-                          {region.name}
-                        </span>
-                        <ChevronRight className="w-3 h-3 md:w-4 md:h-4 text-gray-400 ml-auto" />
+                      <div className="flex items-center gap-2 min-w-0">
+                        <MapPin className={`w-4 h-4 shrink-0 ${isSelected ? "text-[#4262ff]" : "text-[#746019]"}`} />
+                        <span className="font-bold text-[#1c1c1e] text-sm truncate">{region.name}</span>
                       </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#fff4c4] text-[#746019]">
+                          {region.category?.length || 0}
+                        </span>
+                        <ChevronRight className={`w-4 h-4 ${isSelected ? "text-[#4262ff]" : "text-gray-400"}`} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-sm text-[#555a6a]">
+                No regions found. Create some regions first.
+              </div>
+            )}
+
+            {/* Rename Input (Blue Tint Card) */}
+            {selectedRegion && (
+              <div className="p-4 rounded-xl bg-[#f5f3ff] border border-[#ddd6fe] space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#4262ff]">
+                    Rename Selected Region: "{selectedRegion.name}"
+                  </label>
+                  {newRegionName.trim() && (
+                    <span className="text-xs font-bold text-[#4262ff] bg-white px-2.5 py-0.5 rounded-full border border-[#ddd6fe]">
+                      Will save as: "{newRegionName.trim()}"
+                    </span>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  value={newRegionName}
+                  onChange={(e) => setNewRegionName(e.target.value)}
+                  placeholder={`Type new name to rename "${selectedRegion.name}"...`}
+                  className="w-full h-12 px-4 bg-white border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all text-sm font-medium"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Level 2: Category (Teal Theme) */}
+          {selectedRegion && (
+            <div className="p-5 rounded-2xl bg-[#c3faf5]/40 border-2 border-[#9eece4] space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full bg-[#0fbcb0] text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                    2
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-[#1c1c1e]">
+                      Categories <span className="text-sm font-semibold text-[#187574]">in "{selectedRegion.name}"</span>
+                    </h3>
+                    <p className="text-xs text-[#187574]">Edit category names directly inline</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-white text-[#187574] border border-[#9eece4]">
+                    {selectedRegion.category?.length || 0} Categories
+                  </span>
+                  <button
+                    onClick={addNewCategory}
+                    className="px-4 py-1.5 rounded-full bg-[#0fbcb0] hover:bg-[#187574] text-white text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add New</span>
+                  </button>
+                </div>
+              </div>
+
+              {selectedRegion.category?.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
+                  {selectedRegion.category.map((category) => {
+                    const isCatSelected = selectedCategory?._id === category._id
+                    return (
+                      <div
+                        key={category._id}
+                        onClick={() => selectCategory(category)}
+                        className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                          isCatSelected
+                            ? "bg-white border-2 border-[#0fbcb0] shadow-md ring-2 ring-[#0fbcb0]/20"
+                            : "bg-white/90 border-[#9eece4] hover:border-[#0fbcb0] hover:bg-white"
+                        }`}
+                      >
+                        <Tag className={`w-4 h-4 shrink-0 ${isCatSelected ? "text-[#0fbcb0]" : "text-[#187574]"}`} />
+                        <input
+                          type="text"
+                          value={category.name}
+                          onChange={(e) => updateCategoryName(category._id, e)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex-1 bg-transparent font-bold text-sm text-[#1c1c1e] border-b border-transparent focus:border-[#0fbcb0] focus:outline-none px-1"
+                          placeholder="Category name..."
+                        />
+                        <button
+                          onClick={(e) => deleteCategory(category._id, e)}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors shrink-0"
+                          title="Delete category"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-sm text-[#187574]">
+                  No categories found for this region. Click "+ Add New" to add one.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Level 3: Subcategory (Rose Theme) */}
+          {selectedCategory && (
+            <div className="p-5 rounded-2xl bg-[#ffd8f4]/35 border-2 border-[#f3bee5] space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full bg-[#86296b] text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                    3
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-[#1c1c1e]">
+                      Subcategories <span className="text-sm font-semibold text-[#86296b]">in "{selectedCategory.name}"</span>
+                    </h3>
+                    <p className="text-xs text-[#86296b]">Edit subcategory names directly inline</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-white text-[#86296b] border border-[#f3bee5]">
+                    {selectedCategory.subCategory?.length || 0} Subcategories
+                  </span>
+                  <button
+                    onClick={addNewSubcategory}
+                    className="px-4 py-1.5 rounded-full bg-[#86296b] hover:bg-[#6e2257] text-white text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add New</span>
+                  </button>
+                </div>
+              </div>
+
+              {selectedCategory.subCategory?.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
+                  {selectedCategory.subCategory.map((subcategory) => (
+                    <div
+                      key={subcategory._id}
+                      className="p-3 rounded-xl border border-[#f3bee5] bg-white flex items-center justify-between gap-2 shadow-xs"
+                    >
+                      <Grid3X3 className="w-4 h-4 text-[#86296b] shrink-0" />
+                      <input
+                        type="text"
+                        value={subcategory.name}
+                        onChange={(e) => updateSubcategoryName(selectedCategory._id, subcategory._id, e)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex-1 bg-transparent font-bold text-sm text-[#1c1c1e] border-b border-transparent focus:border-[#86296b] focus:outline-none px-1"
+                        placeholder="Subcategory name..."
+                      />
+                      <button
+                        onClick={(e) => deleteSubcategory(selectedCategory._id, subcategory._id, e)}
+                        className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors shrink-0"
+                        title="Delete subcategory"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-3 text-sm md:text-base text-gray-500">
-                  No regions found. Create some regions first.
-                </div>
-              )}
-
-              {/* Single New Region Name input matching Region tile size */}
-              {selectedRegion && (
-                <div className="mt-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    New Region Name
-                  </label>
-                  <input
-                    type="text"
-                    value={newRegionName}
-                    onChange={(e) => setNewRegionName(e.target.value)}
-                    placeholder={`Rename "${selectedRegion.name}"...`}
-                    className="
-                      w-full
-                      p-2 md:p-3
-                      rounded-lg
-                      border-2
-                      border-gray-200 dark:border-gray-600
-                      bg-teal-50 dark:bg-gray-800
-                      text-gray-800 dark:text-white
-                      focus:outline-none
-                      focus:border-teal-500
-                      transition-all duration-200
-                    "
-                  />
-                  {newRegionName?.trim()?.length > 0 && (
-                    <p className="text-xs text-teal-600 dark:text-teal-400 mt-2">
-                      Will rename from "{selectedRegion.name}" to "{newRegionName}"
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Categories */}
-              {selectedRegion && (
-                <div className="ml-2 sm:ml-4 md:ml-6 border-l-2 border-gradient-to-b from-teal-300 to-blue-300 pl-2 sm:pl-4 md:pl-6 space-y-3 md:space-y-4">
-                  <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-3">
-                    <div className="w-2 h-2 md:w-3 md:h-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
-                    <h3 className="text-base md:text-lg font-semibold text-gray-800 dark:text-white">Category</h3>
-                    <span className="text-xs md:text-sm text-gray-500 dark:text-gray-400">in {selectedRegion.name}</span>
-                    <button
-                      onClick={addNewCategory}
-                      className="ml-auto px-2 py-1 md:px-3 md:py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/40 transition-all duration-200 flex items-center justify-center gap-1 text-xs md:text-sm"
-                    >
-                      <Plus className="w-2 h-2 md:w-3 md:h-3" />
-                      Add New
-                    </button>
-                  </div>
-
-                  {selectedRegion.category?.length > 0 ? (
-                    <div className="space-y-2">
-                      {selectedRegion.category.map((category) => (
-                        <div
-                          key={category._id}
-                          onClick={() => selectCategory(category)}
-                          className={`p-2 md:p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                            selectedCategory?._id === category._id
-                              ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                              : "border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-600"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Tag className="w-3 h-3 md:w-4 md:h-4 text-blue-500" />
-                            <input
-                              type="text"
-                              value={category.name}
-                              onChange={(e) => updateCategoryName(category._id, e)}
-                              className="flex-1 text-sm md:text-base font-medium text-gray-800 dark:text-white bg-transparent border-b border-transparent focus:border-blue-300 focus:outline-none px-1"
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                            <button
-                              onClick={(e) => deleteCategory(category._id, e)}
-                              className="ml-auto p-0.5 md:p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-                            >
-                              <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
-                            </button>
-                            <ChevronRight className="w-3 h-3 md:w-4 md:h-4 text-gray-400" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-3 text-sm md:text-base text-gray-500">
-                      No categories found for this region.
-                    </div>
-                  )}
-
-                  {/* Subcategories */}
-                  {selectedCategory && (
-                    <div className="ml-2 sm:ml-4 md:ml-6 border-l-2 border-gradient-to-b from-blue-300 to-indigo-300 pl-2 sm:pl-4 md:pl-6 space-y-3 md:space-y-4">
-                      <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-3">
-                        <div className="w-2 h-2 md:w-3 md:h-3 bg-gradient-to-r from-indigo-500 to-teal-500 rounded-full"></div>
-                        <h3 className="text-base md:text-lg font-semibold text-gray-800 dark:text-white">Subcategory</h3>
-                        <span className="text-xs md:text-sm text-gray-500 dark:text-gray-400">in {selectedCategory.name}</span>
-                        <button
-                          onClick={addNewSubcategory}
-                          className="ml-auto px-2 py-1 md:px-3 md:py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/40 transition-all duration-200 flex items-center justify-center gap-1 text-xs md:text-sm"
-                        >
-                          <Plus className="w-2 h-2 md:w-3 md:h-3" />
-                          Add New
-                        </button>
-                      </div>
-
-                      {selectedCategory.subCategory?.length > 0 ? (
-                        <div className="space-y-2">
-                          {selectedCategory.subCategory.map((subcategory) => (
-                            <div
-                              key={subcategory._id}
-                              className="p-2 md:p-3 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-indigo-50 dark:bg-indigo-900/20 flex items-center gap-2"
-                            >
-                              <Grid3X3 className="w-3 h-3 md:w-4 md:h-4 text-indigo-500" />
-                              <input
-                                type="text"
-                                value={subcategory.name}
-                                onChange={(e) => updateSubcategoryName(selectedCategory._id, subcategory._id, e)}
-                                className="flex-1 text-sm md:text-base font-medium text-gray-800 dark:text-white bg-transparent border-b border-transparent focus:border-indigo-300 focus:outline-none px-1"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                              <button
-                                onClick={(e) => deleteSubcategory(selectedCategory._id, subcategory._id, e)}
-                                className="ml-auto p-0.5 md:p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-                              >
-                                <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-3 text-sm md:text-base text-gray-500">
-                          No subcategories found for this category.
-                        </div>
-                      )}
-                    </div>
-                  )}
+                <div className="text-center py-4 text-sm text-[#86296b]">
+                  No subcategories found for this category. Click "+ Add New" to add one.
                 </div>
               )}
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons Bar */}
         {selectedRegion && (
-          <div className="mt-4 md:mt-6 bg-white dark:bg-gray-800 rounded-xl md:rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-4 md:p-6">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
-              <div className="mb-2 md:mb-0">
-                <h3 className="text-base md:text-lg font-semibold text-gray-800 dark:text-white mb-1">
-                  Editing: {selectedRegion.name}
-                  {newRegionName && (
-                    <span className="text-teal-600 dark:text-teal-400 ml-2">
-                      → {newRegionName}
-                    </span>
-                  )}
-                </h3>
-                <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
-                  {selectedRegion.category?.length || 0} categories
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
-                <button
-                  onClick={handleDeleteRegion}
-                  disabled={isDeleting}
-                  className="px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg hover:from-red-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 text-sm md:text-base"
-                >
-                  {isDeleting ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-3 w-3 md:h-4 md:w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Deleting...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
-                      Delete
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={handleUpdateRegion}
-                  disabled={isSubmitting}
-                  className="px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-teal-500 to-blue-500 text-white rounded-lg hover:from-teal-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 text-sm md:text-base"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-3 w-3 md:h-4 md:w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-3 h-3 md:w-4 md:h-4" />
-                      Update
-                    </>
-                  )}
-                </button>
-              </div>
+          <div className="bg-white rounded-2xl border border-[#e0e2e8] shadow-sm p-5 sm:p-7 flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
+            <div>
+              <h3 className="font-bold text-base sm:text-lg text-[#1c1c1e]">
+                Editing Region: <span className="text-[#4262ff]">{selectedRegion.name}</span>
+                {newRegionName.trim() && (
+                  <span className="text-[#0fbcb0] ml-2">→ {newRegionName.trim()}</span>
+                )}
+              </h3>
+              <p className="text-xs sm:text-sm text-[#555a6a]">
+                {selectedRegion.category?.length || 0} categories linked
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+              <button
+                onClick={handleDeleteRegion}
+                disabled={isDeleting}
+                className="flex-1 sm:flex-none px-6 py-3 rounded-full bg-[#fbd4d4] hover:bg-[#f9a9a9] text-[#600000] border border-[#e3c5c5] font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isDeleting ? "Deleting..." : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete Region</span>
+                  </>
+                )}
+              </button>
+              <button
+                onClick={handleUpdateRegion}
+                disabled={isSubmitting}
+                className="flex-1 sm:flex-none px-8 py-3 rounded-full bg-[#4262ff] hover:bg-[#2a41b6] text-white font-bold text-sm shadow-md hover:shadow transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-98"
+              >
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save Changes</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         )}

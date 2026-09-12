@@ -1,10 +1,23 @@
 "use client"
+
 import { useState, useEffect } from "react"
-import { ChevronRight, Tag, Grid3X3, Trash2, Save, Edit } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import {
+  Tag,
+  Trash2,
+  Save,
+  ArrowLeft,
+  ChevronRight,
+  Loader2,
+  Plus,
+  CheckCircle,
+  AlertCircle
+} from "lucide-react"
 import { toast } from "react-hot-toast"
 import { getAllQuestionTypes, updateQuestionType, deleteQuestionType } from "../../../../services/operations/qandA"
 
 const EditQuestionType = () => {
+  const navigate = useNavigate()
   const [questionTypes, setQuestionTypes] = useState([])
   const [selectedQuestionType, setSelectedQuestionType] = useState(null)
   const [selectedQuestionTypeIndex, setSelectedQuestionTypeIndex] = useState(null)
@@ -16,8 +29,14 @@ const EditQuestionType = () => {
   useEffect(() => {
     const loadAllQuestionTypes = async () => {
       try {
+        setIsLoading(true)
         const response = await getAllQuestionTypes()
-        setQuestionTypes(response?.data || [])
+        const types = response?.data || []
+        setQuestionTypes(types)
+        if (types.length > 0) {
+          setSelectedQuestionType(types[0])
+          setSelectedQuestionTypeIndex(0)
+        }
       } catch (error) {
         console.error("Error loading question types:", error)
         toast.error("Failed to load question types")
@@ -42,18 +61,19 @@ const EditQuestionType = () => {
     setIsUpdating(true)
     try {
       const updatedName = newQuestionTypeName.trim() || selectedQuestionType.name
-      
+
       const response = await updateQuestionType(selectedQuestionType._id, {
         name: updatedName
       })
 
       if (response.success) {
-        toast.success(response.message)
+        toast.success(response.message || "Question type updated successfully!")
         const updatedResponse = await getAllQuestionTypes()
-        setQuestionTypes(updatedResponse?.data || [])
+        const updatedTypes = updatedResponse?.data || []
+        setQuestionTypes(updatedTypes)
         setNewQuestionTypeName("")
-        setSelectedQuestionType(null)
-        setSelectedQuestionTypeIndex(null)
+        const refreshed = updatedTypes.find(t => t.name === updatedName) || updatedTypes[selectedQuestionTypeIndex]
+        setSelectedQuestionType(refreshed)
       } else {
         throw new Error(response.message || "Failed to update question type")
       }
@@ -70,15 +90,24 @@ const EditQuestionType = () => {
       toast.error("Please select a question type to delete")
       return
     }
+
+    if (!window.confirm(`Are you sure you want to delete "${selectedQuestionType.name}"?`)) return
+
     setIsDeleting(true)
     try {
       const response = await deleteQuestionType(selectedQuestionType._id)
       if (response.success) {
-        toast.success(response.message)
+        toast.success(response.message || "Question type deleted successfully!")
         const updatedResponse = await getAllQuestionTypes()
-        setQuestionTypes(updatedResponse?.data || [])
-        setSelectedQuestionType(null)
-        setSelectedQuestionTypeIndex(null)
+        const updatedTypes = updatedResponse?.data || []
+        setQuestionTypes(updatedTypes)
+        if (updatedTypes.length > 0) {
+          setSelectedQuestionType(updatedTypes[0])
+          setSelectedQuestionTypeIndex(0)
+        } else {
+          setSelectedQuestionType(null)
+          setSelectedQuestionTypeIndex(null)
+        }
         setNewQuestionTypeName("")
       } else {
         throw new Error(response.message || "Failed to delete question type")
@@ -99,171 +128,159 @@ const EditQuestionType = () => {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-teal-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 p-2 sm:p-4 md:p-6 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-t-2 border-b-2 border-teal-500"></div>
+      <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-12 px-4 flex items-center justify-center">
+        <div className="bg-white rounded-2xl border border-[#c7cad5] p-10 text-center space-y-3 shadow-sm max-w-sm w-full">
+          <Loader2 className="w-8 h-8 animate-spin text-[#4262ff] mx-auto" />
+          <h3 className="text-sm font-bold text-[#1c1c1e]">Loading Question Types...</h3>
+          <p className="text-xs text-[#555a6a]">Fetching question type registry</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-teal-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 p-2 sm:p-4 md:p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-4 sm:mb-6 md:mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-teal-500 via-blue-500 to-indigo-500 rounded-full mb-2 sm:mb-4">
-            <Edit className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-8 px-4 sm:px-6 lg:px-8 xl:px-12 w-full">
+      <div className="w-full space-y-6">
+
+        {/* Top Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e0e2e8]">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Dashboard</span>
+            </button>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#ffd02f] text-[#1c1c1e]">
+              QUESTION TYPES
+            </span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#ffd8f4] text-[#86296b] border border-[#f3bee5]">
+              SCHEMA EDITOR
+            </span>
           </div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent mb-1 sm:mb-2">
-            Edit Question Types
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate("/create-question-type")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] text-xs sm:text-sm font-extrabold shadow-sm transition-all active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add New Type</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Title */}
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#1c1c1e]">
+            Manage Question Types
           </h1>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
-            Modify existing question types
+          <p className="text-sm sm:text-base text-[#555a6a]">
+            Review, rename, or prune question classifications across quizzes and Q&amp;A repositories.
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-          <div className="bg-gradient-to-r from-teal-500 via-blue-500 to-indigo-500 p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold text-white flex items-center gap-2">
-              <Grid3X3 className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="text-sm sm:text-base md:text-lg">Edit Question Types</span>
-            </h2>
-            <p className="text-teal-100 text-xs sm:text-sm mt-1">Update your question types</p>
-          </div>
-
-          <div className="p-3 sm:p-4 md:p-6">
-            <div className="space-y-4 sm:space-y-6">
-              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
-                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full"></div>
-                <h3 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white">Question Types</h3>
-              </div>
-
-              {questionTypes.length > 0 ? (
-                <div className="space-y-1 sm:space-y-2">
-                  {questionTypes.map((questionType, index) => (
-                    <div
-                      key={questionType._id || index}
-                      onClick={() => selectQuestionType(index)}
-                      className={`p-2 sm:p-3 rounded-md sm:rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                        selectedQuestionTypeIndex === index
-                          ? "border-teal-500 bg-teal-50 dark:bg-teal-900/20"
-                          : "border-gray-200 dark:border-gray-600 hover:border-teal-300 dark:hover:border-teal-600"
-                      }`}
-                    >
-                      <div className="flex items-center gap-1 sm:gap-2">
-                        <Tag className="w-3 h-3 sm:w-4 sm:h-4 text-teal-500" />
-                        <span className="text-sm sm:text-base font-medium text-gray-800 dark:text-white">
-                          {questionType.name}
-                        </span>
-                        <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 ml-auto" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-2 sm:py-3 text-sm text-gray-500">No question types found.</div>
-              )}
-
-              {selectedQuestionType && (
-                <div className="mt-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Update Question Type Name
-                  </label>
-                  <input
-                    type="text"
-                    value={newQuestionTypeName || selectedQuestionType.name}
-                    onChange={(e) => {
-                      const newName = e.target.value
-                      setNewQuestionTypeName(newName)
-                      setSelectedQuestionType(prev => ({ ...prev, name: newName }))
-                    }}
-                    placeholder="Enter new question type name..."
-                    className="w-full p-2 sm:p-3 rounded-md sm:rounded-lg border-2 border-teal-200 dark:border-gray-600 bg-teal-50 dark:bg-gray-800 text-gray-800 dark:text-white
-                      focus:outline-none focus:border-teal-500 transition-all duration-200 text-sm sm:text-base"
-                  />
-                  {newQuestionTypeName?.trim()?.length > 0 && newQuestionTypeName !== selectedQuestionType.name && (
-                    <p className="text-xs text-teal-600 dark:text-teal-400 mt-2">
-                      Will update from "{selectedQuestionType.name}" to "{newQuestionTypeName}"
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {selectedQuestionType && (
-          <div className="mt-4 sm:mt-6 bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-md sm:shadow-lg border border-gray-100 dark:border-gray-700 p-3 sm:p-4 md:p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <div className="flex-1">
-                <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-800 dark:text-white mb-1">
-                  Editing: {selectedQuestionType.name}
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
-                  Use the buttons to update or delete this question type.
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                <button
-                  onClick={handleDeleteQuestionType}
-                  disabled={isDeleting}
-                  className="px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg hover:from-red-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 text-xs sm:text-sm"
-                >
-                  {isDeleting ? (
-                    <>
-                      <svg
-                        className="animate-spin -ml-1 mr-1 h-3 w-3 sm:h-4 sm:w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Deleting...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Delete
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={handleUpdateQuestionType}
-                  disabled={isUpdating || (!newQuestionTypeName.trim() && newQuestionTypeName === selectedQuestionType.name)}
-                  className="px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-teal-500 to-blue-500 text-white rounded-lg hover:from-teal-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 text-xs sm:text-sm"
-                >
-                  {isUpdating ? (
-                    <>
-                      <svg
-                        className="animate-spin -ml-1 mr-1 h-3 w-3 sm:h-4 sm:w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Update
-                    </>
-                  )}
-                </button>
-              </div>
+        {/* Types Pill List */}
+        {questionTypes.length > 0 && (
+          <div className="bg-white rounded-2xl border border-[#c7cad5] p-5 space-y-3 shadow-sm">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#555a6a] block">
+              Available Question Types ({questionTypes.length})
+            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              {questionTypes.map((qt, index) => {
+                const isSelected = selectedQuestionTypeIndex === index
+                return (
+                  <button
+                    key={qt._id || index}
+                    type="button"
+                    onClick={() => selectQuestionType(index)}
+                    className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold border transition-all active:scale-95 flex items-center gap-2 ${
+                      isSelected
+                        ? "bg-[#1c1c1e] text-[#ffd02f] border-[#1c1c1e] shadow-sm"
+                        : "bg-[#f7f8fa] text-[#1c1c1e] border-[#c7cad5] hover:border-[#1c1c1e]"
+                    }`}
+                  >
+                    <Tag className="w-3.5 h-3.5" />
+                    <span>{qt.name}</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
+
+        {/* Selected Type Editor */}
+        {selectedQuestionType ? (
+          <div className="bg-white rounded-2xl border border-[#c7cad5] p-6 sm:p-8 space-y-6 shadow-sm">
+            <div className="flex items-center gap-3 pb-3 border-b border-[#e0e2e8]">
+              <div className="p-2 rounded-xl bg-[#c3faf5] text-[#187574] border border-[#9eece4]">
+                <Tag className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-[#1c1c1e]">
+                  Edit Type: {selectedQuestionType.name}
+                </h3>
+                <p className="text-xs text-[#555a6a]">Modify the display title for this question classification.</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                New Question Type Name
+              </label>
+              <input
+                type="text"
+                value={newQuestionTypeName || selectedQuestionType.name}
+                onChange={(e) => {
+                  const newName = e.target.value
+                  setNewQuestionTypeName(newName)
+                  setSelectedQuestionType(prev => ({ ...prev, name: newName }))
+                }}
+                placeholder="Enter new question type name..."
+                className="w-full h-11 min-h-[44px] px-4 rounded-xl border border-[#c7cad5] bg-[#fffdf5] text-[#1c1c1e] text-sm font-semibold focus:outline-none focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 transition-all"
+              />
+            </div>
+
+            {/* Actions Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#e0e2e8]">
+              <button
+                type="button"
+                onClick={handleDeleteQuestionType}
+                disabled={isDeleting}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-white border border-[#e3c5c5] text-[#800000] hover:bg-[#fbd4d4] text-xs sm:text-sm font-bold transition-all"
+              >
+                {isDeleting ? "Deleting..." : "Delete Question Type"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleUpdateQuestionType}
+                disabled={isUpdating}
+                className="w-full sm:w-auto h-11 min-h-[44px] px-8 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] disabled:bg-gray-100 disabled:text-gray-400 text-[#1c1c1e] font-extrabold text-sm shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-[#1c1c1e]" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 text-[#1c1c1e]" />
+                    <span>Save Changes</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-[#c7cad5] p-12 text-center space-y-3">
+            <Tag className="w-10 h-10 text-[#8e92a0] mx-auto" />
+            <h3 className="text-base font-bold text-[#1c1c1e]">No Question Type Selected</h3>
+            <p className="text-xs text-[#555a6a]">Select a question type above or create a new one.</p>
+          </div>
+        )}
+
       </div>
     </div>
   )

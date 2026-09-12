@@ -1,27 +1,35 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent } from '../../ui/card';
-import { ArrowLeft, Save, Monitor, LayoutTemplate, Smartphone, Code, Info, CheckCircle, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
-import { apiConnector } from '../../../services/apiconnector';
-import { saveAdAPI } from '../../../services/apis';
-import toast, { Toaster } from 'react-hot-toast';
+"use client"
 
-// Spinner Component
-const Spinner = () => (
-  <div className="inline-flex items-center">
-    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-    <span>Saving...</span>
-  </div>
-);
+import React, { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { useNavigate } from "react-router-dom"
+import {
+  ArrowLeft,
+  Save,
+  Monitor,
+  LayoutTemplate,
+  Smartphone,
+  Code,
+  Info,
+  CheckCircle,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  Layers,
+  AlertTriangle
+} from "lucide-react"
+import { apiConnector } from "../../../services/apiconnector"
+import { saveAdAPI } from "../../../services/apis"
+import toast from "react-hot-toast"
 
 export default function UploadAd() {
-  const navigate = useNavigate();
-  const [openCard, setOpenCard] = useState(null);
-  const [category, setCategory] = useState("horizontal");
-  const [adCode, setAdCode] = useState("");
-  const [isSaved, setIsSaved] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate()
+  const [openCard, setOpenCard] = useState(null)
+  const [category, setCategory] = useState("horizontal")
+  const [adCode, setAdCode] = useState("")
+  const [isSaved, setIsSaved] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const adTitles = [
     "Home Page",
@@ -41,362 +49,445 @@ export default function UploadAd() {
     "Inside Contest",
     "Contest Result",
     "Between Contest Result and Comment"
-  ];
+  ]
 
   // Extract client and slot from adCode for preview
-  const clientMatch = adCode.match(/data-ad-client=["']([^"']+)["']/);
-  const slotMatch = adCode.match(/data-ad-slot=["']([^"']+)["']/);
+  const clientMatch = adCode.match(/data-ad-client=["']([^"']+)["']/)
+  const slotMatch = adCode.match(/data-ad-slot=["']([^"']+)["']/)
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
     if (!adCode) {
-      toast.error("Please paste your AdSense code", {
-        duration: 3000,
-        position: 'top-center',
-        icon: '⚠️',
-      });
-      return;
+      toast.error("Please paste your AdSense code")
+      return
     }
     
     if (!clientMatch || !slotMatch) {
-      toast.error("Invalid AdSense code. Ensure it contains data-ad-client and data-ad-slot.", {
-        duration: 4000,
-        position: 'top-center',
-      });
-      return;
+      toast.error("Invalid AdSense code. Ensure it contains data-ad-client and data-ad-slot.")
+      return
     }
     
-    const client = clientMatch[1];
-    const slot = slotMatch[1];
+    const client = clientMatch[1]
+    const slot = slotMatch[1]
 
-    setLoading(true);
-    const loadingToast = toast.loading("Saving ad configuration...", {
-      position: 'top-center',
-    });
+    setLoading(true)
+    const loadingToast = toast.loading("Saving ad configuration...")
 
     try {
-      const token = localStorage.getItem("token");
-      await apiConnector("POST", saveAdAPI, {
-        title: openCard,
-        format: category,
-        client,
-        slot
-      }, {
-        Authorization: `Bearer ${token}`
-      });
+      const token = localStorage.getItem("token")
+      await apiConnector(
+        "POST",
+        saveAdAPI,
+        {
+          title: openCard,
+          format: category,
+          client,
+          slot
+        },
+        {
+          Authorization: `Bearer ${token}`
+        }
+      )
       
       toast.success("Ad configuration saved successfully!", {
         id: loadingToast,
-        duration: 3000,
-        position: 'top-center',
-        icon: '✅',
-      });
+      })
       
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 3000);
+      setIsSaved(true)
+      setTimeout(() => setIsSaved(false), 3000)
     } catch (error) {
-      console.error("Error saving ad:", error);
+      console.error("Error saving ad:", error)
       toast.error(error.response?.data?.message || "Failed to save ad configuration", {
         id: loadingToast,
-        duration: 4000,
-        position: 'top-center',
-      });
+      })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const adFormats = [
-    { id: "horizontal", name: "Horizontal Banner", icon: LayoutTemplate, desc: "Best for top or bottom placement (e.g., 728x90)" },
-    { id: "vertical", name: "Vertical Sidebar", icon: Smartphone, desc: "Ideal for left/right columns (e.g., 300x600)" },
-    { id: "square", name: "Square Unit", icon: Monitor, desc: "Perfect for in-article content (e.g., 250x250)" }
-  ];
+    {
+      id: "horizontal",
+      name: "Horizontal Banner",
+      icon: LayoutTemplate,
+      desc: "Top or bottom placement (728x90 or responsive)"
+    },
+    {
+      id: "vertical",
+      name: "Vertical Sidebar",
+      icon: Smartphone,
+      desc: "Left/right column placement (300x600 skyscraper)"
+    },
+    {
+      id: "square",
+      name: "Square Unit",
+      icon: Monitor,
+      desc: "In-article & between content units (250x250 or 336x280)"
+    }
+  ]
 
   return (
-    <>
-      <Toaster 
-        position="top-center"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-            borderRadius: '12px',
-            padding: '12px 16px',
-            fontSize: '14px',
-          },
-          success: {
-            style: {
-              background: '#10b981',
-              color: '#fff',
-            },
-            iconTheme: {
-              primary: '#fff',
-              secondary: '#10b981',
-            },
-          },
-          error: {
-            style: {
-              background: '#ef4444',
-              color: '#fff',
-            },
-            duration: 4000,
-          },
-          loading: {
-            style: {
-              background: '#3b82f6',
-              color: '#fff',
-            },
-          },
-        }}
-      />
-      
-      <div className="min-h-screen bg-gradient-to-b from-white to-gray-200 p-3 sm:p-4 md:p-6 lg:p-8">
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          className="max-w-4xl mx-auto space-y-4 sm:space-y-6"
-        >
-          {/* Header with Back Button */}
-          <div className="flex items-center gap-3 mb-2">
-            <motion.button
-              onClick={() => navigate('/admin/dashboard')}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-2 bg-blue-500 rounded-full hover:bg-blue-600 hover:text-blue-600 transition-colors"
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-8 px-4 sm:px-6 lg:px-8 xl:px-12 w-full">
+      <div className="w-full space-y-6">
+        
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e0e2e8]">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95"
             >
-              <ArrowLeft className="h-4 w-4 text-white" />
-            </motion.button>
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Dashboard</span>
+            </button>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#ffd02f] text-[#1c1c1e]">
+              ADVERTISING STUDIO
+            </span>
+            <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#ffd8f4] text-[#86296b] border border-[#f3bee5]">
+              ADSENSE ENGINE
+            </span>
           </div>
 
-          {/* Title Section - Centered */}
-          <div className="text-center mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight mb-2">
-              AdSense Configuration
-            </h1>
-            <p className="text-sm sm:text-base text-gray-500">
-              Manage and deploy advertisement code across your platform
-            </p>
+          <div className="flex items-center gap-3 self-start sm:self-auto">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-[#c7cad5] text-xs font-bold text-[#1c1c1e]">
+              <Layers className="w-3.5 h-3.5 text-[#4262ff]" />
+              <span>{adTitles.length} Placements Available</span>
+            </span>
           </div>
+        </div>
 
-          {/* Main Content */}
-          <div className="space-y-4">
-            {/* Title Accordion Cards */}
-            {adTitles.map((t) => (
-              <Card key={t} className="border border-gray-200 shadow-sm rounded-xl overflow-hidden bg-white">
-                {/* Accordion Header */}
-                <div 
-                  className={`p-4 sm:p-5 flex justify-between items-center cursor-pointer transition-colors ${openCard === t ? 'bg-blue-50/50' : 'hover:bg-gray-50'}`}
+        {/* Page Title */}
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#1c1c1e]">
+            AdSense Configuration & Deployment
+          </h1>
+          <p className="text-sm sm:text-base text-[#555a6a]">
+            Configure advertisement slots, inject responsive AdSense scripts, and manage monetization layouts across all curriculum zones.
+          </p>
+        </div>
+
+        {/* Ad Placements Accordion List */}
+        <div className="space-y-3">
+          {adTitles.map((t, index) => {
+            const isOpen = openCard === t
+            return (
+              <div
+                key={t}
+                className={`bg-white rounded-2xl border transition-all duration-200 overflow-hidden shadow-sm ${
+                  isOpen ? "border-[#4262ff] shadow-md" : "border-[#c7cad5] hover:border-[#1c1c1e]"
+                }`}
+              >
+                {/* Accordion Trigger Header */}
+                <button
+                  type="button"
                   onClick={() => {
-                    if (openCard === t) {
-                      setOpenCard(null);
+                    if (isOpen) {
+                      setOpenCard(null)
                     } else {
-                      setOpenCard(t);
-                      setAdCode("");
-                      setCategory("horizontal");
+                      setOpenCard(t)
+                      setAdCode("")
+                      setCategory("horizontal")
                     }
                   }}
+                  className={`w-full p-4 sm:p-5 flex items-center justify-between text-left transition-colors ${
+                    isOpen ? "bg-[#f5f3ff]" : "bg-white hover:bg-[#fbfbfd]"
+                  }`}
                 >
-                  <h3 className={`text-base sm:text-lg font-semibold flex items-center ${openCard === t ? 'text-blue-700' : 'text-gray-800'}`}>
-                    <LayoutTemplate className={`w-5 h-5 mr-3 ${openCard === t ? 'text-blue-600' : 'text-gray-400'}`} />
-                    {t}
-                  </h3>
-                  {openCard === t ? (
-                    <ChevronUp className="w-5 h-5 text-blue-500" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
-                  )}
-                </div>
-
-                {/* Expanded Content */}
-                {openCard === t && (
-                  <div className="border-t border-gray-100 bg-gray-50/30 p-4 sm:p-6 space-y-6">
-                    {/* Select Ad Format Section */}
-                    <div>
-                      <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-3 flex items-center">
-                        <LayoutTemplate className="w-4 h-4 mr-2 text-blue-500" />
-                        Select Ad Format
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span
+                      className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold flex-shrink-0 ${
+                        isOpen
+                          ? "bg-[#4262ff] text-white"
+                          : "bg-[#f7f8fa] border border-[#c7cad5] text-[#1c1c1e]"
+                      }`}
+                    >
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <h3
+                        className={`text-sm sm:text-base font-bold truncate ${
+                          isOpen ? "text-[#4262ff]" : "text-[#1c1c1e]"
+                        }`}
+                      >
+                        {t}
                       </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                        {adFormats.map((format) => (
-                          <div 
-                            key={format.id}
-                            onClick={() => !loading && setCategory(format.id)}
-                            className={`cursor-pointer p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 flex flex-col items-center text-center gap-2 sm:gap-3 ${
-                              loading ? 'opacity-50 cursor-not-allowed' : ''
-                            } ${
-                              category === format.id 
-                                ? 'border-blue-500 bg-white shadow-sm' 
-                                : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50/50'
-                            }`}
-                          >
-                            <div className={`p-2 sm:p-3 rounded-full ${category === format.id ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
-                              <format.icon className="w-5 h-5 sm:w-6 sm:h-6" />
-                            </div>
-                            <div>
-                              <p className={`text-sm sm:text-base font-semibold ${category === format.id ? 'text-blue-700' : 'text-gray-700'}`}>{format.name}</p>
-                              <p className="text-xs text-gray-500 mt-1">{format.desc}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      <p className="text-xs text-[#555a6a] truncate hidden sm:block">
+                        Slot location #{index + 1} • Deployment position
+                      </p>
                     </div>
+                  </div>
 
-                    {/* AdSense Script Inject Section */}
-                    <div>
-                      <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-3 flex items-center">
-                        <Code className="w-4 h-4 mr-2 text-blue-500" />
-                        AdSense Script Inject
-                      </h3>
-                      <div className="relative group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-lg sm:rounded-xl blur opacity-20 group-hover:opacity-30 transition duration-500"></div>
-                        <textarea
-                          value={adCode}
-                          onChange={(e) => setAdCode(e.target.value)}
-                          disabled={loading}
-                          rows="8"
-                          placeholder="<!-- Paste your HTML/JS code here... -->&#10;<ins class='adsbygoogle' style='display:block' data-ad-format='auto'></ins>&#10;<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>"
-                          className="relative w-full p-4 sm:p-5 bg-gray-900 border border-gray-800 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-green-400 font-mono text-xs sm:text-sm placeholder-gray-600 shadow-inner resize-y transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        ></textarea>
-                      </div>
-                      {adCode && adCode.length < 50 && (
-                        <p className="text-xs text-amber-600 mt-2">⚠️ Code seems short. Please paste the complete AdSense snippet.</p>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span
+                      className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
+                        isOpen
+                          ? "bg-[#ffd02f] text-[#1c1c1e] border-[#fcb900]"
+                          : "bg-[#f7f8fa] text-[#555a6a] border-[#e0e2e8]"
+                      }`}
+                    >
+                      {isOpen ? "Editing Slot" : "Configure"}
+                    </span>
+                    {isOpen ? (
+                      <ChevronUp className="w-5 h-5 text-[#4262ff]" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-[#555a6a]" />
+                    )}
+                  </div>
+                </button>
 
-                    {/* Preview Status and Save Button Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Preview Status */}
-                      <div className="border border-gray-100 shadow-sm rounded-xl sm:rounded-2xl bg-white p-4">
-                        <h3 className="text-xs font-semibold text-gray-800 mb-3 uppercase tracking-wider">Preview Status</h3>
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                            <span className="text-xs text-gray-600">Selected Location</span>
-                            <span className="text-xs font-medium text-blue-600 capitalize py-1 px-2 bg-blue-50 rounded-md">
-                              {openCard}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                            <span className="text-xs text-gray-600">Selected Layout</span>
-                            <span className="text-xs font-medium text-blue-600 capitalize py-1 px-2 bg-blue-50 rounded-md">
-                              {category} Format
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                            <span className="text-xs text-gray-600">Code Status</span>
-                            {adCode.length > 10 ? (
-                              <span className="text-xs font-medium text-green-600 flex items-center">
-                                <CheckCircle className="w-3 h-3 mr-1"/> Valid length
-                              </span>
-                            ) : (
-                              <span className="text-xs font-medium text-amber-600 flex items-center">
-                                Waiting for code...
-                              </span>
-                            )}
-                          </div>
-                          {clientMatch && slotMatch && (
-                            <div className="p-2 bg-blue-50 rounded-lg">
-                              <p className="text-[10px] text-gray-600 mb-1">Detected Configuration:</p>
-                              <p className="text-[10px] font-mono text-blue-700 break-all">Client: {clientMatch[1]}</p>
-                              <p className="text-[10px] font-mono text-blue-700 mt-1 break-all">Slot: {slotMatch[1]}</p>
-                            </div>
-                          )}
-                          {adCode.length > 10 && (!clientMatch || !slotMatch) && (
-                            <div className="p-2 bg-red-50 rounded-lg">
-                              <p className="text-[10px] text-red-600">
-                                ⚠️ Could not detect data-ad-client or data-ad-slot in the provided code. Please ensure you've pasted the complete AdSense snippet.
-                              </p>
-                            </div>
-                          )}
+                {/* Expanded Ad Slot Configuration Panel */}
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="border-t border-[#e0e2e8] p-5 sm:p-7 space-y-6 bg-white"
+                    >
+                      {/* Step 1: Select Format */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <LayoutTemplate className="w-4 h-4 text-[#4262ff]" />
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                            1. Select Ad Format
+                          </h4>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          {adFormats.map((format) => {
+                            const isSelected = category === format.id
+                            const IconComponent = format.icon
+                            return (
+                              <button
+                                key={format.id}
+                                type="button"
+                                onClick={() => !loading && setCategory(format.id)}
+                                className={`p-4 rounded-xl border-2 text-left transition-all flex flex-col gap-2 ${
+                                  isSelected
+                                    ? "border-[#1c1c1e] bg-[#fffdf5] shadow-sm"
+                                    : "border-[#c7cad5] bg-white hover:bg-[#f7f8fa]"
+                                } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div
+                                    className={`p-2 rounded-lg ${
+                                      isSelected
+                                        ? "bg-[#ffd02f] text-[#1c1c1e]"
+                                        : "bg-[#f7f8fa] text-[#555a6a]"
+                                    }`}
+                                  >
+                                    <IconComponent className="w-5 h-5" />
+                                  </div>
+                                  {isSelected && (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#1c1c1e] text-[#ffd02f]">
+                                      Active
+                                    </span>
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-bold text-[#1c1c1e]">
+                                    {format.name}
+                                  </p>
+                                  <p className="text-xs text-[#555a6a] mt-0.5 leading-relaxed">
+                                    {format.desc}
+                                  </p>
+                                </div>
+                              </button>
+                            )
+                          })}
                         </div>
                       </div>
 
-                      {/* Save Button */}
-                      <div className="border border-gray-100 shadow-sm rounded-xl sm:rounded-2xl bg-white p-4 flex flex-col items-center justify-center">
-                        <div className="text-center">
-                          <div className="mb-3">
-                            <Save className="w-8 h-8 text-blue-500 mx-auto mb-1" />
-                            <h3 className="text-sm font-semibold text-gray-800">Ready to Save?</h3>
+                      {/* Step 2: AdSense Script Injection */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Code className="w-4 h-4 text-[#4262ff]" />
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                              2. AdSense Script Inject
+                            </h4>
                           </div>
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
+                          <span className="text-xs font-semibold text-[#555a6a]">
+                            HTML / JS snippet
+                          </span>
+                        </div>
+                        <div className="relative rounded-xl overflow-hidden border border-[#1c1c1e] bg-[#1c1c1e] shadow-inner">
+                          <textarea
+                            value={adCode}
+                            onChange={(e) => setAdCode(e.target.value)}
+                            disabled={loading}
+                            rows={6}
+                            placeholder={`<!-- Paste your Google AdSense code snippet here -->\n<ins class="adsbygoogle"\n     style="display:block"\n     data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"\n     data-ad-slot="XXXXXXXXXX"\n     data-ad-format="auto"></ins>\n<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>`}
+                            className="w-full p-4 bg-[#1c1c1e] text-[#ffd02f] font-mono text-xs sm:text-sm placeholder-[#6b6f7e] focus:outline-none resize-y min-h-[140px] leading-relaxed"
+                          />
+                        </div>
+                        {adCode && adCode.length < 50 && (
+                          <p className="text-xs text-[#b8860b] font-medium flex items-center gap-1.5">
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                            <span>Code snippet seems short. Ensure both &lt;ins&gt; and &lt;script&gt; tags are included.</span>
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Step 3: Verification & Save Row */}
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pt-2 border-t border-[#e0e2e8]">
+                        {/* Status Diagnostics */}
+                        <div className="lg:col-span-2 bg-[#f7f8fa] border border-[#e0e2e8] rounded-xl p-4 space-y-2.5">
+                          <h5 className="text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                            Diagnostics & Detection
+                          </h5>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                            <div className="bg-white p-2.5 rounded-lg border border-[#e0e2e8]">
+                              <span className="text-[#555a6a] block text-[11px]">Placement:</span>
+                              <strong className="text-[#1c1c1e] truncate block">{t}</strong>
+                            </div>
+                            <div className="bg-white p-2.5 rounded-lg border border-[#e0e2e8]">
+                              <span className="text-[#555a6a] block text-[11px]">Layout:</span>
+                              <strong className="text-[#1c1c1e] capitalize block">{category}</strong>
+                            </div>
+                            <div className="bg-white p-2.5 rounded-lg border border-[#e0e2e8]">
+                              <span className="text-[#555a6a] block text-[11px]">Code Status:</span>
+                              {adCode.length > 10 ? (
+                                <span className="font-bold text-[#187574] flex items-center gap-1">
+                                  <CheckCircle className="w-3 h-3" /> Valid format
+                                </span>
+                              ) : (
+                                <span className="text-[#b8860b] font-medium">Waiting for code</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {clientMatch && slotMatch ? (
+                            <div className="bg-[#c3faf5] border border-[#9eece4] rounded-lg p-2.5 text-xs text-[#187574] font-semibold space-y-0.5">
+                              <p>✓ Detected Client: <code className="font-mono text-[#1c1c1e]">{clientMatch[1]}</code></p>
+                              <p>✓ Detected Slot: <code className="font-mono text-[#1c1c1e]">{slotMatch[1]}</code></p>
+                            </div>
+                          ) : adCode.length > 10 ? (
+                            <div className="bg-[#fbd4d4] border border-[#e3c5c5] rounded-lg p-2.5 text-xs text-[#800000] font-medium">
+                              ⚠️ Could not detect data-ad-client or data-ad-slot. Please verify your AdSense snippet.
+                            </div>
+                          ) : null}
+                        </div>
+
+                        {/* Save Action */}
+                        <div className="bg-[#fffdf5] border border-[#fde89c] rounded-xl p-4 flex flex-col items-center justify-center text-center space-y-3">
+                          <div className="space-y-1">
+                            <h5 className="text-sm font-bold text-[#1c1c1e]">
+                              Save Placement
+                            </h5>
+                            <p className="text-xs text-[#555a6a]">
+                              Deploy this ad unit immediately across the platform.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
                             onClick={handleSubmit}
                             disabled={!adCode.trim() || loading || !clientMatch || !slotMatch}
-                            className={`inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium transition-all w-full text-sm ${
-                              !adCode.trim() || loading || !clientMatch || !slotMatch
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                                : 'bg-blue-600 text-white shadow-sm hover:bg-blue-700 hover:shadow'
-                            }`}
+                            className="w-full h-11 min-h-[44px] rounded-full bg-[#ffd02f] hover:bg-[#fcb900] disabled:bg-gray-100 disabled:border disabled:border-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-[#1c1c1e] font-extrabold text-xs sm:text-sm shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
                           >
                             {loading ? (
-                              <Spinner />
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin text-[#1c1c1e]" />
+                                <span>Saving...</span>
+                              </>
                             ) : isSaved ? (
                               <>
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Saved Successfully!
+                                <CheckCircle className="w-4 h-4 text-[#187574]" />
+                                <span>Saved Successfully!</span>
                               </>
                             ) : (
                               <>
-                                <Save className="h-4 w-4 mr-2" />
-                                Save Configuration
+                                <Save className="w-4 h-4 text-[#1c1c1e]" />
+                                <span>Deploy Ad Unit</span>
                               </>
                             )}
-                          </motion.button>
-                          {adCode.length > 10 && (!clientMatch || !slotMatch) && (
-                            <p className="text-[10px] text-red-500 mt-2">
-                              Cannot save: Invalid code format
-                            </p>
-                          )}
+                          </button>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                )}
-              </Card>
-            ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* AdSense Instructions Guide Card */}
+        <div className="bg-[#f5f3ff] rounded-2xl border border-[#ddd6fe] shadow-sm p-6 sm:p-8 space-y-4">
+          <div className="flex items-center gap-3 pb-3 border-b border-[#ddd6fe]">
+            <div className="p-2 rounded-xl bg-[#4262ff] text-white">
+              <Info className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-[#1c1c1e]">
+                How to generate your Google AdSense code
+              </h3>
+              <p className="text-xs text-[#555a6a]">
+                Quick setup guide for creating and exporting publisher tags
+              </p>
+            </div>
           </div>
 
-            {/* Instructions Section */}
-            <Card className="border-0 shadow-sm rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
-                    <Info className="w-5 h-5 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold">How to get your AdSense code</h3>
-                </div>
-                <ol className="space-y-4 text-sm text-blue-50">
-                  <li className="flex gap-3">
-                    <span className="font-bold text-white bg-white/20 w-6 h-6 flex items-center justify-center rounded-full shrink-0">1</span>
-                    <p>Log in to your Google AdSense account.</p>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="font-bold text-white bg-white/20 w-6 h-6 flex items-center justify-center rounded-full shrink-0">2</span>
-                    <p>Navigate to <strong>Ads &gt; By ad unit</strong>.</p>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="font-bold text-white bg-white/20 w-6 h-6 flex items-center justify-center rounded-full shrink-0">3</span>
-                    <p>Select your desired ad format (Display, In-feed, etc).</p>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="font-bold text-white bg-white/20 w-6 h-6 flex items-center justify-center rounded-full shrink-0">4</span>
-                    <p>Click on "Create" and then copy the generated HTML snippet.</p>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="font-bold text-white bg-white/20 w-6 h-6 flex items-center justify-center rounded-full shrink-0">5</span>
-                    <p>Paste the entire code in the "AdSense Script Inject" textarea above.</p>
-                  </li>
-                </ol>
-                <div className="mt-4 p-3 bg-white/10 rounded-lg backdrop-blur-sm">
-                  <p className="text-xs text-blue-100">
-                    💡 <strong>Pro Tip:</strong> Make sure to copy the complete script including both the &lt;ins&gt; and &lt;script&gt; tags for proper functionality.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-        </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 pt-1">
+            <div className="bg-white rounded-xl p-4 border border-[#ddd6fe] space-y-2">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#ffd02f] text-[#1c1c1e] font-black text-xs">
+                1
+              </span>
+              <p className="text-xs font-bold text-[#1c1c1e]">Login to AdSense</p>
+              <p className="text-xs text-[#555a6a] leading-relaxed">
+                Sign in to your authorized Google AdSense publisher console.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-4 border border-[#ddd6fe] space-y-2">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#ffd02f] text-[#1c1c1e] font-black text-xs">
+                2
+              </span>
+              <p className="text-xs font-bold text-[#1c1c1e]">Navigate to Ad Units</p>
+              <p className="text-xs text-[#555a6a] leading-relaxed">
+                Open <strong>Ads &gt; By ad unit</strong> from the navigation sidebar.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-4 border border-[#ddd6fe] space-y-2">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#ffd02f] text-[#1c1c1e] font-black text-xs">
+                3
+              </span>
+              <p className="text-xs font-bold text-[#1c1c1e]">Choose Unit Type</p>
+              <p className="text-xs text-[#555a6a] leading-relaxed">
+                Select Display, In-feed, or In-article format matching your slot.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-4 border border-[#ddd6fe] space-y-2">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#ffd02f] text-[#1c1c1e] font-black text-xs">
+                4
+              </span>
+              <p className="text-xs font-bold text-[#1c1c1e]">Copy Code Snippet</p>
+              <p className="text-xs text-[#555a6a] leading-relaxed">
+                Click "Create" and copy the entire generated HTML &amp; JS tag.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-4 border border-[#ddd6fe] space-y-2">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#ffd02f] text-[#1c1c1e] font-black text-xs">
+                5
+              </span>
+              <p className="text-xs font-bold text-[#1c1c1e]">Paste &amp; Deploy</p>
+              <p className="text-xs text-[#555a6a] leading-relaxed">
+                Paste into the snippet box above and click "Deploy Ad Unit".
+              </p>
+            </div>
+          </div>
+
+          <div className="p-3.5 bg-[#fffdf5] rounded-xl border border-[#fde89c] flex items-center gap-2.5">
+            <Sparkles className="w-4 h-4 text-[#b8860b] flex-shrink-0" />
+            <p className="text-xs font-semibold text-[#746019]">
+              <strong>Pro Tip:</strong> Ensure that both the <code>&lt;ins class="adsbygoogle"&gt;</code> container and <code>&lt;script&gt;(adsbygoogle = window.adsbygoogle || []).push({});&lt;/script&gt;</code> trigger are present for live ad rendering.
+            </p>
+          </div>
+        </div>
       </div>
-    </>
-  );
+    </div>
+  )
 }

@@ -1,6 +1,6 @@
 /* write your css here */
 .App {
-  text-align: center;
+  min-height: 100vh;
 }
 
 .App-logo {

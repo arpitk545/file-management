@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "../../ui/card";
 import { useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard,PlayCircle,Gamepad2,Sparkles,FolderOpen,
+  LayoutDashboard,
+  PlayCircle,
+  Gamepad2,
+  Sparkles,
+  FolderOpen,
   User,
   Settings,
   LogOut,
   Brain,
   Trophy,
-  ChevronLeft,
-  ChevronRight,
   BookOpenIcon,
   Newspaper,
   Upload,
@@ -28,13 +30,12 @@ import {
   PlusCircleIcon,
   ScanEyeIcon,
   PuzzleIcon,
-  TriangleAlert,
   FilePenLineIcon,
   PenTool,
   BookOpen,
   ListCheck,
   PanelLeftClose,
-  PanelRightClose
+  PanelRightClose,
 } from "lucide-react";
 
 import {
@@ -49,6 +50,7 @@ import {
   Legend,
 } from "chart.js";
 import { Bar, Line } from "react-chartjs-2";
+import { getQuizSubmission } from "../../../services/operations/quizAPI";
 
 ChartJS.register(
   CategoryScale,
@@ -70,6 +72,31 @@ export default function UserDashboard() {
     return localStorage.getItem("userExpandedItem") || null;
   });
 
+  const [quizResults, setQuizResults] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchRealScores = async () => {
+      try {
+        const res = await getQuizSubmission();
+        const results = Array.isArray(res?.result)
+          ? res.result
+          : res?.result
+          ? [res.result]
+          : [];
+        if (isMounted) {
+          setQuizResults(results);
+        }
+      } catch (err) {
+        console.warn("Could not load real quiz submissions:", err);
+      }
+    };
+    fetchRealScores();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleSidebarCollapse = () => {
     const newState = !sidebarCollapsed;
     setSidebarCollapsed(newState);
@@ -78,74 +105,107 @@ export default function UserDashboard() {
   const navigate = useNavigate();
 
   const sidebarItems = [
-    { icon: LayoutDashboard, label: "Dashboard", id: "dashboard", path: "/dashboard" },
-    { icon: User, label: "Profile", id: "profile", path: "/profile",
-      subItems: [
-         { icon: PlusCircle, label: "Create Profile", path: "/create-profile" },
-         { icon: UserCheck, label: "View Profile", path: "/profile" },
-      ]
-     },
-
-    {icon:NewspaperIcon,label:"Posts",id: "post",
-      subItems: [
-         {icon:ListOrdered, label: "View All Posts",path: "/user-all-post-view",},
-      ]
-    },
-    { 
-      icon: Upload, 
-      label: "Upload file", 
-      id: "upload", 
-      subItems: [
-        { icon: FilePlus, label: "Upload New File", path: "/user-upload-file" },
-        { icon: FolderSearch, label: "View Your Files", path: "/filter-user-file" },
-        { icon: FolderOpen, label: "View Uploaded Files", path: "/file-view" }
-      ]
-    },
-    {icon:PenTool, label: "Create Contest",id: "contestsection",
-      subItems: [
-         {icon:FilePenLineIcon, label: "Create Contest",path: "/build-contest",},
-      ]
-     },
-    {icon: Trophy, label: "Contest Section",id: "contest",
-      subItems: [
-         {icon:Medal, label: "Enroll Contests",path: "/Contest-Details",},
-      ]
-     },
-
-     { icon:PuzzleIcon, label: "Create Quiz", id: "quiz",
-      subItems: [
-        {icon:PlusCircleIcon, label: "Create Quiz", path: "/build-quiz" },
-        {icon:ScanEyeIcon,label: "View Your Quizzes", path: "/filter-user-quiz" },
-      ]
-    },
-    { icon: Gamepad2, label: "Play Quiz", id: "play-quiz",
-      subItems: [
-        { icon: PlayCircle, label: "Play Quiz", path: "/view-user-quiz" },
-        { icon: Sparkles, label: "Play AI Quiz", path: "/create-quiz" },
-      ]
+    {
+      icon: LayoutDashboard,
+      label: "Dashboard",
+      id: "dashboard",
+      path: "/dashboard",
+      iconColor: "text-slate-800",
     },
     {
-  icon: BookOpen, 
-  label: "Q & A Page", 
-  id: "q-and-a-page",
-  subItems: [
-    { icon: Upload, label: "Upload Q & A", path: "/upload-q-and-a" },
-    { icon: ListCheck, label: "View All Q & A", path: "/view-all-q-and-a" },
-    { icon: User, label: "View Your Q & A", path: "/view-your-q-and-a" },
-  ]
-},
-
-    { icon: Settings, label: "Settings", id: "settings", path: "/settings" },
-    { icon: LogOut, label: "Logout", id: "logout", path: "/logout" },
+      icon: User,
+      label: "Profile",
+      id: "profile",
+      path: "/profile",
+      iconColor: "text-blue-600",
+      subItems: [
+        { icon: PlusCircle, label: "Create Profile", path: "/create-profile", iconColor: "text-blue-500" },
+        { icon: UserCheck, label: "View Profile", path: "/profile", iconColor: "text-blue-500" },
+      ],
+    },
+    {
+      icon: NewspaperIcon,
+      label: "Posts",
+      id: "post",
+      iconColor: "text-indigo-600",
+      subItems: [
+        { icon: ListOrdered, label: "View All Posts", path: "/user-all-post-view", iconColor: "text-indigo-500" },
+      ],
+    },
+    {
+      icon: Upload,
+      label: "Upload file",
+      id: "upload",
+      iconColor: "text-teal-600",
+      subItems: [
+        { icon: FilePlus, label: "Upload New File", path: "/user-upload-file", iconColor: "text-teal-500" },
+        { icon: FolderSearch, label: "View Your Files", path: "/filter-user-file", iconColor: "text-teal-500" },
+        { icon: FolderOpen, label: "View Uploaded Files", path: "/file-view", iconColor: "text-teal-500" },
+      ],
+    },
+    {
+      icon: PenTool,
+      label: "Create Contest",
+      id: "contestsection",
+      iconColor: "text-pink-600",
+      subItems: [
+        { icon: FilePenLineIcon, label: "Create Contest", path: "/build-contest", iconColor: "text-pink-500" },
+      ],
+    },
+    {
+      icon: Trophy,
+      label: "Contest Section",
+      id: "contest",
+      iconColor: "text-amber-600",
+      subItems: [
+        { icon: Medal, label: "Enroll Contests", path: "/Contest-Details", iconColor: "text-amber-500" },
+      ],
+    },
+    {
+      icon: PuzzleIcon,
+      label: "Create Quiz",
+      id: "quiz",
+      iconColor: "text-purple-600",
+      subItems: [
+        { icon: PlusCircleIcon, label: "Create Quiz", path: "/build-quiz", iconColor: "text-purple-500" },
+        { icon: ScanEyeIcon, label: "View Your Quizzes", path: "/filter-user-quiz", iconColor: "text-purple-500" },
+      ],
+    },
+    {
+      icon: Gamepad2,
+      label: "Play Quiz",
+      id: "play-quiz",
+      iconColor: "text-sky-600",
+      subItems: [
+        { icon: PlayCircle, label: "Play Quiz", path: "/view-user-quiz", iconColor: "text-sky-500" },
+        { icon: Sparkles, label: "Play AI Quiz", path: "/create-quiz", iconColor: "text-sky-500" },
+      ],
+    },
+    {
+      icon: BookOpen,
+      label: "Q & A Page",
+      id: "q-and-a-page",
+      iconColor: "text-emerald-600",
+      subItems: [
+        { icon: Upload, label: "Upload Q & A", path: "/upload-q-and-a", iconColor: "text-emerald-500" },
+        { icon: ListCheck, label: "View All Q & A", path: "/view-all-q-and-a", iconColor: "text-emerald-500" },
+        { icon: User, label: "View Your Q & A", path: "/view-your-q-and-a", iconColor: "text-emerald-500" },
+      ],
+    },
+    { icon: Settings, label: "Settings", id: "settings", path: "/settings", iconColor: "text-slate-600" },
+    { icon: LogOut, label: "Logout", id: "logout", path: "/logout", iconColor: "text-red-600" },
   ];
 
+  // Colors replaced strictly from DESIGN-miro.md
   const dashboardCards = [
     {
       icon: Brain,
       title: "Play AI Quiz",
       description: "Design custom quizzes to test your knowledge.",
       buttonText: "Play Quiz",
-      color: "from-indigo-500 to-indigo-600",
+      iconBg: "bg-[#4262ff]", // Miro Brand Blue
+      iconColor: "text-white",
+      buttonBg: "bg-[#4262ff] hover:bg-[#2a41b6] text-white",
       route: "/create-quiz",
     },
     {
@@ -153,50 +213,145 @@ export default function UserDashboard() {
       title: "Enroll Contest",
       description: "Join exciting educational contests.",
       buttonText: "Enroll Now",
-      color: "from-emerald-500 to-emerald-600",
-      route:"/Contest-Details"
+      iconBg: "bg-[#fcb900]", // Miro Brand Yellow Deep
+      iconColor: "text-[#1c1c1e]",
+      buttonBg: "bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e]",
+      route: "/Contest-Details",
     },
     {
       icon: BookOpenIcon,
       title: "Documentation",
       description: "Access comprehensive guides and resources.",
       buttonText: "View Docs",
-      color: "from-blue-500 to-blue-600",
-      route: "/file-view"
+      iconBg: "bg-[#187574]", // Miro Moss Dark
+      iconColor: "text-white",
+      buttonBg: "bg-[#187574] hover:bg-[#135d5c] text-white",
+      route: "/file-view",
     },
     {
       icon: Newspaper,
       title: "Posts",
       description: "Browse insightful tutorials and posts.",
       buttonText: "Read More",
-      color: "from-indigo-500 to-indigo-600",
-      route:"/user-all-post-view"
+      iconBg: "bg-[#7c3aed]", // Miro Vibrant Purple
+      iconColor: "text-white",
+      buttonBg: "bg-[#7c3aed] hover:bg-[#6d28d9] text-white",
+      route: "/user-all-post-view",
     },
   ];
 
-  const barData = {
-    labels: ["Quiz 1", "Quiz 2", "Quiz 3", "Quiz 4"],
-    datasets: [
-      {
-        label: "Scores",
-        data: [65, 75, 80, 90],
-        backgroundColor: "#6366f1",
-      },
-    ],
-  };
+  // REAL Quiz Scores Bar Data
+  const barData = useMemo(() => {
+    if (!quizResults || quizResults.length === 0) {
+      return {
+        labels: ["Quiz 1", "Quiz 2", "Quiz 3", "Quiz 4"],
+        datasets: [
+          {
+            label: "Scores (%)",
+            data: [0, 0, 0, 0],
+            backgroundColor: "#4262ff", // Miro Blue
+          },
+        ],
+      };
+    }
 
-  const lineData = {
-    labels: ["Jan", "Feb", "Mar", "Apr", "May"],
-    datasets: [
-      {
-        label: "Learning Progress",
-        data: [20, 40, 60, 80, 95],
-        borderColor: "#10b981",
-        backgroundColor: "rgba(16, 185, 129, 0.2)",
-        tension: 0.4,
-      },
-    ],
-  };
+    const sorted = [...quizResults].sort(
+      (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
+    );
+    const recent = sorted.slice(-6);
+
+    const labels = recent.map((item, idx) => {
+      const subject = item.metadata?.subject || item.metadata?.examType || `Quiz ${idx + 1}`;
+      return subject.length > 10 ? `${subject.slice(0, 8)}...` : subject;
+    });
+
+    const data = recent.map((item) => {
+      const total = item.metadata?.totalQuestions || item.questions?.length || 1;
+      const correct = item.correctCount ?? 0;
+      return Math.min(100, Math.round((correct / total) * 100));
+    });
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: "Scores (%)",
+          data,
+          backgroundColor: "#4262ff", // Miro Blue
+        },
+      ],
+    };
+  }, [quizResults]);
+
+  // REAL Learning Progress Line Data
+  const lineData = useMemo(() => {
+    if (!quizResults || quizResults.length === 0) {
+      return {
+        labels: ["Jan", "Feb", "Mar", "Apr", "May"],
+        datasets: [
+          {
+            label: "Learning Progress (%)",
+            data: [0, 0, 0, 0, 0],
+            borderColor: "#187574", // Miro Moss
+            backgroundColor: "rgba(24, 117, 116, 0.2)",
+            tension: 0.4,
+          },
+        ],
+      };
+    }
+
+    const sorted = [...quizResults].sort(
+      (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
+    );
+
+    const monthMap = {};
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    sorted.forEach((item) => {
+      const date = item.createdAt ? new Date(item.createdAt) : new Date();
+      const monthKey = monthNames[date.getMonth()];
+      if (!monthMap[monthKey]) {
+        monthMap[monthKey] = [];
+      }
+      const total = item.metadata?.totalQuestions || item.questions?.length || 1;
+      const correct = item.correctCount ?? 0;
+      const pct = Math.min(100, Math.round((correct / total) * 100));
+      monthMap[monthKey].push(pct);
+    });
+
+    const monthKeys = Object.keys(monthMap);
+
+    let labels = [];
+    let progressData = [];
+
+    if (monthKeys.length >= 2) {
+      labels = monthKeys;
+      progressData = monthKeys.map((m) => {
+        const scores = monthMap[m];
+        return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      });
+    } else {
+      labels = sorted.slice(-6).map((_, idx) => `Test ${idx + 1}`);
+      progressData = sorted.slice(-6).map((item) => {
+        const total = item.metadata?.totalQuestions || item.questions?.length || 1;
+        const correct = item.correctCount ?? 0;
+        return Math.min(100, Math.round((correct / total) * 100));
+      });
+    }
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: "Learning Progress (%)",
+          data: progressData,
+          borderColor: "#187574", // Miro Moss
+          backgroundColor: "rgba(24, 117, 116, 0.2)",
+          tension: 0.4,
+        },
+      ],
+    };
+  }, [quizResults]);
 
   const toggleItemExpand = (itemId) => {
     if (expandedItem === itemId) {
@@ -265,7 +420,7 @@ export default function UserDashboard() {
                 }`}
               >
                 <div className="flex items-center">
-                  <item.icon className="h-5 w-5 flex-shrink-0" />
+                  <item.icon className={`h-5 w-5 flex-shrink-0 ${item.iconColor || ""}`} />
                   {!sidebarCollapsed && <span className="ml-3 font-medium">{item.label}</span>}
                 </div>
                 {!sidebarCollapsed && item.subItems && (
@@ -287,7 +442,7 @@ export default function UserDashboard() {
                       whileHover={{ x: 5 }}
                       className="w-full flex items-center py-2 text-gray-600 hover:text-indigo-600 transition-colors duration-200"
                     >
-                      <subItem.icon className="h-4 w-4 mr-2 text-gray-700" />
+                      <subItem.icon className={`h-4 w-4 mr-2 ${subItem.iconColor || item.iconColor || "text-gray-700"}`} />
                       <span className="text-sm font-medium">{subItem.label}</span>
                     </motion.button>
                   ))}
@@ -312,7 +467,7 @@ export default function UserDashboard() {
               onClick={() => navigate("/")}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-colors duration-200"
+              className="px-6 py-2.5 bg-[#1c1c1e] text-white rounded-full hover:bg-[#2c2c34] transition-all duration-200 shadow-sm text-sm font-medium cursor-pointer"
             >
               Back to Home
             </motion.button>
@@ -339,11 +494,11 @@ export default function UserDashboard() {
                 <CardContent className="p-6 flex flex-col h-full">
                   <motion.div
                     whileHover={{ rotate: 5 }}
-                    className={`w-14 h-14 bg-gradient-to-r ${card.color} rounded-xl flex items-center justify-center mx-auto mb-4`}
+                    className={`w-14 h-14 ${card.iconBg} rounded-xl flex items-center justify-center mx-auto mb-4`}
                   >
-                    <card.icon className="text-white w-7 h-7" />
+                    <card.icon className={`${card.iconColor} w-7 h-7`} />
                   </motion.div>
-                  <h3 className="text-lg md:text-xl font-bold text-center text-gray-900 mb-2 group-hover:text-indigo-600">
+                  <h3 className="text-lg md:text-xl font-bold text-center text-gray-900 mb-2">
                     {card.title}
                   </h3>
                   <p className="text-sm text-center text-gray-600 flex-1 mb-4">
@@ -353,7 +508,7 @@ export default function UserDashboard() {
                     onClick={() => navigate(card.route)}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    className={`mt-auto w-full bg-gradient-to-r ${card.color} text-white py-2 rounded-xl shadow-md hover:shadow-lg transition duration-300`}
+                    className={`mt-auto w-full ${card.buttonBg} py-2.5 px-6 rounded-full shadow-sm hover:shadow-md transition-all duration-200 text-sm font-medium cursor-pointer`}
                   >
                     {card.buttonText}
                   </motion.button>

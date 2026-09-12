@@ -2,7 +2,18 @@
 
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { Shield, Lock, Eye, FileText, Users, AlertCircle } from "lucide-react"
+import {
+  Shield,
+  Lock,
+  Eye,
+  FileText,
+  Users,
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  Loader2,
+} from "lucide-react"
+import { useNavigate } from "react-router-dom"
 import { getPrivacyPolicy } from "../../services/operations/pagesAPI"
 
 const iconMap = {
@@ -15,6 +26,7 @@ const iconMap = {
 }
 
 export default function PrivacyPolicy() {
+  const navigate = useNavigate()
   const [policy, setPolicy] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -22,7 +34,9 @@ export default function PrivacyPolicy() {
     const fetchData = async () => {
       try {
         const res = await getPrivacyPolicy()
-        setPolicy(res)
+        if (res) {
+          setPolicy(res)
+        }
       } catch (err) {
         console.error("Failed to load privacy policy", err)
       } finally {
@@ -35,113 +49,107 @@ export default function PrivacyPolicy() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-800">Loading your PrivacyPolicy ...</h2>
-          <p className="text-gray-600">Please wait while we process your privacypolicy</p>
+      <div className="min-h-screen bg-[#f7f8fa] flex flex-col items-center justify-center p-6 text-center font-sans">
+        <div className="w-12 h-12 rounded-2xl bg-[#ffd02f] flex items-center justify-center mb-4 shadow-sm animate-pulse">
+          <Loader2 className="animate-spin h-6 w-6 text-[#1c1c1e]" />
         </div>
+        <p className="text-xs font-bold uppercase tracking-wider text-[#6a6d7c]">Loading privacy policy...</p>
       </div>
-    );
+    )
   }
 
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-8 sm:mb-12 md:mb-16"
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="inline-flex items-center bg-gradient-to-r from-purple-100 to-pink-100 rounded-full px-4 sm:px-6 py-2 sm:py-3 mb-4 sm:mb-6"
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-10 px-4 sm:px-6 lg:px-8 xl:px-12 w-full font-sans">
+      <div className="w-full space-y-10">
+        {/* Navigation & Header */}
+        <div>
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#c7cad5] bg-white text-xs font-semibold text-[#1c1c1e] hover:bg-[#ebecf0] transition-colors mb-6 shadow-sm active:scale-95 cursor-pointer"
           >
-            <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 mr-2" />
-            <span className="text-sm sm:text-base text-purple-600 font-semibold">Privacy & Security</span>
-          </motion.div>
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </button>
 
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6">
-            Privacy{" "}
-            <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
-              Policy
-            </span>
-          </h1>
-          <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Your privacy is important to us. This policy explains how we collect, use, and protect your information when
-            you use our educational platform.
-          </p>
-          <p className="text-xs sm:text-sm text-gray-500 mt-2 sm:mt-4">Last updated: {new Date().toLocaleDateString()}</p>
-        </motion.div>
+          <div className="text-center w-full space-y-4">
+            <div className="flex items-center justify-center gap-2 flex-wrap mb-2">
+              <span className="px-3 py-1 bg-[#ffd02f] text-[#1c1c1e] text-[11px] font-black uppercase tracking-widest rounded-full shadow-sm">
+                LEGAL & PRIVACY
+              </span>
+              <span className="px-3 py-1 bg-[#c3faf5] text-[#187574] text-[11px] font-bold uppercase tracking-wider rounded-full">
+                DATA PROTECTION
+              </span>
+            </div>
+
+            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[#1c1c1e] leading-tight">
+              Privacy Policy
+            </h1>
+
+            <p className="text-sm sm:text-base text-[#6a6d7c] leading-relaxed max-w-4xl mx-auto">
+              Your personal privacy and academic information security are paramount. This policy outlines how we collect, safeguard, and use your data across CLYS services.
+            </p>
+
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-[#c7cad5] text-[11px] font-bold text-[#6a6d7c] shadow-2xs">
+              <Shield className="w-3.5 h-3.5 text-[#187574]" />
+              <span>Last Revised: {new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            </div>
+          </div>
+        </div>
 
         {/* Content Sections */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: {},
-            visible: {
-              transition: {
-                staggerChildren: 0.1,
-              },
-            },
-          }}
-          className="grid gap-4 sm:gap-6 md:gap-8 max-w-4xl mx-auto"
-        >
-         {policy?.sections?.map((section, index) => {
-          const Icon = iconMap[section.icon] || FileText
-        
-          return (
-            <motion.div
-              key={index}
-              variants={{
-                hidden: { opacity: 0, y: 50 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              transition={{ duration: 0.6 }}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20"
-            >
-              <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0">
-                  <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">{section.title}</h2>
-                  <p className="text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed">{section.content}</p>
+        <div className="w-full space-y-5">
+          {policy?.sections?.map((section, index) => {
+            const Icon = iconMap[section.icon] || FileText
+
+            return (
+              <div
+                key={index}
+                className="bg-white border border-[#c7cad5] rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-all space-y-4"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 rounded-xl bg-[#fff4c4] border border-[#fde89c] flex items-center justify-center text-[#746019] shrink-0 shadow-2xs">
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <h2 className="text-lg sm:text-xl font-extrabold text-[#1c1c1e]">
+                        {section.title}
+                      </h2>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-[#6a6d7c] px-2 py-0.5 rounded-md bg-[#f0f1f4]">
+                        Section 0{index + 1}
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-[#555a6a] leading-relaxed whitespace-pre-line">
+                      {section.content}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </motion.div>
-          )
-        })}
- 
-         </motion.div>
- 
-         {/* Contact Section */}
-         <motion.div
-           initial={{ opacity: 0, y: 30 }}
-           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          className="text-center mt-8 sm:mt-12 md:mt-16 bg-white/60 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 max-w-2xl mx-auto"
-        >
-          <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Questions About Privacy?</h3>
-          <p className="text-xs sm:text-sm md:text-base text-gray-600 mb-4 sm:mb-6">
-            If you have any questions about this Privacy Policy or our data practices, please don't hesitate to contact
-            us.
+            )
+          })}
+        </div>
+
+        {/* Bottom Questions & Inquiries Card */}
+        <div className="w-full bg-[#1c1c1e] text-white rounded-3xl p-8 sm:p-10 text-center space-y-4 shadow-xl">
+          <span className="px-3 py-1 bg-[#ffd02f] text-[#1c1c1e] text-[10px] font-black uppercase tracking-wider rounded-full inline-block">
+            PRIVACY INQUIRIES
+          </span>
+          <h3 className="text-xl sm:text-3xl font-extrabold text-white">
+            Have Questions About Your Data Rights?
+          </h3>
+          <p className="text-xs sm:text-sm text-white/70 max-w-lg mx-auto leading-relaxed">
+            If you need assistance regarding data deletion, cookie preferences, or clarification on our storage practices, our compliance team is available.
           </p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => window.location.href = "/contact-us"}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 rounded-xl sm:rounded-2xl font-semibold shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 text-sm sm:text-base"
-          >
-            Contact Support
-          </motion.button>
-        </motion.div>
+          <div className="pt-2">
+            <button
+              onClick={() => navigate("/contact-us")}
+              className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] text-xs font-black uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer"
+            >
+              <span>Contact Compliance Officer</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -2,25 +2,20 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Card, CardContent } from "../../ui/card"
-import { Button } from "../../ui/button"
-import { Input } from "../../ui/input"
-import { Label } from "../../ui/label"
-import { Badge } from "../../ui/badge"
-import { Clock, Target, Zap, Loader2, X, ArrowLeft } from "lucide-react"
+import { Clock, Target, Zap, Loader2, X, ArrowLeft, Bot, Sparkles, CheckCircle, Database } from "lucide-react"
 import { getAllQuizRegions, createQuizWithGeneratedQuestion } from "../../../services/operations/quizAPI"
 import toast from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
-import puter from '@heyputer/puter.js'
-import questionIdGenerator from '../../../lib/questionIdGenerator'
+import puter from "@heyputer/puter.js"
+import questionIdGenerator from "../../../lib/questionIdGenerator"
 
 const shuffleOptions = (options, correctAnswer) => {
   const labels = ["A", "B", "C", "D"]
-  const values = labels.map(l => options[l])
+  const values = labels.map((l) => options[l])
 
   for (let i = values.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [values[i], values[j]] = [values[j], values[i]]
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[values[i], values[j]] = [values[j], values[i]]
   }
 
   const correctText = options[correctAnswer]
@@ -42,12 +37,12 @@ export default function CreateQuiz() {
     specificClass: "",
     subject: "",
     topics: [],
-    questionType: "",
-    languages: [],
-    totalQuestions: "",
-    duration: 0,
+    questionType: "Easy",
+    languages: ["English"],
+    totalQuestions: "5",
+    duration: 5,
   })
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const [regions, setRegions] = useState([])
   const [examTypes, setExamTypes] = useState([])
   const [specificClasses, setSpecificClasses] = useState([])
@@ -90,24 +85,24 @@ export default function CreateQuiz() {
 
   useEffect(() => {
     const handleBackButton = (event) => {
-      event.preventDefault();
-      navigate("/dashboard", { replace: true });
-    };
+      event.preventDefault()
+      navigate("/dashboard", { replace: true })
+    }
 
-    window.addEventListener("popstate", handleBackButton);
+    window.addEventListener("popstate", handleBackButton)
 
     return () => {
-      window.removeEventListener("popstate", handleBackButton);
-    };
-  }, [navigate]);
+      window.removeEventListener("popstate", handleBackButton)
+    }
+  }, [navigate])
 
   // Fetch exam types when region is selected
   useEffect(() => {
     if (formData.region) {
-      const selectedRegion = regions.find(region => region._id === formData.region)
+      const selectedRegion = regions.find((region) => region._id === formData.region)
       if (selectedRegion) {
         setExamTypes(selectedRegion.examTypes || [])
-        setFormData(prev => ({ ...prev, examType: "", specificClass: "", subject: "", topics: [] }))
+        setFormData((prev) => ({ ...prev, examType: "", specificClass: "", subject: "", topics: [] }))
       }
     } else {
       setExamTypes([])
@@ -117,12 +112,12 @@ export default function CreateQuiz() {
   // Fetch specific classes when exam type is selected
   useEffect(() => {
     if (formData.region && formData.examType) {
-      const selectedRegion = regions.find(region => region._id === formData.region)
+      const selectedRegion = regions.find((region) => region._id === formData.region)
       if (selectedRegion) {
-        const selectedExamType = selectedRegion.examTypes.find(et => et.name === formData.examType)
+        const selectedExamType = selectedRegion.examTypes?.find((et) => et.name === formData.examType)
         if (selectedExamType) {
           setSpecificClasses(selectedExamType.specificClasses || [])
-          setFormData(prev => ({ ...prev, specificClass: "", subject: "", topics: [] }))
+          setFormData((prev) => ({ ...prev, specificClass: "", subject: "", topics: [] }))
         }
       }
     } else {
@@ -133,14 +128,16 @@ export default function CreateQuiz() {
   // Fetch subjects when specific class is selected
   useEffect(() => {
     if (formData.region && formData.examType && formData.specificClass) {
-      const selectedRegion = regions.find(region => region._id === formData.region)
+      const selectedRegion = regions.find((region) => region._id === formData.region)
       if (selectedRegion) {
-        const selectedExamType = selectedRegion.examTypes.find(et => et.name === formData.examType)
+        const selectedExamType = selectedRegion.examTypes?.find((et) => et.name === formData.examType)
         if (selectedExamType) {
-          const selectedSpecificClass = selectedExamType.specificClasses.find(sc => sc.name === formData.specificClass)
+          const selectedSpecificClass = selectedExamType.specificClasses?.find(
+            (sc) => sc.name === formData.specificClass
+          )
           if (selectedSpecificClass) {
             setSubjects(selectedSpecificClass.subjects || [])
-            setFormData(prev => ({ ...prev, subject: "", topics: [] }))
+            setFormData((prev) => ({ ...prev, subject: "", topics: [] }))
           }
         }
       }
@@ -152,16 +149,20 @@ export default function CreateQuiz() {
   // Fetch topics when subject is selected
   useEffect(() => {
     if (formData.region && formData.examType && formData.specificClass && formData.subject) {
-      const selectedRegion = regions.find(region => region._id === formData.region)
+      const selectedRegion = regions.find((region) => region._id === formData.region)
       if (selectedRegion) {
-        const selectedExamType = selectedRegion.examTypes.find(et => et.name === formData.examType)
+        const selectedExamType = selectedRegion.examTypes?.find((et) => et.name === formData.examType)
         if (selectedExamType) {
-          const selectedSpecificClass = selectedExamType.specificClasses.find(sc => sc.name === formData.specificClass)
+          const selectedSpecificClass = selectedExamType.specificClasses?.find(
+            (sc) => sc.name === formData.specificClass
+          )
           if (selectedSpecificClass) {
-            const selectedSubject = selectedSpecificClass.subjects.find(sub => sub.name === formData.subject)
+            const selectedSubject = selectedSpecificClass.subjects?.find(
+              (sub) => sub.name === formData.subject
+            )
             if (selectedSubject) {
               setTopics(selectedSubject.chapters || [])
-              setFormData(prev => ({ ...prev, topics: [] }))
+              setFormData((prev) => ({ ...prev, topics: [] }))
             }
           }
         }
@@ -179,25 +180,27 @@ export default function CreateQuiz() {
       if (questionType === "Average") timePerQuestion = 2
       if (questionType === "Hard") timePerQuestion = 3
 
+      const parsed = Number.parseInt(totalQuestions) || 0
       setFormData((prev) => ({
         ...prev,
-        duration: Number.parseInt(totalQuestions) * timePerQuestion,
+        duration: parsed * timePerQuestion,
       }))
     }
   }, [formData.questionType, formData.totalQuestions])
 
   const buildPrompt = (count) => {
     const { questionType: difficulty, languages, region, examType, specificClass, subject, topics } = formData
-    const selectedRegion = regions.find(r => r._id === region)
+    const selectedRegion = regions.find((r) => r._id === region)
     const regionName = selectedRegion?.name || region
 
     const language = languages[0] || "English"
-    const nonEnglishNote = language.toLowerCase() !== "english"
-      ? `Do NOT use English. Respond strictly in ${language}.`
-      : ""
+    const nonEnglishNote =
+      language.toLowerCase() !== "english"
+        ? `Do NOT use English. Respond strictly in ${language}.`
+        : ""
 
     return `
-You are a professional exam setter for competitive engineering exams like GATE.
+You are a professional exam setter for competitive academic curricula.
 
 Generate exactly ${count} UNIQUE multiple-choice question(s) with:
 - Exactly four options labeled A, B, C, D
@@ -245,37 +248,37 @@ Respond ONLY with a valid JSON array. No markdown, no explanation, no code fence
     while (allQuestions.length < desiredCount && attempts < maxAttempts) {
       const remainingNeeded = desiredCount - allQuestions.length
       const prompt = buildPrompt(remainingNeeded)
-      
-      let response;
+
+      let response
       try {
         response = await puter.ai.chat(prompt, {
           model: "gpt-4o-mini",
           stream: false,
           temperature: 0.9,
-          max_tokens: 4096
+          max_tokens: 4096,
         })
       } catch (pErr) {
-        console.warn("Puter gpt-4o-mini failed, trying default model:", pErr);
-        response = await puter.ai.chat(prompt);
+        console.warn("Puter gpt-4o-mini failed, trying default model:", pErr)
+        response = await puter.ai.chat(prompt)
       }
 
-      let raw = response?.message?.content || response?.text || response;
-      if (typeof raw !== 'string') {
-        raw = JSON.stringify(raw) || "";
+      let raw = response?.message?.content || response?.text || response
+      if (typeof raw !== "string") {
+        raw = JSON.stringify(raw) || ""
       }
-      let cleaned = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
-      const arrayMatch = cleaned.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      let cleaned = raw.replace(/```json/gi, "").replace(/```/g, "").trim()
+      const arrayMatch = cleaned.match(/\[\s*\{[\s\S]*\}\s*\]/)
       if (arrayMatch) {
-        cleaned = arrayMatch[0];
+        cleaned = arrayMatch[0]
       }
 
-      let parsed;
+      let parsed
       try {
-        parsed = JSON.parse(cleaned);
+        parsed = JSON.parse(cleaned)
       } catch (e) {
-        console.error("AI parse error. Raw response:", raw);
-        attempts++;
-        continue;
+        console.error("AI parse error. Raw response:", raw)
+        attempts++
+        continue
       }
 
       if (!Array.isArray(parsed) || parsed.length === 0) {
@@ -291,17 +294,17 @@ Respond ONLY with a valid JSON array. No markdown, no explanation, no code fence
           !q.options?.C ||
           !q.options?.D ||
           !q.answer
-        ) continue
+        )
+          continue
 
-        // Check for duplicate using crypto-based ID generator
         const isDuplicate = await questionIdGenerator.isQuestionDuplicate(q.question)
-        
+
         if (!isDuplicate) {
           const { shuffledOptions, newCorrectAnswer } = shuffleOptions(q.options, q.answer)
           const uniqueId = await questionIdGenerator.generateUniqueId(q.question)
-          
+
           await questionIdGenerator.addQuestion(q.question, uniqueId)
-          
+
           allQuestions.push({
             id: uniqueId,
             text: q.question,
@@ -312,50 +315,52 @@ Respond ONLY with a valid JSON array. No markdown, no explanation, no code fence
             image: "",
             note: "",
             timestamp: Date.now(),
-            hash: await questionIdGenerator.generateQuestionHash(q.question)
+            hash: await questionIdGenerator.generateQuestionHash(q.question),
           })
-          
+
           totalGenerated++
           setProgress(totalGenerated)
           setStoreStats(questionIdGenerator.getStats())
         } else {
-          console.log('Duplicate detected:', q.question.substring(0, 50))
+          console.log("Duplicate detected:", q.question.substring(0, 50))
         }
-        
+
         if (allQuestions.length >= desiredCount) break
       }
-      
+
       attempts++
-      
-      // Wait before retry if needed
+
       if (allQuestions.length < desiredCount && attempts < maxAttempts) {
-        toast.loading(`Generated ${allQuestions.length} unique questions, generating ${desiredCount - allQuestions.length} more...`, { duration: 2000 })
-        await new Promise(r => setTimeout(r, 1000))
+        toast.loading(
+          `Generated ${allQuestions.length} unique questions, generating ${desiredCount - allQuestions.length} more...`,
+          { duration: 2000 }
+        )
+        await new Promise((r) => setTimeout(r, 1000))
       }
     }
-    
+
     return allQuestions
   }
 
   const generateUniqueQuestions = async (desiredCount) => {
-    // 1. First attempt: Puter AI from frontend
+    // 1. Puter AI
     try {
-      toast.loading("Generating with AI...", { id: "ai-gen" });
-      const puterQuestions = await generateUniqueQuestionsWithPuter(desiredCount);
+      toast.loading("Generating questions with AI...", { id: "ai-gen" })
+      const puterQuestions = await generateUniqueQuestionsWithPuter(desiredCount)
       if (Array.isArray(puterQuestions) && puterQuestions.length > 0) {
-        toast.success(`Generated ${puterQuestions.length} question(s) successfully!`, { id: "ai-gen" });
-        return puterQuestions;
+        toast.success(`Generated ${puterQuestions.length} question(s) successfully!`, { id: "ai-gen" })
+        return puterQuestions
       }
-      throw new Error("Puter AI generated no questions");
+      throw new Error("Puter AI generated no questions")
     } catch (puterError) {
-      console.warn("Puter AI failed or busy, falling back to OpenRouter NVIDIA:", puterError);
-      toast.loading("Generating with AI...", { id: "ai-gen" });
+      console.warn("Puter AI failed, trying backend fallback:", puterError)
+      toast.loading("Generating with AI...", { id: "ai-gen" })
     }
 
-    // 2. Fallback: OpenRouter AI from backend (NVIDIA model)
-    let allQuestions = [];
-    const selectedRegion = regions.find(r => r._id === formData.region);
-    const regionName = selectedRegion?.name || formData.region;
+    // 2. OpenRouter AI Fallback
+    let allQuestions = []
+    const selectedRegion = regions.find((r) => r._id === formData.region)
+    const regionName = selectedRegion?.name || formData.region
 
     try {
       const response = await createQuizWithGeneratedQuestion({
@@ -367,21 +372,21 @@ Respond ONLY with a valid JSON array. No markdown, no explanation, no code fence
         difficulty: formData.questionType,
         language: formData.languages,
         totalQuestions: desiredCount,
-      });
+      })
 
       if (response?.success && Array.isArray(response.questions) && response.questions.length > 0) {
         for (const q of response.questions) {
-          const qText = q.question || q.text;
-          const opts = q.options;
-          const ans = q.correctAnswer || q.answer;
+          const qText = q.question || q.text
+          const opts = q.options
+          const ans = q.correctAnswer || q.answer
 
-          if (!qText || !opts?.A || !opts?.B || !opts?.C || !opts?.D || !ans) continue;
+          if (!qText || !opts?.A || !opts?.B || !opts?.C || !opts?.D || !ans) continue
 
-          const isDuplicate = await questionIdGenerator.isQuestionDuplicate(qText);
+          const isDuplicate = await questionIdGenerator.isQuestionDuplicate(qText)
           if (!isDuplicate) {
-            const { shuffledOptions, newCorrectAnswer } = shuffleOptions(opts, ans);
-            const uniqueId = await questionIdGenerator.generateUniqueId(qText);
-            await questionIdGenerator.addQuestion(qText, uniqueId);
+            const { shuffledOptions, newCorrectAnswer } = shuffleOptions(opts, ans)
+            const uniqueId = await questionIdGenerator.generateUniqueId(qText)
+            await questionIdGenerator.addQuestion(qText, uniqueId)
 
             allQuestions.push({
               id: uniqueId,
@@ -393,27 +398,27 @@ Respond ONLY with a valid JSON array. No markdown, no explanation, no code fence
               image: "",
               note: "",
               timestamp: Date.now(),
-              hash: await questionIdGenerator.generateQuestionHash(qText)
-            });
+              hash: await questionIdGenerator.generateQuestionHash(qText),
+            })
 
-            setProgress(allQuestions.length);
-            setStoreStats(questionIdGenerator.getStats());
+            setProgress(allQuestions.length)
+            setStoreStats(questionIdGenerator.getStats())
           }
-          if (allQuestions.length >= desiredCount) break;
+          if (allQuestions.length >= desiredCount) break
         }
 
         if (allQuestions.length > 0) {
-          toast.success(`Generated ${allQuestions.length} question(s) successfully!`, { id: "ai-gen" });
-          return allQuestions;
+          toast.success(`Generated ${allQuestions.length} question(s) successfully!`, { id: "ai-gen" })
+          return allQuestions
         }
       }
-      throw new Error("Backend OpenRouter returned no valid questions");
+      throw new Error("Backend AI returned no valid questions")
     } catch (backendError) {
-      console.error("Backend OpenRouter failed as well:", backendError);
-      toast.error("Failed to generate questions with AI", { id: "ai-gen" });
+      console.error("Backend AI failed:", backendError)
+      toast.error("Failed to generate questions with AI", { id: "ai-gen" })
     }
 
-    return allQuestions;
+    return allQuestions
   }
 
   const generateQuestions = async () => {
@@ -426,12 +431,20 @@ Respond ONLY with a valid JSON array. No markdown, no explanation, no code fence
       questionType,
       languages,
       totalQuestions,
-    } = formData;
+    } = formData
 
-    // Validation
-    if (!region || !examType || !specificClass || !subject || !topics.length || !questionType || !languages.length || !totalQuestions) {
-      toast.error("Please fill all required fields");
-      return;
+    if (
+      !region ||
+      !examType ||
+      !specificClass ||
+      !subject ||
+      !topics.length ||
+      !questionType ||
+      !languages.length ||
+      !totalQuestions
+    ) {
+      toast.error("Please fill all required fields")
+      return
     }
 
     const count = parseInt(totalQuestions)
@@ -446,10 +459,14 @@ Respond ONLY with a valid JSON array. No markdown, no explanation, no code fence
     try {
       const generatedQuestions = await generateUniqueQuestions(count)
 
-      // Create quiz session with crypto IDs
+      if (!generatedQuestions.length) {
+        toast.error("No questions could be generated. Please try again.")
+        return
+      }
+
       const sessionId = await questionIdGenerator.generateUniqueId(`session_${Date.now()}`)
-      const selectedRegion = regions.find(r => r._id === region)
-      
+      const selectedRegion = regions.find((r) => r._id === region)
+
       const quizData = {
         id: sessionId,
         region: selectedRegion?.name || region,
@@ -463,24 +480,21 @@ Respond ONLY with a valid JSON array. No markdown, no explanation, no code fence
         questions: generatedQuestions,
         totalQuestions: generatedQuestions.length,
         sessionHash: await questionIdGenerator.generateQuestionHash(`${sessionId}-${Date.now()}`),
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date().toISOString(),
       }
 
-      // Store in localStorage with encryption
-      const savedQuizzes = localStorage.getItem('generatedQuizzes')
+      const savedQuizzes = localStorage.getItem("generatedQuizzes")
       const quizzes = savedQuizzes ? JSON.parse(savedQuizzes) : {}
       quizzes[sessionId] = {
         id: sessionId,
         createdAt: new Date().toISOString(),
         questions: generatedQuestions,
         metadata: quizData,
-        hash: await questionIdGenerator.generateQuestionHash(JSON.stringify(quizData))
+        hash: await questionIdGenerator.generateQuestionHash(JSON.stringify(quizData)),
       }
-      localStorage.setItem('generatedQuizzes', JSON.stringify(quizzes))
+      localStorage.setItem("generatedQuizzes", JSON.stringify(quizzes))
 
-      // Navigate to attempt page
-      navigate('/attempt', { state: { quizData } })
-
+      navigate("/attempt", { state: { quizData } })
     } catch (error) {
       console.error("AI Generation Error:", error)
       toast.error("Failed to generate questions: " + (error.message || "Unknown error"))
@@ -491,318 +505,364 @@ Respond ONLY with a valid JSON array. No markdown, no explanation, no code fence
   }
 
   const handleClearStore = () => {
-    if (window.confirm(`Are you sure you want to clear ${storeStats.totalQuestions} stored questions? This action cannot be undone.`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to clear ${storeStats.totalQuestions} stored questions? This action cannot be undone.`
+      )
+    ) {
       questionIdGenerator.clearStore()
       setStoreStats({ totalQuestions: 0, uniqueHashes: 0 })
       toast.success("Question store cleared successfully")
     }
   }
 
-  const handleCancel = () => {
-    window.location.href = "/dashboard"
-  }
-
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-800">Loading...</h2>
-          <p className="text-gray-600">Please wait while we load the quiz builder</p>
+      <div className="min-h-screen bg-[#f7f8fa] flex flex-col items-center justify-center p-6 text-center font-sans">
+        <div className="w-12 h-12 rounded-2xl bg-[#ffd02f] flex items-center justify-center mb-4 shadow-sm animate-pulse">
+          <Loader2 className="animate-spin h-6 w-6 text-[#1c1c1e]" />
         </div>
+        <p className="text-xs font-semibold uppercase tracking-wider text-[#555a6a]">
+          Loading AI quiz builder...
+        </p>
       </div>
     )
   }
 
   return (
-    <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="max-w-7xl mx-auto p-4 sm:p-6 md:p-8"
-      >
-        {/* Centered Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
-            Create Quiz
-          </h1>
-          <p className="text-gray-600 text-base sm:text-lg">
-            Configure your quiz and generate questions with AI
-          </p>
-          {storeStats.totalQuestions > 0 && (
-            <p className="text-xs text-gray-400 mt-2">
-              🔒 {storeStats.totalQuestions} unique questions in secure store
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-10 px-4 sm:px-6 lg:px-8 xl:px-12 w-full font-sans">
+      <div className="w-full space-y-6 sm:space-y-8">
+        {/* Navigation & Header */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <button
+              onClick={() => navigate("/dashboard")}
+              type="button"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#c7cad5] bg-white text-xs font-medium text-[#1c1c1e] hover:bg-[#f7f8fa] transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Dashboard</span>
+            </button>
+
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 bg-[#ffd02f] text-[#1c1c1e] text-[11px] font-semibold uppercase tracking-wider rounded-full">
+                AI GENERATOR
+              </span>
+              <span className="px-3 py-1 bg-[#f5f3ff] text-[#4262ff] text-[11px] font-semibold uppercase tracking-wider rounded-full">
+                CRYPTO-VERIFIED
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <h1 className="text-2xl sm:text-4xl font-medium tracking-tight text-[#1c1c1e]">
+              Create AI Assessment Quiz
+            </h1>
+            <p className="text-xs sm:text-sm text-[#555a6a] max-w-2xl leading-relaxed">
+              Configure curriculum parameters and generate unique, verified multiple-choice questions instantly using AI.
             </p>
+            {storeStats.totalQuestions > 0 && (
+              <p className="text-[11px] text-[#555a6a] pt-1">
+                🔒 {storeStats.totalQuestions} unique questions verified in local cryptographic hash store
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Configuration Card - Miro card-base */}
+        <div className="bg-white rounded-2xl border border-[#c7cad5] shadow-sm p-5 sm:p-7 space-y-6 w-full">
+          <div className="flex items-center gap-2.5 pb-3 border-b border-[#e6e8ec]">
+            <div className="w-8 h-8 rounded-lg bg-[#fff4c4] flex items-center justify-center text-[#746019]">
+              <Zap className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-base font-medium text-[#1c1c1e]">Curriculum & Parameters</h2>
+              <p className="text-xs text-[#555a6a]">Select academic board and specify topic details</p>
+            </div>
+          </div>
+
+          {/* 4-Column Hierarchy Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {/* Region */}
+            <div className="space-y-1.5 p-3 rounded-xl bg-[#fff8e0] border border-[#fde89c]/70">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#746019]">
+                Region / Board
+              </label>
+              <select
+                value={formData.region}
+                onChange={(e) => setFormData((prev) => ({ ...prev, region: e.target.value }))}
+                disabled={generating}
+                className="w-full h-10 px-3 bg-white border border-[#fde89c] rounded-lg text-xs font-medium text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#ffd02f] cursor-pointer"
+              >
+                <option value="">Select region</option>
+                {regions.map((region) => (
+                  <option key={region._id} value={region._id}>
+                    {region.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Exam Type */}
+            <div className="space-y-1.5 p-3 rounded-xl bg-[#c3faf5]/40 border border-[#0fbcb0]/30">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#187574]">
+                Exam Type
+              </label>
+              <select
+                value={formData.examType}
+                onChange={(e) => setFormData((prev) => ({ ...prev, examType: e.target.value }))}
+                disabled={!formData.region || generating}
+                className="w-full h-10 px-3 bg-white border border-[#0fbcb0]/40 rounded-lg text-xs font-medium text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#4262ff] disabled:bg-[#f7f8fa] disabled:text-[#a5a8b5] disabled:cursor-not-allowed cursor-pointer"
+              >
+                <option value="">Select exam type</option>
+                {examTypes.map((examType) => (
+                  <option key={examType.name} value={examType.name}>
+                    {examType.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Class */}
+            <div className="space-y-1.5 p-3 rounded-xl bg-[#ffd8f4]/40 border border-[#ffd8f4]">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#86296b]">
+                Class Level
+              </label>
+              <select
+                value={formData.specificClass}
+                onChange={(e) => setFormData((prev) => ({ ...prev, specificClass: e.target.value }))}
+                disabled={!formData.examType || generating}
+                className="w-full h-10 px-3 bg-white border border-[#ffd8f4] rounded-lg text-xs font-medium text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#4262ff] disabled:bg-[#f7f8fa] disabled:text-[#a5a8b5] disabled:cursor-not-allowed cursor-pointer"
+              >
+                <option value="">Select class</option>
+                {specificClasses.map((specificClass) => (
+                  <option key={specificClass.name} value={specificClass.name}>
+                    {specificClass.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Subject */}
+            <div className="space-y-1.5 p-3 rounded-xl bg-[#ffe6cd]/50 border border-[#ffe6cd]">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#746019]">
+                Subject
+              </label>
+              <select
+                value={formData.subject}
+                onChange={(e) => setFormData((prev) => ({ ...prev, subject: e.target.value }))}
+                disabled={!formData.specificClass || generating}
+                className="w-full h-10 px-3 bg-white border border-[#ffe6cd] rounded-lg text-xs font-medium text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#4262ff] disabled:bg-[#f7f8fa] disabled:text-[#a5a8b5] disabled:cursor-not-allowed cursor-pointer"
+              >
+                <option value="">Select subject</option>
+                {subjects.map((subject) => (
+                  <option key={subject.name} value={subject.name}>
+                    {subject.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Topics Multi-Select & Chips */}
+          <div className="space-y-2 pt-2 border-t border-[#e6e8ec]">
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#555a6a]">
+              Chapter / Topics (Select to Add)
+            </label>
+            <select
+              value={formData.topics[0] || ""}
+              onChange={(e) => {
+                if (e.target.value && !formData.topics.includes(e.target.value)) {
+                  setFormData((prev) => ({
+                    ...prev,
+                    topics: [...prev.topics, e.target.value],
+                  }))
+                }
+              }}
+              disabled={!formData.subject || generating}
+              className="w-full h-11 px-3.5 bg-white border border-[#c7cad5] rounded-lg text-sm font-normal text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#4262ff] disabled:bg-[#f7f8fa] disabled:text-[#a5a8b5] disabled:cursor-not-allowed cursor-pointer"
+            >
+              <option value="">Choose topics from subject list...</option>
+              {topics.map((topic) => (
+                <option key={topic.name} value={topic.name}>
+                  {topic.name}
+                </option>
+              ))}
+            </select>
+
+            {formData.topics.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                {formData.topics.map((topic, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#fff8e0] text-[#746019] border border-[#fde89c] rounded-full text-xs font-semibold"
+                  >
+                    <span>{topic}</span>
+                    <X
+                      className="w-3.5 h-3.5 cursor-pointer hover:text-[#600000]"
+                      onClick={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          topics: prev.topics.filter((t) => t !== topic),
+                        }))
+                      }}
+                    />
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Assessment Parameters Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2 border-t border-[#e6e8ec]">
+            {/* Difficulty */}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#555a6a]">
+                Difficulty Level
+              </label>
+              <select
+                value={formData.questionType}
+                onChange={(e) => setFormData((prev) => ({ ...prev, questionType: e.target.value }))}
+                disabled={generating}
+                className="w-full h-11 px-3.5 bg-white border border-[#c7cad5] rounded-lg text-sm text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#4262ff] cursor-pointer"
+              >
+                {questionTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Language */}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#555a6a]">
+                Language
+              </label>
+              <select
+                value={formData.languages[0] || ""}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      languages: [e.target.value],
+                    }))
+                  }
+                }}
+                disabled={generating}
+                className="w-full h-11 px-3.5 bg-white border border-[#c7cad5] rounded-lg text-sm text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#4262ff] cursor-pointer"
+              >
+                {languages.map((language) => (
+                  <option key={language} value={language}>
+                    {language}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Total Questions */}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#555a6a]">
+                Total Questions (1–20)
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="20"
+                placeholder="5"
+                value={formData.totalQuestions}
+                onChange={(e) => setFormData((prev) => ({ ...prev, totalQuestions: e.target.value }))}
+                disabled={generating}
+                className="w-full h-11 px-3.5 bg-white border border-[#c7cad5] rounded-lg text-sm text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#4262ff]"
+              />
+            </div>
+
+            {/* Duration */}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#555a6a]">
+                Estimated Duration
+              </label>
+              <div className="w-full h-11 px-3.5 bg-[#f7f8fa] border border-[#c7cad5] rounded-lg flex items-center gap-2 text-sm text-[#1c1c1e]">
+                <Clock className="w-4 h-4 text-[#555a6a]" />
+                <span className="font-medium">{formData.duration || 0} Minutes</span>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Generation State */}
+          {generating && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-5 rounded-2xl bg-[#fff8e0] border border-[#fde89c] text-center space-y-3"
+            >
+              <div className="flex items-center justify-center gap-2 text-sm font-medium text-[#746019]">
+                <Loader2 className="w-4 h-4 animate-spin text-[#746019]" />
+                <span>Generating unique questions with cryptographic hash verification...</span>
+              </div>
+              {progress > 0 && (
+                <div className="space-y-2">
+                  <p className="text-base font-semibold text-[#1c1c1e]">
+                    {progress} of {formData.totalQuestions} unique questions generated
+                  </p>
+                  <div className="w-full bg-[#fde89c] h-1.5 rounded-full overflow-hidden">
+                    <div
+                      className="bg-[#1c1c1e] h-full transition-all duration-300"
+                      style={{
+                        width: `${Math.min((progress / (parseInt(formData.totalQuestions) || 1)) * 100, 100)}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </motion.div>
           )}
         </div>
 
-        {/* Main Form Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-        >
-          <Card className="bg-white/90 border-0 shadow-xl rounded-none">
-            <CardContent className="p-6 space-y-6">
-              {/* All fields in a single grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Region</Label>
-                  <select
-                    value={formData.region}
-                    onChange={(e) => setFormData(prev => ({ ...prev, region: e.target.value }))}
-                    disabled={generating}
-                    className="w-full h-11 px-3 border-2 border-gray-200 rounded-none font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:outline-none bg-white"
-                  >
-                    <option value="">Select region</option>
-                    {regions.map((region) => (
-                      <option key={region._id} value={region._id}>
-                        {region.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+        {/* Bottom Actions */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+          <button
+            onClick={() => navigate("/dashboard")}
+            type="button"
+            disabled={generating}
+            className="py-3 px-8 border border-[#c7cad5] text-[#1c1c1e] rounded-full text-sm font-medium hover:bg-[#f7f8fa] transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Exam Type</Label>
-                  <select
-                    value={formData.examType}
-                    onChange={(e) => setFormData(prev => ({ ...prev, examType: e.target.value }))}
-                    disabled={!formData.region || generating}
-                    className="w-full h-11 px-3 border-2 border-gray-200 rounded-none font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:outline-none bg-white"
-                  >
-                    <option value="">Select exam type</option>
-                    {examTypes.map((examType) => (
-                      <option key={examType.name} value={examType.name}>
-                        {examType.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Class</Label>
-                  <select
-                    value={formData.specificClass}
-                    onChange={(e) => setFormData(prev => ({ ...prev, specificClass: e.target.value }))}
-                    disabled={!formData.examType || generating}
-                    className="w-full h-11 px-3 border-2 border-gray-200 rounded-none font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:outline-none bg-white"
-                  >
-                    <option value="">Select class</option>
-                    {specificClasses.map((specificClass) => (
-                      <option key={specificClass.name} value={specificClass.name}>
-                        {specificClass.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Subject</Label>
-                  <select
-                    value={formData.subject}
-                    onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                    disabled={!formData.specificClass || generating}
-                    className="w-full h-11 px-3 border-2 border-gray-200 rounded-none font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:outline-none bg-white"
-                  >
-                    <option value="">Select subject</option>
-                    {subjects.map((subject) => (
-                      <option key={subject.name} value={subject.name}>
-                        {subject.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Topics</Label>
-                  <select
-                    value={formData.topics[0] || ""}
-                    onChange={(e) => {
-                      if (!formData.topics.includes(e.target.value)) {
-                        setFormData(prev => ({
-                          ...prev,
-                          topics: [...prev.topics, e.target.value],
-                        }))
-                      }
-                    }}
-                    disabled={!formData.subject || generating}
-                    className="w-full h-11 px-3 border-2 border-gray-200 rounded-none font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:outline-none bg-white"
-                  >
-                    <option value="">Select topics</option>
-                    {topics.map((topic) => (
-                      <option key={topic.name} value={topic.name}>
-                        {topic.name}
-                      </option>
-                    ))}
-                  </select>
-                  {formData.topics.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {formData.topics.map((topic, index) => (
-                        <Badge key={index} variant="secondary" className="bg-blue-100 text-blue-800 rounded-none text-xs">
-                          {topic}
-                          <X
-                            className="w-3 h-3 ml-1 cursor-pointer hover:text-red-600"
-                            onClick={() => {
-                              setFormData(prev => ({
-                                ...prev,
-                                topics: prev.topics.filter(t => t !== topic),
-                              }))
-                            }}
-                          />
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Difficulty</Label>
-                  <select
-                    value={formData.questionType}
-                    onChange={(e) => setFormData(prev => ({ ...prev, questionType: e.target.value }))}
-                    disabled={generating}
-                    className="w-full h-11 px-3 border-2 border-gray-200 rounded-none font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:outline-none bg-white"
-                  >
-                    <option value="">Select difficulty</option>
-                    {questionTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Language</Label>
-                  <select
-                    value={formData.languages[0] || ""}
-                    onChange={(e) => {
-                      if (!formData.languages.includes(e.target.value)) {
-                        setFormData(prev => ({
-                          ...prev,
-                          languages: [e.target.value],
-                        }))
-                      }
-                    }}
-                    disabled={generating}
-                    className="w-full h-11 px-3 border-2 border-gray-200 rounded-none font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:outline-none bg-white"
-                  >
-                    <option value="">Select language</option>
-                    {languages.map((language) => (
-                      <option key={language} value={language}>
-                        {language}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Total Questions</Label>
-                  <Input
-                    type="number"
-                    placeholder="1-20"
-                    value={formData.totalQuestions}
-                    onChange={(e) => setFormData(prev => ({ ...prev, totalQuestions: e.target.value }))}
-                    disabled={generating}
-                    className="w-full h-11 px-3 border-2 border-gray-200 rounded-none font-medium"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Duration (minutes)</Label>
-                  <div className="w-full h-11 px-3 bg-gray-50 border-2 border-gray-200 rounded-none flex items-center">
-                    <Clock className="w-4 h-4 mr-2 text-gray-500" />
-                    <span className="text-gray-700 font-medium">{formData.duration} min</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Generation Progress */}
-              {generating && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4"
-                >
-                  <div className="text-center space-y-3">
-                    <div className="flex items-center justify-center gap-3">
-                      <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
-                      <p className="text-gray-700 font-medium">Generating unique questions with crypto verification...</p>
-                    </div>
-                    {progress > 0 && (
-                      <>
-                        <p className="text-2xl font-bold text-indigo-600">
-                          {progress}
-                          <span className="text-base text-gray-400"> unique questions generated</span>
-                        </p>
-                        <div className="w-full bg-gray-200 h-1 overflow-hidden">
-                          <motion.div
-                            className="h-1 bg-gradient-to-r from-indigo-500 to-purple-500"
-                            initial={{ width: "0%" }}
-                            animate={{ width: `${Math.min((progress / parseInt(formData.totalQuestions)) * 100, 100)}%` }}
-                            transition={{ duration: 0.3 }}
-                          />
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Action Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="flex flex-col sm:flex-row gap-3 mt-6 justify-center"
-        >
-          <Button
+          <button
             onClick={generateQuestions}
             disabled={generating}
-            className="h-12 px-8 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-none shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50"
+            type="button"
+            className="py-3.5 px-8 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] active:bg-[#e0b020] text-[#1c1c1e] text-sm font-semibold uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:bg-[#e0e2e8] disabled:text-[#a5a8b5]"
           >
             {generating ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Generating Quiz...
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Generating Assessment...</span>
               </>
             ) : (
               <>
-                <Zap className="w-4 h-4 mr-2" />
-                Generate Quiz
+                <Zap className="w-4 h-4" />
+                <span>Generate Quiz Assessment</span>
               </>
             )}
-          </Button>
+          </button>
+        </div>
 
-          <Button
-            onClick={handleCancel}
-            variant="outline"
-            disabled={generating}
-            className="h-12 px-8 border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold rounded-none hover:bg-gray-50 transform hover:scale-105 transition-all duration-200 bg-transparent"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Cancel
-          </Button>
-        </motion.div>
-
-        {/* Clear Store Button */}
+        {/* Clear Store Link */}
         {storeStats.totalQuestions > 0 && !generating && (
-          <div className="flex justify-center mt-4">
-            <Button
+          <div className="text-center pt-2 pb-8">
+            <button
               onClick={handleClearStore}
-              variant="ghost"
-              className="text-xs text-gray-400 hover:text-red-600"
+              type="button"
+              className="text-xs text-[#555a6a] hover:text-[#600000] hover:underline cursor-pointer transition-colors"
             >
-              Clear Question Store ({storeStats.totalQuestions} questions)
-            </Button>
+              Clear Cryptographic Question Store ({storeStats.totalQuestions} questions cached)
+            </button>
           </div>
         )}
-      </motion.div>
+      </div>
     </div>
   )
 }

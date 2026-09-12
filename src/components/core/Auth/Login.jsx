@@ -2,18 +2,19 @@
 
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Eye, EyeOff, User, Lock, Mail } from "lucide-react" 
+import { Eye, EyeOff, User, Lock, Mail, ArrowLeft, LogIn } from "lucide-react" 
 import toast from "react-hot-toast"
 import { login } from "../../../services/operations/authAPI"
 import { googleLogin } from "../../../services/operations/googleauth"
 
 export default function Login() {
   const [formData, setFormData] = useState({
-    role: "",
+    role: "user",
     email: "",
     password: "",
   })
   const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
 
   const handleInputChange = (e) => {
@@ -26,6 +27,7 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setIsLoading(true)
     const toastId = toast.loading("Logging in...")
 
     try {
@@ -61,13 +63,11 @@ export default function Login() {
       toast.dismiss(toastId)
       toast.error(errorMessage)
       console.error("Login failed:", error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleRegisterClick = () => {
-    navigate("/signup")
-  }
-   
   // Browser back to home 
   useEffect(() => {
     const handleBackButton = (event) => {
@@ -82,114 +82,153 @@ export default function Login() {
   }, [navigate])
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4 sm:p-6">
-      <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl">
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center w-full">
+      <div className="w-full max-w-lg space-y-6">
+        
+        {/* Top bar */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-xs font-bold shadow-sm active:scale-95"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Home</span>
+          </button>
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#ffd02f] text-[#1c1c1e]">
+            AUTH PORTAL
+          </span>
+        </div>
+
         {/* Main Card */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-6 sm:p-8 md:p-10 lg:p-12 mx-auto">
+        <div className="bg-white rounded-2xl border border-[#c7cad5] shadow-sm p-6 sm:p-8 space-y-6">
           {/* Header */}
-          <div className="text-center mb-6 sm:mb-8">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
-              <User className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+          <div className="text-center space-y-2">
+            <div className="w-12 h-12 rounded-2xl bg-[#ffd02f] text-[#1c1c1e] flex items-center justify-center mx-auto shadow-sm">
+              <User className="w-6 h-6" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Welcome Back</h1>
-            <p className="text-sm sm:text-base text-gray-600">Sign in to your account</p>
+            <h1 className="text-2xl font-bold tracking-tight text-[#1c1c1e]">
+              Welcome Back
+            </h1>
+            <p className="text-xs sm:text-sm text-[#555a6a]">
+              Sign in to access your dashboard and study resources
+            </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 md:space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Role Selection */}
-            <div className="space-y-2 sm:space-y-3">
-              <label className="text-xs sm:text-sm font-medium text-gray-700 block">Select Role</label>
-              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-[#555a6a] block">
+                Select Your Role
+              </label>
+              <div className="grid grid-cols-3 gap-2">
                 {["admin", "manager", "user"].map((role) => (
                   <button
                     key={role}
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, role }))}
-                    className={`px-3 py-2 sm:px-4 sm:py-3 rounded-xl border-2 font-medium transition-all duration-300 text-xs sm:text-sm ${
+                    className={`h-11 min-h-[44px] rounded-xl border text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center ${
                       formData.role === role
-                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                        : "border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300 hover:bg-gray-100"
+                        ? "bg-[#1c1c1e] text-[#ffd02f] border-[#1c1c1e] shadow-sm"
+                        : "bg-[#f7f8fa] border-[#c7cad5] text-[#555a6a] hover:bg-white hover:text-[#1c1c1e]"
                     }`}
                   >
-                    {role ? role.charAt(0).toUpperCase() + role.slice(1) : ""}
+                    {role}
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Email Field */}
-            <div className="space-y-1 sm:space-y-2">
-              <label className="text-xs sm:text-sm font-medium text-gray-700 block">Email Address</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-[#555a6a] block">
+                Email Address *
+              </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555a6a] pointer-events-none" />
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  placeholder="Enter your email"
-                  className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base"
+                  placeholder="name@example.com"
+                  className="w-full h-11 min-h-[44px] pl-10 pr-4 bg-[#fffdf5] border border-[#c7cad5] rounded-xl focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 focus:outline-none transition-all text-sm font-semibold text-[#1c1c1e]"
                   required
                 />
               </div>
             </div>
 
             {/* Password Field */}
-            <div className="space-y-1 sm:space-y-2">
-              <label className="text-xs sm:text-sm font-medium text-gray-700 block">Password</label>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                  Password *
+                </label>
+                <button
+                  type="button"
+                  onClick={() => navigate("/forgot-password")}
+                  className="text-xs font-bold text-[#4262ff] hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555a6a] pointer-events-none" />
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="Enter your password"
-                  className="w-full pl-9 sm:pl-10 pr-11 sm:pr-12 py-2 sm:py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base"
+                  className="w-full h-11 min-h-[44px] pl-10 pr-11 bg-white border border-[#c7cad5] rounded-xl focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 focus:outline-none transition-all text-sm font-semibold text-[#1c1c1e]"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#555a6a] hover:text-[#1c1c1e] transition-colors"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Eye className="h-4 w-4 sm:h-5 sm:w-5" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            {/* Forgot Password */}
-            <div className="text-right">
+            {/* Submit Button */}
+            <div className="pt-2">
               <button
-                type="button"
-                onClick={() => navigate("/forgot-password")}
-                className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-12 min-h-[48px] bg-[#ffd02f] hover:bg-[#fcb900] disabled:bg-[#f7f8fa] text-[#1c1c1e] font-extrabold text-sm rounded-full shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2"
               >
-                Forgot Password?
+                {isLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-[#1c1c1e] border-t-transparent rounded-full animate-spin" />
+                    <span>Signing in...</span>
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="w-4 h-4 text-[#1c1c1e]" />
+                    <span>Sign In</span>
+                  </>
+                )}
               </button>
             </div>
-
-            {/* Login Button */}
-            <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 sm:py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 text-sm sm:text-base"
-            >
-              LogIn
-            </button>
           </form>
 
           {/* Divider */}
-          <div className="my-6 sm:my-8 flex items-center">
-            <div className="flex-1 border-t border-gray-300"></div>
-            <span className="px-3 text-xs sm:text-sm text-gray-500">Or continue with</span>
-            <div className="flex-1 border-t border-gray-300"></div>
+          <div className="relative flex py-2 items-center">
+            <div className="flex-grow border-t border-[#e0e2e8]"></div>
+            <span className="flex-shrink mx-4 text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+              Or continue with
+            </span>
+            <div className="flex-grow border-t border-[#e0e2e8]"></div>
           </div>
 
           {/* Google Login Button */}
           <button
+            type="button"
             onClick={() => googleLogin(formData.role || "user")}
-            className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 font-medium py-2 sm:py-3 px-6 rounded-xl shadow-md hover:shadow-lg hover:bg-gray-50 transform hover:scale-[1.02] transition-all duration-300 text-sm sm:text-base"
+            className="w-full h-12 min-h-[48px] flex items-center justify-center gap-3 bg-white border border-[#c7cad5] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] text-[#1c1c1e] font-bold text-sm rounded-full shadow-sm transition-all active:scale-[0.98]"
           >
             <svg className="h-5 w-5" viewBox="0 0 533.5 544.3">
               <path
@@ -209,18 +248,19 @@ export default function Login() {
                 d="M272 107.7c39.5-.6 77.5 13.9 106.4 40.7l79.4-79.4C411.1 24.5 343.5 0 272 0 167.3 0 77.5 68.7 32.9 161.6l88.7 69.4C142.8 154.8 202.1 107.7 272 107.7z"
               />
             </svg>
-            Login as a User with Google
+            <span>Continue with Google</span>
           </button>
 
           {/* Register Link */}
-          <div className="mt-6 sm:mt-8 text-center">
-            <p className="text-xs sm:text-sm text-gray-600">
-              Not registered?{" "}
+          <div className="text-center pt-2">
+            <p className="text-xs sm:text-sm text-[#555a6a]">
+              Don't have an account?{" "}
               <button
-                onClick={handleRegisterClick}
-                className="text-blue-600 hover:text-blue-700 font-semibold transition-colors duration-200"
+                type="button"
+                onClick={() => navigate("/signup")}
+                className="text-[#4262ff] hover:underline font-bold"
               >
-                Register
+                Sign Up
               </button>
             </p>
           </div>

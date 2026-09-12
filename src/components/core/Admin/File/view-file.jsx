@@ -1,11 +1,22 @@
 "use client"
+
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { useParams } from "react-router-dom"
-import { useNavigate } from "react-router-dom"
-import { FileText, Calendar, Tag, MapPin, Layers, Clock, BookOpen, Eye, Download, X } from "lucide-react"
+import { useParams, useNavigate } from "react-router-dom"
+import { FileText, Tag, BookOpen, Eye, Download, ArrowLeft, CheckCircle, XCircle } from "lucide-react"
 import { getFileById, updateFileStatus } from "../../../../services/operations/filesAPI"
 import toast from "react-hot-toast"
+
+const MiroLoader = ({ message = "Loading file details..." }) => (
+  <div className="flex flex-col items-center justify-center py-16 gap-3">
+    <div className="relative w-12 h-12">
+      <div className="w-12 h-12 rounded-full border-4 border-[#eef0f3] border-t-[#ffd02f] border-r-[#1c1c1e] animate-spin" />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-3 h-3 rounded-full bg-[#ffd02f]" />
+      </div>
+    </div>
+    <span className="text-xs font-bold uppercase tracking-wider text-[#555a6a]">{message}</span>
+  </div>
+)
 
 const ViewFile = () => {
   const [fileData, setFileData] = useState(null)
@@ -39,12 +50,10 @@ const ViewFile = () => {
       setPublishing(true)
       await updateFileStatus(id, "Approved File")
       setFileData((prev) => ({ ...prev, status: "Approved File" }))
-      toast.success("File published successfully!")
+      toast.success("File approved successfully!")
       navigate("/filter-file")
-      const updatedData = await getFileById(id)
-      setFileData(updatedData?.file)
     } catch (error) {
-      toast.error("Failed to publish file. Please try again.")
+      toast.error("Failed to approve file")
     } finally {
       setPublishing(false)
     }
@@ -57,26 +66,19 @@ const ViewFile = () => {
       setFileData((prev) => ({ ...prev, status: "Rejected File" }))
       toast.success("File rejected successfully!")
       navigate("/filter-file")
-      const updatedData = await getFileById(id)
-      setFileData(updatedData?.file)
     } catch (error) {
-      toast.error("Failed to reject file. Please try again.")
+      toast.error("Failed to reject file")
     } finally {
       setRejecting(false)
     }
   }
 
-  const handleCancel = () => {
-    window.history.back()
-  }
-
   const formatDate = (dateString) => {
+    if (!dateString) return "—"
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
     })
   }
 
@@ -88,22 +90,26 @@ const ViewFile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading file details...</p>
-        </div>
+      <div className="min-h-screen bg-[#f7f8fa] flex items-center justify-center p-6">
+        <MiroLoader message="Retrieving file document..." />
       </div>
     )
   }
 
   if (!fileData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">File not found</p>
+      <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-12 px-6 flex flex-col items-center justify-center gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-[#fbd4d4] flex items-center justify-center text-red-500">
+          <FileText className="w-8 h-8" />
         </div>
+        <h2 className="text-xl font-bold">File Not Found</h2>
+        <p className="text-sm text-[#555a6a]">The requested document does not exist or has been removed.</p>
+        <button
+          onClick={() => navigate("/filter-file")}
+          className="px-6 py-2.5 rounded-full bg-[#1c1c1e] text-white text-sm font-bold shadow-sm"
+        >
+          Back to Files
+        </button>
       </div>
     )
   }
@@ -113,219 +119,180 @@ const ViewFile = () => {
   const downloadName = `${fileNameWithoutExt}.${extension}`
 
   return (
-    <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl shadow-2xl overflow-hidden"
-        >
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 sm:p-8">
-            <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-              <div className="flex-1">
-                <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">{fileData.fileTitle}</h1>
-                <div className="flex items-center space-x-4 bg-white/10 rounded-2xl p-3 sm:p-4 mb-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-white/20 bg-blue-500 flex items-center justify-center text-white font-bold">
-                    {fileData.fileCreatorName?.charAt(0) || "U"}
-                  </div>
-                  <div>
-                    <h3 className="text-white font-semibold text-sm sm:text-base">
-                      {fileData.fileCreatorName || "Unknown Creator"}
-                    </h3>
-                    <p className="text-blue-100 text-xs sm:text-sm">{fileData.region || "No region specified"}</p>
-                  </div>
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-8 px-4 sm:px-6 lg:px-8 xl:px-12 w-full">
+      <div className="w-full space-y-6">
+        
+        {/* Header Bar (Posts Pattern) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e0e2e8]">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => navigate("/filter-file")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Repository</span>
+            </button>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#ffd02f] text-[#1c1c1e]">
+              FILE STUDIO
+            </span>
+            <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#c3faf5] text-[#187574] border border-[#9eece4]">
+              DOCUMENT INSPECTOR
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-bold ${
+                fileData.status === "Approved File"
+                  ? "bg-[#c3faf5] text-[#187574] border border-[#9eece4]"
+                  : fileData.status === "Rejected File"
+                    ? "bg-[#fbd4d4] text-[#800000] border border-[#e3c5c5]"
+                    : "bg-[#fff8e0] text-[#746019] border border-[#fde89c]"
+              }`}
+            >
+              {fileData.status || "Waiting for Approval"}
+            </span>
+          </div>
+        </div>
+
+        {/* Page Title */}
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#1c1c1e]">
+            {fileData.fileTitle}
+          </h1>
+          <p className="text-sm sm:text-base text-[#555a6a]">
+            Published by {fileData.fileCreatorName || "Admin"} • {fileData.region || "No Region"} • Added {formatDate(fileData.createdAt)}
+          </p>
+        </div>
+
+        {/* Details Card */}
+        <div className="bg-white rounded-2xl border border-[#e0e2e8] shadow-sm p-5 sm:p-7 space-y-6 w-full">
+          {/* File Document Preview */}
+          {fileData.fileUrl && (
+            <div className="bg-[#f7f8fa] border border-[#e0e2e8] rounded-2xl p-6 flex flex-col items-center justify-center min-h-[220px]">
+              {fileData.imageUrl ? (
+                <img
+                  src={fileData.imageUrl || "/placeholder.svg"}
+                  alt={fileData.fileTitle || "File preview"}
+                  className="object-contain max-h-64 max-w-full rounded-xl shadow-xs border border-[#e0e2e8] mb-4 bg-white"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-2xl bg-white border border-[#c7cad5] flex items-center justify-center text-[#555a6a] mb-4 shadow-xs">
+                  <FileText className="w-8 h-8" />
                 </div>
-              </div>
-              <div className="text-right text-white">
-                <p className="text-blue-100 text-sm">
-                  <Clock size={14} className="inline mr-1" />
-                  {formatDate(fileData.createdAt)}
-                </p>
-                <div className="mt-2">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                      fileData.status === "Approved File"
-                        ? "bg-green-100 text-green-800"
-                        : fileData.status === "Rejected File"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
-                    }`}
-                  >
-                    {fileData.status || "Unknown Status"}
-                  </span>
-                </div>
+              )}
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <button
+                  onClick={viewFileInGoogleDocs}
+                  className="px-6 py-2.5 bg-[#4262ff] hover:bg-[#3451e0] text-white font-bold rounded-full text-xs sm:text-sm flex items-center gap-2 shadow-sm transition-all active:scale-95"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>Open in Document Viewer</span>
+                </button>
+                <a
+                  href={fileData.fileUrl}
+                  download={downloadName}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-2.5 bg-[#1c1c1e] hover:bg-[#2c2c34] text-white font-bold rounded-full text-xs sm:text-sm flex items-center gap-2 shadow-sm transition-all active:scale-95"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download Document</span>
+                </a>
               </div>
             </div>
-          </div>
-          <div className="p-6 sm:p-8 space-y-6 sm:space-y-8">
-            {fileData.fileUrl && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 }}
-                className="relative"
-              >
-                <div className="bg-gray-100 w-full h-48 border sm:h-64 rounded-2xl shadow-lg flex items-center justify-center">
-                  {fileData.imageUrl ? (
-                    <img
-                      src={fileData.imageUrl || "/placeholder.svg"}
-                      alt={fileData.fileTitle || "File preview"}
-                      className="object-contain max-h-full max-w-full rounded-2xl"
-                    />
-                  ) : (
-                    <FileText className="w-16 h-16 text-gray-400" />
-                  )}
-                </div>
-              </motion.div>
-            )}
+          )}
 
-            <div className="space-y-4">
-              <h3 className="font-bold text-gray-800 text-lg sm:text-xl flex items-center">
-                <BookOpen className="mr-2 text-purple-600" size={20} />
-                File Description
+          {/* Description */}
+          {fileData.fileDescription && (
+            <div className="space-y-2">
+              <h3 className="text-sm sm:text-base font-bold text-[#1c1c1e] flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-[#4262ff]" />
+                <span>Description & Overview</span>
               </h3>
-              <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-inner">
+              <div className="bg-[#f7f8fa] rounded-xl p-4 sm:p-6 border border-[#e0e2e8]">
                 <div
-                  className="text-gray-700 leading-relaxed prose prose-sm sm:prose-base max-w-none"
+                  className="text-[#1c1c1e] text-sm leading-relaxed prose prose-sm max-w-none"
                   dangerouslySetInnerHTML={{ __html: fileData.fileDescription }}
                 />
               </div>
             </div>
-            <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 border border-gray-400">
-              <h3 className="font-bold text-gray-800 mb-3 sm:mb-4 flex items-center text-sm sm:text-base">
-                <FileText className="mr-2" size={18} />
-                File Information
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-600">File Name</p>
-                  <p className="font-medium text-gray-800 text-sm sm:text-base">{fileData.fileTitle || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-600">Comment Status</p>
-                  <p className="font-medium text-gray-800 text-sm sm:text-base">
-                    {fileData.showCommentBox ? "Yes" : "No" || "—"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-600">Academic Year</p>
-                  <p className="font-medium text-gray-800 text-sm sm:text-base">
-                   {Array.isArray(fileData.additionalAcademicYears)
-                     ? fileData.additionalAcademicYears.join(', ')
-                     : fileData.additionalAcademicYears || "—"}
-                 </p>
-                </div>
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-600">Upload Method</p>
-                  <p className="font-medium text-gray-800 text-sm sm:text-base capitalize">
-                    {fileData.uploadMethod || "—"}
-                  </p>
-                </div>
+          )}
+
+          {/* Taxonomy & Metadata Grid */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+              Taxonomy Classification & Metadata
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-xl bg-white border border-[#e0e2e8]">
+                <span className="text-xs text-[#555a6a] font-medium block">Region</span>
+                <span className="font-bold text-sm text-[#1c1c1e]">{fileData.region || "—"}</span>
               </div>
-              {fileData.fileUrl && (
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <button
-                    onClick={viewFileInGoogleDocs}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                  >
-                    <Eye size={16} />
-                    View File
-                  </button>
-                  <a
-                    href={fileData.fileUrl}
-                    download={downloadName}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                  >
-                    <Download size={16} />
-                    Download
-                  </a>
-                </div>
-              )}
-            </div>
-            {fileData.tags?.length > 0 && (
-              <div>
-                <h3 className="font-bold text-gray-800 mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
-                  <Tag className="mr-2" size={18} />
-                  Tags
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {fileData.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="bg-blue-100 text-blue-800 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
+              <div className="p-3.5 rounded-xl bg-white border border-[#e0e2e8]">
+                <span className="text-xs text-[#555a6a] font-medium block">Category 1</span>
+                <span className="font-bold text-sm text-[#1c1c1e]">{fileData.category1 || "—"}</span>
               </div>
-            )}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-6 sm:pt-8 border-t border-gray-200">
-              {fileData.status === "Approved File" ? (
-                <button
-                  onClick={handleReject}
-                  disabled={rejecting}
-                  className={`flex-1 h-12 sm:h-14 bg-gradient-to-r from-red-600 to-rose-600 text-white font-bold text-base sm:text-lg rounded-2xl
-                                hover:from-red-700 hover:to-rose-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg
-                                flex items-center justify-center space-x-2 ${rejecting ? "opacity-70 cursor-not-allowed" : ""}`}
-                >
-                  {rejecting ? (
-                    <span>Rejecting...</span>
-                  ) : (
-                    <>
-                      <X size={18} />
-                      <span>Reject File</span>
-                    </>
-                  )}
-                </button>
-              ) : fileData.status === "Rejected File" ? (
-                <button
-                  onClick={handlePublish}
-                  disabled={publishing}
-                  className={`flex-1 h-12 sm:h-14 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold text-base sm:text-lg rounded-2xl
-                   hover:from-green-700 hover:to-emerald-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg
-                  flex items-center justify-center space-x-2 ${publishing ? "opacity-70 cursor-not-allowed" : ""}`}
-                >
-                  {publishing ? (
-                    <span>Publishing...</span>
-                  ) : (
-                    <>
-                      <BookOpen size={18} />
-                      <span>Publish File</span>
-                    </>
-                  )}
-                </button>
-              ) : (
-                <button
-                  onClick={handlePublish}
-                  disabled={publishing}
-                  className={`flex-1 h-12 sm:h-14 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold text-base sm:text-lg rounded-2xl
-                  hover:from-green-700 hover:to-emerald-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg
-                  flex items-center justify-center space-x-2 ${publishing ? "opacity-70 cursor-not-allowed" : ""}`}
-                >
-                  {publishing ? (
-                    <span>Publishing...</span>
-                  ) : (
-                    <>
-                      <BookOpen size={18} />
-                      <span>Publish File</span>
-                    </>
-                  )}
-                </button>
-              )}
-              <button
-                onClick={handleCancel}
-                className="flex-1 h-12 sm:h-14 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold text-base sm:text-lg rounded-2xl
-                 hover:from-gray-600 hover:to-gray-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg
-                flex items-center justify-center"
-              >
-                Back
-              </button>
+              <div className="p-3.5 rounded-xl bg-white border border-[#e0e2e8]">
+                <span className="text-xs text-[#555a6a] font-medium block">Category 2</span>
+                <span className="font-bold text-sm text-[#1c1c1e]">{fileData.category2 || "—"}</span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-white border border-[#e0e2e8]">
+                <span className="text-xs text-[#555a6a] font-medium block">Category 3</span>
+                <span className="font-bold text-sm text-[#1c1c1e]">{fileData.category3 || "—"}</span>
+              </div>
             </div>
           </div>
-        </motion.div>
+
+          {/* Tags */}
+          {fileData.tags?.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#555a6a] flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5" /> Tags
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {fileData.tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="bg-[#c3faf5] text-[#187574] border border-[#9eece4] px-3 py-1 rounded-full text-xs font-bold"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Moderation Actions */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-[#e0e2e8] justify-end">
+            {fileData.status !== "Approved File" && (
+              <button
+                onClick={handlePublish}
+                disabled={publishing}
+                className="w-full sm:w-auto px-8 py-3 bg-[#0fbcb0] hover:bg-[#0da69b] text-white font-bold rounded-full text-sm shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>{publishing ? "Approving..." : "Approve File"}</span>
+              </button>
+            )}
+            {fileData.status !== "Rejected File" && (
+              <button
+                onClick={handleReject}
+                disabled={rejecting}
+                className="w-full sm:w-auto px-8 py-3 bg-[#fbd4d4] hover:bg-[#f8b4b4] text-[#800000] border border-[#e3c5c5] font-bold rounded-full text-sm shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                <XCircle className="w-4 h-4" />
+                <span>{rejecting ? "Rejecting..." : "Reject File"}</span>
+              </button>
+            )}
+            <button
+              onClick={() => navigate("/filter-file")}
+              className="w-full sm:w-auto px-8 py-3 bg-[#1c1c1e] hover:bg-[#2c2c34] text-white font-bold rounded-full text-sm shadow-sm transition-all active:scale-95"
+            >
+              Back to Repository
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

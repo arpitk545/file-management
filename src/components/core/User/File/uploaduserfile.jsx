@@ -1,14 +1,52 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Plus, FileText, ImageIcon, Eye, EyeOff } from "lucide-react"
+import {
+  Plus,
+  FileText,
+  ImageIcon,
+  Eye,
+  EyeOff,
+  ArrowLeft,
+  ArrowRight,
+  Sparkles,
+  FolderUp,
+  MapPin,
+  X,
+  Upload,
+  Link as LinkIcon,
+  Check,
+  Calendar,
+  Layers,
+  HelpCircle,
+} from "lucide-react"
 import { GetFileRegion, CreateFileNew } from "../../../../services/operations/filesAPI"
 import toast from "react-hot-toast"
 import FileEditor from "../../Admin/File/File-editor"
 import { useNavigate } from "react-router-dom"
 
-const CreateFiles = () => {
+const MiroLoader = ({ message = "Loading..." }) => (
+  <div className="flex flex-col items-center justify-center py-16 gap-3 font-sans">
+    <div className="relative w-12 h-12">
+      <div className="w-12 h-12 rounded-full border-4 border-[#eef0f3] border-t-[#ffd02f] border-r-[#1c1c1e] animate-spin" />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-3 h-3 rounded-full bg-[#ffd02f]" />
+      </div>
+    </div>
+    <span className="text-xs font-bold uppercase tracking-wider text-[#555a6a]">{message}</span>
+  </div>
+)
+
+const TAG_COLOR_PALETTES = [
+  { bg: "bg-[#fff4c4]", text: "text-[#746019]", border: "border-[#fde89c]" }, // Yellow
+  { bg: "bg-[#c3faf5]", text: "text-[#187574]", border: "border-[#9eece4]" }, // Teal
+  { bg: "bg-[#ffd8f4]", text: "text-[#86296b]", border: "border-[#f3bee5]" }, // Rose
+  { bg: "bg-[#ffe6cd]", text: "text-[#7c3a00]", border: "border-[#fcd0a1]" }, // Orange
+  { bg: "bg-[#f5f3ff]", text: "text-[#4262ff]", border: "border-[#ddd6fe]" }, // Blue
+]
+
+export default function CreateFiles() {
   const [formData, setFormData] = useState({
     region: "",
     category1: "",
@@ -35,6 +73,7 @@ const CreateFiles = () => {
   const [additionalYears, setAdditionalYears] = useState([])
   const [additionalAcademicYears, setAdditionalAcademicYears] = useState([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [regions, setRegions] = useState([])
   const [regionOptions, setRegionOptions] = useState([])
   const [category1Options, setCategory1Options] = useState([])
@@ -46,10 +85,6 @@ const CreateFiles = () => {
   const [showAcademicYearDropdown, setShowAcademicYearDropdown] = useState(false)
 
   const fileTypeOptions = ["PDF", "DOC", "DOCX", "PPT", "PPTX"]
-  const formattedFileTypeOptions = fileTypeOptions.map((type) => ({
-    value: type,
-    label: type,
-  }))
 
   const startYear = 2000
   const endYear = 2050
@@ -64,6 +99,7 @@ const CreateFiles = () => {
   useEffect(() => {
     const fetchRegions = async () => {
       try {
+        setIsLoading(true)
         const response = await GetFileRegion()
         const data = response?.data || []
 
@@ -76,6 +112,8 @@ const CreateFiles = () => {
         setRegions(data)
       } catch (error) {
         toast.error("Failed to load region data")
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -184,28 +222,6 @@ const CreateFiles = () => {
     }))
   }, [formData.category3, formData.category2, formData.category1, formData.region, regions])
 
-  // Update Category 5 when Category 4 changes
-  useEffect(() => {
-    const selectedRegion = regions.find((r) => r._id === formData.region)
-    const selectedCat1 = selectedRegion?.category1?.find((cat) => cat.name === formData.category1)
-    const selectedCat2 = selectedCat1?.category2?.find((cat) => cat.name === formData.category2)
-    const selectedCat3 = selectedCat2?.category3?.find((cat) => cat.name === formData.category3)
-    const selectedCat4 = selectedCat3?.category4?.find((cat) => cat.name === formData.category4)
-
-    const cat5Options =
-      selectedCat4?.category5?.map((cat) => ({
-        value: cat.name,
-        label: cat.name,
-      })) || []
-
-    setCategory5Options(cat5Options)
-
-    setFormData((prev) => ({
-      ...prev,
-      category5: "",
-    }))
-  }, [formData.category4, formData.category3, formData.category2, formData.category1, formData.region, regions])
-
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -213,18 +229,24 @@ const CreateFiles = () => {
     }))
   }
 
-  const handleFileUpload = (event, type) => {
-    const file = event.target.files[0]
-    if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        [type]: file,
-      }))
-    }
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0] || null
+    setFormData((prev) => ({
+      ...prev,
+      selectedFile: file,
+    }))
+  }
+
+  const handleImageChange = (e) => {
+    const image = e.target.files?.[0] || null
+    setFormData((prev) => ({
+      ...prev,
+      selectedImage: image,
+    }))
   }
 
   const addTag = () => {
-    if (formData.currentTag.trim() !== "") {
+    if (formData.currentTag.trim() && !formData.tags.includes(formData.currentTag.trim())) {
       setFormData((prev) => ({
         ...prev,
         tags: [...prev.tags, prev.currentTag.trim()],
@@ -233,10 +255,10 @@ const CreateFiles = () => {
     }
   }
 
-  const removeTag = (index) => {
+  const removeTag = (tagToRemove) => {
     setFormData((prev) => ({
       ...prev,
-      tags: prev.tags.filter((_, i) => i !== index),
+      tags: prev.tags.filter((tag) => tag !== tagToRemove),
     }))
   }
 
@@ -256,16 +278,42 @@ const CreateFiles = () => {
   }
 
   const updateAdditionalYear = (id, value) => {
-    setAdditionalYears((prev) => prev.map((item) => (item.id === id ? { ...item, year: value } : item)))
+    setAdditionalYears((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, year: value } : item))
+    )
   }
 
   const updateAdditionalAcademicYear = (id, value) => {
-    setAdditionalAcademicYears((prev) => prev.map((item) => (item.id === id ? { ...item, year: value } : item)))
+    setAdditionalAcademicYears((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, year: value } : item))
+    )
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    if (!formData.region || !formData.category1 || !formData.category2 || !formData.category3) {
+      toast.error("Please complete all required regional and category classifications (Steps 1 to 4).")
+      return
+    }
+
+    if (!formData.fileTitle) {
+      toast.error("Please provide a title for the study resource.")
+      return
+    }
+
+    if (formData.uploadMethod === "file" && !formData.selectedFile) {
+      toast.error("Please select a document file to upload.")
+      return
+    }
+
+    if (formData.uploadMethod === "link" && !formData.externalLink) {
+      toast.error("Please provide a valid external resource link.")
+      return
+    }
+
     setIsSubmitting(true)
+    const toastId = toast.loading("Uploading study resource...")
 
     try {
       const formDataToSend = new FormData()
@@ -291,9 +339,15 @@ const CreateFiles = () => {
 
       // Append arrays as JSON strings
       formDataToSend.append("tags", JSON.stringify(formData.tags))
-      formDataToSend.append("additionalYears", JSON.stringify(additionalYears.map((item) => item.year)))
-      formDataToSend.append("additionalAcademicYears", JSON.stringify(additionalAcademicYears.map((item) => item.year)))
-      formDataToSend.append("role", formData.role || "user")
+      formDataToSend.append(
+        "additionalYears",
+        JSON.stringify(additionalYears.map((item) => item.year))
+      )
+      formDataToSend.append(
+        "additionalAcademicYears",
+        JSON.stringify(additionalAcademicYears.map((item) => item.year))
+      )
+      formDataToSend.append("role", "user")
 
       // Append file
       if (formData.selectedFile) {
@@ -305,156 +359,18 @@ const CreateFiles = () => {
         formDataToSend.append("image", formData.selectedImage)
       }
 
-      // Send to backend
-      const response = await CreateFileNew(formDataToSend)
+      await CreateFileNew(formDataToSend)
+      toast.dismiss(toastId)
       toast.success("File uploaded successfully!")
       navigate("/filter-user-file")
-
-      // Reset form if needed
-      setFormData({
-        region: "",
-        category1: "",
-        category2: "",
-        category3: "",
-        category4: "",
-        category5: "",
-        fileCreatorName: "",
-        fileType: "",
-        fileTitle: "",
-        fileDescription: "",
-        uploadMethod: "file",
-        externalLink: "",
-        selectedFile: null,
-        selectedImage: null,
-        tags: [],
-        currentTag: "",
-        showCommentBox: true,
-        addYears: "none",
-        academicYear: "",
-        role: "user",
-      })
-      setAdditionalYears([])
-      setAdditionalAcademicYears([])
     } catch (error) {
+      toast.dismiss(toastId)
       console.error("Error creating file:", error)
       toast.error("Failed to upload file. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
   }
-
-  const ModernDropdown = ({ label, value, onChange, options, disabled = false, placeholder }) => (
-    <div className="space-y-2">
-      <label className="block text-sm font-semibold text-gray-700">{label}</label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        className={`w-full h-14 px-4 border-2 rounded-2xl bg-white transition-all duration-200 font-medium
-        ${
-          disabled
-            ? "border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
-            : "border-gray-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-        } outline-none`}
-      >
-        <option value="">{placeholder || `Select ${label}`}</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  )
-
-  const CustomCrossIcon = ({ onClick }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className="absolute top-2 right-2 z-20 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-lg"
-    >
-      <div className="relative">
-        <div className="absolute w-3 h-0.5 bg-white transform rotate-45 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute w-3 h-0.5 bg-white transform -rotate-45 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-      </div>
-    </button>
-  )
-
-  const FileUploadArea = ({ label, onFileSelect, selectedFile, accept, icon: Icon, onClearFile }) => (
-    <div className="space-y-2">
-      <label className="block text-sm font-semibold text-gray-700">{label}</label>
-      <div className="relative">
-        <input
-          type="file"
-          accept={accept}
-          onChange={onFileSelect}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-        />
-        <div
-          className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200
-        ${selectedFile ? "border-green-300 bg-green-50" : "border-gray-300 hover:border-blue-400 hover:bg-blue-50"}`}
-        >
-          <Icon className={`mx-auto mb-4 ${selectedFile ? "text-green-500" : "text-gray-400"}`} size={48} />
-          {selectedFile ? (
-            <div className="space-y-2">
-              <CustomCrossIcon onClick={onClearFile} />
-              <p className="text-green-600 font-semibold">✓ File Selected</p>
-              {selectedFile.type.startsWith("image/") ? (
-                <div className="flex justify-center">
-                  <img
-                    src={URL.createObjectURL(selectedFile) || "/placeholder.svg"}
-                    alt="Preview"
-                    className="max-h-40 max-w-full rounded-lg"
-                  />
-                </div>
-              ) : (
-                <p className="text-sm text-gray-600">{selectedFile.name}</p>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-gray-600 font-medium">Click to upload or drag and drop</p>
-              <p className="text-sm text-gray-400">Supported formats: {accept}</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-
-  const ToggleSwitch = ({ label, checked, onChange }) => (
-    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-      <div className="flex items-center space-x-3">
-        {checked ? <Eye className="text-blue-500" size={20} /> : <EyeOff className="text-gray-400" size={20} />}
-        <span className="font-semibold text-gray-700">{label}</span>
-      </div>
-      <button
-        type="button"
-        onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-        ${checked ? "bg-blue-500" : "bg-gray-300"}`}
-      >
-        <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200
-          ${checked ? "translate-x-6" : "translate-x-1"}`}
-        />
-      </button>
-    </div>
-  )
-
-  const RadioOption = ({ label, value, checked, onChange, name }) => (
-    <label className="flex items-center space-x-3 cursor-pointer">
-      <input
-        type="radio"
-        name={name}
-        value={value}
-        checked={checked}
-        onChange={() => onChange(value)}
-        className="h-5 w-5 text-blue-600 focus:ring-blue-500"
-      />
-      <span className="text-gray-700 font-medium">{label}</span>
-    </label>
-  )
 
   const handleRemoveFile = () => {
     setFormData((prev) => ({
@@ -471,431 +387,592 @@ const CreateFiles = () => {
   }
 
   return (
-    <div className="fixed overflow-auto inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl shadow-2xl overflow-hidden"
-        >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-center">
-            <h1 className="text-3xl font-bold text-white mb-2">Upload File</h1>
-            <p className="text-blue-100">Share your educational resources with the community</p>
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-10 px-4 sm:px-6 lg:px-8 xl:px-12 w-full font-sans">
+      <div className="w-full space-y-6 sm:space-y-8">
+        {/* Top Header & Navigation Bar */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <button
+              onClick={() => navigate("/filter-user-file")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#c7cad5] bg-white text-xs font-semibold text-[#1c1c1e] hover:bg-[#ebecf0] transition-colors shadow-sm active:scale-95 cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to File Vault</span>
+            </button>
+
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 bg-[#ffd02f] text-[#1c1c1e] text-[11px] font-black uppercase tracking-widest rounded-full shadow-sm">
+                STUDENT REPOSITORY
+              </span>
+              <span className="px-3 py-1 bg-[#c3faf5] text-[#187574] text-[11px] font-bold uppercase tracking-wider rounded-full">
+                DOCUMENT CONTRIBUTION
+              </span>
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-8 space-y-8">
-            {/* Region */}
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
-              <ModernDropdown
-                label="Region"
-                value={formData.region}
-                onChange={(value) => handleInputChange("region", value)}
-                options={regionOptions}
-                placeholder="Select your region"
-              />
-            </motion.div>
+          <div className="space-y-2">
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-[#1c1c1e]">
+              Upload Academic Document & Study Resource
+            </h1>
+            <p className="text-xs sm:text-sm text-[#6a6d7c] max-w-2xl leading-relaxed">
+              Contribute verified syllabus guides, lecture notes, or past papers. Classify by regional curriculum to help peers find materials quickly.
+            </p>
+          </div>
+        </div>
 
-            {/* Category 1 */}
-            <AnimatePresence>
-              {formData.region && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ delay: 0.1 }}
+        {/* Step 1 Card: Regional & Academic Classification */}
+        <div className="bg-white rounded-2xl border border-[#c7cad5] shadow-sm p-5 sm:p-7 space-y-5 w-full">
+          <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#e6e8ec]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#ffd02f] border border-[#fde89c] flex items-center justify-center text-[#1c1c1e] shadow-2xs">
+                <FolderUp className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-base sm:text-lg font-extrabold text-[#1c1c1e]">
+                  Curriculum & Structure Classification
+                </h2>
+                <p className="text-xs text-[#6a6d7c]">Select region, curriculum level, and subject stream</p>
+              </div>
+            </div>
+            <span className="text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-[#ffd02f] text-[#1c1c1e] shadow-2xs">
+              Step 1 of 2
+            </span>
+          </div>
+
+          {isLoading ? (
+            <MiroLoader message="Fetching Academic Hierarchy..." />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+              {/* Region (Yellow tint accent) */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-[#fff8e0]/60 border border-[#fde89c]">
+                <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#746019]">
+                  1. Region / Board <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.region}
+                  onChange={(e) => handleInputChange("region", e.target.value)}
+                  className="w-full h-11 px-3 bg-[#fff4c4]/40 border border-[#fde89c] rounded-lg text-[#1c1c1e] font-semibold focus:outline-none focus:border-2 focus:border-[#ffd02f] transition-all text-xs cursor-pointer"
                 >
-                  <ModernDropdown
-                    label="Category 1"
-                    value={formData.category1}
-                    onChange={(value) => handleInputChange("category1", value)}
-                    options={category1Options}
-                    placeholder="Select category 1"
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  <option value="">Choose region / board...</option>
+                  {regionOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            {/* Category 2 */}
-            <AnimatePresence>
-              {formData.category1 && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ delay: 0.1 }}
+              {/* Category 1 (Teal tint accent) */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-[#c3faf5]/20 border border-[#9eece4]">
+                <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#187574]">
+                  2. Category 1 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.category1}
+                  onChange={(e) => handleInputChange("category1", e.target.value)}
+                  disabled={!formData.region}
+                  className={`w-full h-11 px-3 bg-[#c3faf5]/40 border border-[#9eece4] rounded-lg text-[#1c1c1e] font-semibold focus:outline-none focus:border-2 focus:border-[#0fbcb0] transition-all text-xs cursor-pointer ${
+                    !formData.region ? "opacity-50 cursor-not-allowed bg-gray-50" : ""
+                  }`}
                 >
-                  <ModernDropdown
-                    label="Category 2"
-                    value={formData.category2}
-                    onChange={(value) => handleInputChange("category2", value)}
-                    options={category2Options}
-                    placeholder="Select category 2"
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  <option value="">Choose category 1...</option>
+                  {category1Options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            {/* Category 3 */}
-            <AnimatePresence>
-              {formData.category2 && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ delay: 0.1 }}
+              {/* Category 2 (Rose tint accent) */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-[#ffd8f4]/20 border border-[#f3bee5]">
+                <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#86296b]">
+                  3. Category 2 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.category2}
+                  onChange={(e) => handleInputChange("category2", e.target.value)}
+                  disabled={!formData.category1}
+                  className={`w-full h-11 px-3 bg-[#ffd8f4]/35 border border-[#f3bee5] rounded-lg text-[#1c1c1e] font-semibold focus:outline-none focus:border-2 focus:border-[#86296b] transition-all text-xs cursor-pointer ${
+                    !formData.category1 ? "opacity-50 cursor-not-allowed bg-gray-50" : ""
+                  }`}
                 >
-                  <ModernDropdown
-                    label="Category 3"
-                    value={formData.category3}
-                    onChange={(value) => handleInputChange("category3", value)}
-                    options={category3Options}
-                    placeholder="Select category 3"
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  <option value="">Choose category 2...</option>
+                  {category2Options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            {/* Show all content after category 3 */}
-            <AnimatePresence>
-              {formData.category3 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ delay: 0.2 }}
-                  className="space-y-8"
+              {/* Category 3 (Orange tint accent) */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-[#ffe6cd]/25 border border-[#fcd0a1]">
+                <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#7c3a00]">
+                  4. Category 3 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.category3}
+                  onChange={(e) => handleInputChange("category3", e.target.value)}
+                  disabled={!formData.category2}
+                  className={`w-full h-11 px-3 bg-[#ffe6cd]/40 border border-[#fcd0a1] rounded-lg text-[#1c1c1e] font-semibold focus:outline-none focus:border-2 focus:border-[#fcb900] transition-all text-xs cursor-pointer ${
+                    !formData.category2 ? "opacity-50 cursor-not-allowed bg-gray-50" : ""
+                  }`}
                 >
-                  {/* Optional Category 4 */}
-                  {category4Options.length > 0 && (
-                    <ModernDropdown
-                      label="Category 4 (Optional)"
-                      value={formData.category4}
-                      onChange={(value) => handleInputChange("category4", value)}
-                      options={category4Options}
-                      placeholder="Select category 4 (optional)"
-                    />
-                  )}
+                  <option value="">Choose category 3...</option>
+                  {category3Options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-                  {/* Optional Category 5 */}
-                  {category5Options.length > 0 && (
-                    <ModernDropdown
-                      label="Category 5 (Optional)"
-                      value={formData.category5}
-                      onChange={(value) => handleInputChange("category5", value)}
-                      options={category5Options}
-                      placeholder="Select category 5 (optional)"
-                    />
-                  )}
+              {/* Category 4 (Lavender tint accent) */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-[#f5f3ff] border border-[#ddd6fe]">
+                <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#4262ff]">
+                  5. Cat 4 (Optional)
+                </label>
+                <select
+                  value={formData.category4}
+                  onChange={(e) => handleInputChange("category4", e.target.value)}
+                  disabled={!formData.category3 || category4Options.length === 0}
+                  className={`w-full h-11 px-3 bg-[#f5f3ff] border border-[#ddd6fe] rounded-lg text-[#1c1c1e] font-semibold focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all text-xs cursor-pointer ${
+                    !formData.category3 || category4Options.length === 0 ? "opacity-50 cursor-not-allowed bg-gray-50" : ""
+                  }`}
+                >
+                  <option value="">Choose category 4...</option>
+                  {category4Options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
 
-                  {/* File Creator Name */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">File Creator Name</label>
+        {/* Step 2 Card: File Details & Upload Form */}
+        <AnimatePresence>
+          {formData.category3 && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl border border-[#c7cad5] shadow-sm p-5 sm:p-7 space-y-6 w-full"
+            >
+              <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#e6e8ec]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#c3faf5] border border-[#9eece4] flex items-center justify-center text-[#187574] shadow-2xs">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-extrabold text-[#1c1c1e]">
+                      Resource Details & Attachment
+                    </h2>
+                    <p className="text-xs text-[#6a6d7c]">Add document metadata, files, and tags</p>
+                  </div>
+                </div>
+                <span className="text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-[#c3faf5] text-[#187574] shadow-2xs">
+                  Step 2 of 2
+                </span>
+              </div>
+
+              <form id="userUploadFileForm" onSubmit={handleSubmit} className="space-y-6">
+                {/* Creator & Format Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                      Contributor / Author Name
+                    </label>
                     <input
                       type="text"
                       value={formData.fileCreatorName}
                       onChange={(e) => handleInputChange("fileCreatorName", e.target.value)}
-                      placeholder="Enter creator's name"
-                      className="w-full h-14 px-4 border-2 rounded-2xl bg-white transition-all duration-200 font-medium border-gray-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none"
+                      placeholder="e.g. Student Name, Study Group, or Department"
+                      className="w-full h-11 min-h-[44px] px-4 bg-[#f7f8fa] border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] focus:bg-white focus:outline-none focus:border-[#1c1c1e] transition-all text-xs font-semibold"
                     />
                   </div>
 
-                  {/* File Type */}
-                  <ModernDropdown
-                    label="File Type"
-                    value={formData.fileType}
-                    onChange={(val) => handleInputChange("fileType", val)}
-                    options={formattedFileTypeOptions}
-                    placeholder="Select File Type"
-                  />
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                      Document Format
+                    </label>
+                    <select
+                      value={formData.fileType}
+                      onChange={(e) => handleInputChange("fileType", e.target.value)}
+                      className="w-full h-11 min-h-[44px] px-3.5 bg-[#f7f8fa] border border-[#c7cad5] rounded-xl text-[#1c1c1e] font-semibold focus:bg-white focus:outline-none focus:border-[#1c1c1e] transition-all text-xs cursor-pointer"
+                    >
+                      <option value="">Select File Format (PDF, DOCX, etc.)</option>
+                      {fileTypeOptions.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-                  {/* Additional Years Section */}
-                  <div className="space-y-6">
-                    <div className="space-y-4">
-                      <p className="text-sm font-semibold text-gray-700">Add Year And Academic Year</p>
-                      <div className="flex flex-wrap gap-6">
-                        <RadioOption
-                          label="None"
-                          value="none"
-                          checked={formData.addYears === "none"}
-                          onChange={(value) => handleInputChange("addYears", value)}
-                          name="addYears"
-                        />
-                        <RadioOption
-                          label="Add Year"
-                          value="year"
-                          checked={formData.addYears === "year"}
-                          onChange={(value) => {
-                            handleInputChange("addYears", value)
-                            setShowYearCalendar(true)
-                          }}
-                          name="addYears"
-                        />
-                        <RadioOption
-                          label="Add Academic Year"
-                          value="academic"
-                          checked={formData.addYears === "academic"}
-                          onChange={(value) => {
-                            handleInputChange("addYears", value)
-                            setShowAcademicYearDropdown(true)
-                          }}
-                          name="addYears"
-                        />
-                      </div>
-                    </div>
+                {/* Applicable Academic Session & Year */}
+                <div className="rounded-2xl border border-[#fcd0a1] bg-[#ffe6cd]/25 p-4 sm:p-5 space-y-3">
+                  <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#7c3a00]">
+                    Applicable Academic Session & Year
+                  </p>
+                  <div className="flex flex-wrap gap-4 sm:gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-[#1c1c1e]">
+                      <input
+                        type="radio"
+                        name="addYears"
+                        value="none"
+                        checked={formData.addYears === "none"}
+                        onChange={() => handleInputChange("addYears", "none")}
+                        className="h-4 w-4 text-[#1c1c1e] focus:ring-[#ffd02f]"
+                      />
+                      <span>None</span>
+                    </label>
 
-                    {/* Additional Years */}
-                    {additionalYears.length > 0 && (
-                      <div className="space-y-4">
-                        {additionalYears.map((yearItem) => (
-                          <div key={yearItem.id} className="flex items-end space-x-4">
-                            <div className="flex-1">
-                              <label className="block text-sm font-semibold text-gray-700">Additional Year</label>
-                              <input
-                                type="text"
-                                value={yearItem.year}
-                                onChange={(e) => updateAdditionalYear(yearItem.id, e.target.value)}
-                                className="w-full h-14 px-4 border-2 rounded-2xl bg-white border-gray-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none"
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => removeYear(yearItem.id)}
-                              className="h-14 w-14 flex items-center justify-center bg-red-100 text-red-500 rounded-2xl hover:bg-red-200"
-                            >
-                              <X size={20} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-[#1c1c1e]">
+                      <input
+                        type="radio"
+                        name="addYears"
+                        value="academicYear"
+                        checked={formData.addYears === "academicYear"}
+                        onChange={() => handleInputChange("addYears", "academicYear")}
+                        className="h-4 w-4 text-[#1c1c1e] focus:ring-[#ffd02f]"
+                      />
+                      <span>Academic Session (e.g. 2024-2025)</span>
+                    </label>
 
-                    {/* Year Dropdown */}
-                    {formData.addYears === "year" && showYearCalendar && (
-                      <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-gray-700">Select Year</label>
-                        <select
-                          onChange={(e) => {
-                            const selectedYear = e.target.value
-                            if (selectedYear) {
-                              setAdditionalYears((prev) => [...prev, { id: Date.now(), year: selectedYear }])
-                            }
-                          }}
-                          className="w-full h-14 px-4 border-2 rounded-2xl bg-white border-gray-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none"
-                        >
-                          <option value="">Select Year</option>
-                          {Array.from({ length: 51 }, (_, i) => 2020 + i).map((year) => (
-                            <option key={year} value={year}>
-                              {year}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-                    {/* Additional Academic Years */}
-                    {additionalAcademicYears.length > 0 && (
-                      <div className="space-y-4">
-                        {additionalAcademicYears.map((yearItem) => (
-                          <div key={yearItem.id} className="flex items-end space-x-4">
-                            <div className="flex-1">
-                              <label className="block text-sm font-semibold text-gray-700">Academic Year</label>
-                              <input
-                                type="text"
-                                value={yearItem.year}
-                                onChange={(e) => updateAdditionalAcademicYear(yearItem.id, e.target.value)}
-                                className="w-full h-14 px-4 border-2 rounded-2xl bg-white border-gray-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none"
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => removeAcademicYear(yearItem.id)}
-                              className="h-14 w-14 flex items-center justify-center bg-red-100 text-red-500 rounded-2xl hover:bg-red-200"
-                            >
-                              <X size={20} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Academic Year Dropdown */}
-                    {formData.addYears === "academic" && showAcademicYearDropdown && (
-                      <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-gray-700">Select Academic Year</label>
-                        <select
-                          onChange={(e) => {
-                            const selected = e.target.value
-                            if (selected) {
-                              setAdditionalAcademicYears((prev) => [...prev, { id: Date.now(), year: selected }])
-                            }
-                          }}
-                          className="w-full h-14 px-4 border-2 rounded-2xl bg-white border-gray-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none"
-                        >
-                          <option value="">Select Academic Year</option>
-                          {academicYearOptions.map((option) => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-[#1c1c1e]">
+                      <input
+                        type="radio"
+                        name="addYears"
+                        value="yearCalendar"
+                        checked={formData.addYears === "yearCalendar"}
+                        onChange={() => handleInputChange("addYears", "yearCalendar")}
+                        className="h-4 w-4 text-[#1c1c1e] focus:ring-[#ffd02f]"
+                      />
+                      <span>Calendar Year</span>
+                    </label>
                   </div>
 
-                  {/* File Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">File Title</label>
+                  {formData.addYears === "academicYear" && (
+                    <div className="pt-2 flex flex-wrap gap-2 items-center">
+                      <select
+                        value={formData.academicYear}
+                        onChange={(e) => handleInputChange("academicYear", e.target.value)}
+                        className="h-10 px-3 bg-white border border-[#fcd0a1] rounded-lg text-xs font-bold text-[#1c1c1e]"
+                      >
+                        <option value="">Select Academic Year</option>
+                        {academicYearOptions.map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {formData.addYears === "yearCalendar" && (
+                    <div className="pt-2 flex flex-wrap gap-2 items-center">
                       <input
-                        type="text"
-                        value={formData.fileTitle}
-                        onChange={(e) => handleInputChange("fileTitle", e.target.value)}
-                        placeholder="Enter file title"
-                        className="w-full h-14 px-4 border-2 rounded-2xl bg-white transition-all duration-200 font-medium border-gray-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none"
+                        type="number"
+                        min="1990"
+                        max="2099"
+                        value={formData.academicYear}
+                        onChange={(e) => handleInputChange("academicYear", e.target.value)}
+                        placeholder="e.g. 2024"
+                        className="h-10 px-3 bg-white border border-[#fcd0a1] rounded-lg text-xs font-bold text-[#1c1c1e] w-36"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">Tags</label>
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="text"
-                          value={formData.currentTag}
-                          onChange={(e) => handleInputChange("currentTag", e.target.value)}
-                          onKeyDown={handleKeyDown}
-                          placeholder="Enter tag and press Enter"
-                          className="flex-1 h-14 px-4 border-2 rounded-2xl bg-white border-gray-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={addTag}
-                          className="h-14 w-14 flex items-center justify-center bg-blue-100 text-blue-500 rounded-2xl hover:bg-blue-200 transition-colors duration-200"
-                        >
-                          <Plus size={20} />
-                        </button>
-                      </div>
-                      {formData.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {formData.tags.map((tag, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center bg-blue-200 text-blue-800 rounded-full px-3 py-1"
-                            >
-                              <span className="text-sm">{tag}</span>
-                              <button
-                                type="button"
-                                onClick={() => removeTag(index)}
-                                className="ml-2 text-gray-500 hover:text-red-500"
-                              >
-                                <X size={16} />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  )}
+                </div>
 
-                  <FileEditor
-                    value={formData.fileDescription}
-                    onChange={(value) => handleInputChange("fileDescription", value)}
-                    placeholder="Describe your file..."
+                {/* File Title */}
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                    Resource / Document Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.fileTitle}
+                    onChange={(e) => handleInputChange("fileTitle", e.target.value)}
+                    placeholder="e.g. Complete Engineering Mathematics Unit 1 Notes"
+                    className="w-full h-11 min-h-[44px] px-4 bg-[#f7f8fa] border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] focus:bg-white focus:outline-none focus:border-[#1c1c1e] transition-all text-xs font-semibold"
+                    required
                   />
+                </div>
 
-                  {/* Upload Method Toggle */}
-                  <div className="space-y-4">
-                    <div className="flex space-x-4">
+                {/* Rich Editor for Description */}
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                    Document Summary & Content Overview
+                  </label>
+                  <div className="border border-[#c7cad5] rounded-2xl overflow-hidden bg-white shadow-2xs">
+                    <FileEditor
+                      value={formData.fileDescription}
+                      onChange={(content) => handleInputChange("fileDescription", content)}
+                    />
+                  </div>
+                </div>
+
+                {/* Upload Method Toggle & File Upload Area */}
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center gap-3">
+                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                      Resource Method:
+                    </label>
+                    <div className="inline-flex rounded-full p-1 bg-[#f0f1f4] border border-[#c7cad5]">
                       <button
                         type="button"
                         onClick={() => handleInputChange("uploadMethod", "file")}
-                        className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
                           formData.uploadMethod === "file"
-                            ? "bg-blue-500 text-white shadow-lg"
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            ? "bg-[#1c1c1e] text-[#ffd02f] shadow-xs"
+                            : "text-[#6a6d7c] hover:text-[#1c1c1e]"
                         }`}
                       >
-                        Upload File
+                        Upload Document File
                       </button>
-                      {/* <button
+                      <button
                         type="button"
                         onClick={() => handleInputChange("uploadMethod", "link")}
-                        className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
                           formData.uploadMethod === "link"
-                            ? "bg-blue-500 text-white shadow-lg"
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            ? "bg-[#1c1c1e] text-[#ffd02f] shadow-xs"
+                            : "text-[#6a6d7c] hover:text-[#1c1c1e]"
                         }`}
                       >
-                        External Link
-                      </button> */}
+                        External Resource Link
+                      </button>
                     </div>
+                  </div>
 
-                    {formData.uploadMethod === "file" ? (
-                      <FileUploadArea
-                        label="Upload File"
-                        onFileSelect={(e) => handleFileUpload(e, "selectedFile")}
-                        selectedFile={formData.selectedFile}
-                        accept=".pdf,.doc,.docx,.ppt,.pptx"
-                        icon={FileText}
-                        onClearFile={handleRemoveFile}
-                      />
-                    ) : (
-                      <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-gray-700">External Link</label>
+                  {formData.uploadMethod === "file" ? (
+                    <div className="space-y-2">
+                      <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                        Upload Document <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative border-2 border-dashed border-[#c7cad5] hover:border-[#1c1c1e] rounded-2xl p-6 text-center bg-[#f7f8fa] hover:bg-white transition-all cursor-pointer group">
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx,.ppt,.pptx"
+                          onChange={handleFileChange}
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                        />
+                        {formData.selectedFile ? (
+                          <div className="flex items-center justify-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-[#c3faf5] text-[#187574] flex items-center justify-center">
+                              <FileText className="w-5 h-5" />
+                            </div>
+                            <div className="text-left">
+                              <p className="text-xs font-bold text-[#1c1c1e]">
+                                {formData.selectedFile.name}
+                              </p>
+                              <p className="text-[10px] text-[#6a6d7c]">
+                                {(formData.selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleRemoveFile()
+                              }}
+                              className="z-20 p-1.5 rounded-full hover:bg-red-50 text-red-500"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-1.5">
+                            <div className="w-10 h-10 rounded-xl bg-[#ffd02f] text-[#1c1c1e] flex items-center justify-center mx-auto shadow-2xs group-hover:scale-105 transition-transform">
+                              <Upload className="w-5 h-5" />
+                            </div>
+                            <p className="text-xs font-bold text-[#1c1c1e]">
+                              Click to choose a file or drag and drop here
+                            </p>
+                            <p className="text-[10px] text-[#6a6d7c]">
+                              PDF, DOC, DOCX, PPT, PPTX (up to 50MB)
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                        External URL / Cloud Storage Link <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <LinkIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8e91a0] pointer-events-none" />
                         <input
                           type="url"
                           value={formData.externalLink}
                           onChange={(e) => handleInputChange("externalLink", e.target.value)}
-                          placeholder="Paste external link here"
-                          className="w-full h-14 px-4 border-2 rounded-2xl bg-white transition-all duration-200 font-medium border-gray-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none"
+                          placeholder="https://drive.google.com/..."
+                          className="w-full h-11 min-h-[44px] pl-10 pr-4 bg-[#f7f8fa] border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] focus:bg-white focus:outline-none focus:border-[#1c1c1e] transition-all text-xs font-semibold"
                         />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cover Thumbnail Image */}
+                <div className="space-y-2 pt-2">
+                  <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                    Cover Thumbnail Preview (Optional)
+                  </label>
+                  <div className="relative border-2 border-dashed border-[#c7cad5] hover:border-[#1c1c1e] rounded-2xl p-5 text-center bg-[#f7f8fa] hover:bg-white transition-all cursor-pointer group">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                    />
+                    {formData.selectedImage ? (
+                      <div className="flex items-center justify-center gap-3">
+                        <img
+                          src={URL.createObjectURL(formData.selectedImage)}
+                          alt="Cover Preview"
+                          className="w-14 h-14 rounded-lg object-cover border border-[#c7cad5]"
+                        />
+                        <div className="text-left">
+                          <p className="text-xs font-bold text-[#1c1c1e]">
+                            {formData.selectedImage.name}
+                          </p>
+                          <p className="text-[10px] text-[#6a6d7c]">Cover thumbnail selected</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRemoveImage()
+                          }}
+                          className="z-20 p-1.5 rounded-full hover:bg-red-50 text-red-500"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <ImageIcon className="w-6 h-6 text-[#8e91a0] mx-auto group-hover:scale-105 transition-transform" />
+                        <p className="text-xs font-bold text-[#1c1c1e]">Add custom cover image</p>
+                        <p className="text-[10px] text-[#6a6d7c]">PNG, JPG, WebP supported</p>
                       </div>
                     )}
                   </div>
+                </div>
 
-                  {/* Image Upload */}
-                  <FileUploadArea
-                    label="Upload Image"
-                    onFileSelect={(e) => handleFileUpload(e, "selectedImage")}
-                    selectedFile={formData.selectedImage}
-                    accept="image/*"
-                    icon={ImageIcon}
-                    onClearFile={handleRemoveImage}
-                  />
-
-                  {/* Comment Box Toggle */}
-                  <ToggleSwitch
-                    label="Show Comment Box"
-                    checked={formData.showCommentBox}
-                    onChange={(value) => handleInputChange("showCommentBox", value)}
-                  />
-
-                  {/* Submit Button */}
-                  <div className="pt-8">
+                {/* Miro Sticky Note Tag System */}
+                <div className="space-y-2 pt-2">
+                  <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                    Resource Keywords & Tags
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={formData.currentTag}
+                      onChange={(e) => handleInputChange("currentTag", e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Add topic tags (press Enter or Click Add)"
+                      className="flex-1 h-11 min-h-[44px] px-4 bg-[#f7f8fa] border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] focus:bg-white focus:outline-none focus:border-[#1c1c1e] text-xs font-semibold"
+                    />
                     <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full h-16 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-lg rounded-2xl
-                      hover:from-blue-700 hover:to-purple-700 transform hover:scale-[1.02] transition-all duration-200
-                      disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-xl"
+                      type="button"
+                      onClick={addTag}
+                      className="px-5 h-11 rounded-xl bg-[#1c1c1e] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#2c2c34] transition-all cursor-pointer"
                     >
-                      {isSubmitting ? (
-                        <div className="flex items-center justify-center space-x-3">
-                          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          <span>Uploading...</span>
-                        </div>
-                      ) : (
-                        "Submit File"
-                      )}
+                      Add Tag
                     </button>
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </form>
-        </motion.div>
+
+                  {formData.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {formData.tags.map((tag, idx) => {
+                        const style = TAG_COLOR_PALETTES[idx % TAG_COLOR_PALETTES.length]
+                        return (
+                          <span
+                            key={idx}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${style.bg} ${style.text} ${style.border} shadow-2xs`}
+                          >
+                            <span>#{tag}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeTag(tag)}
+                              className="hover:opacity-75 cursor-pointer"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Discussion Switch */}
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-[#f7f8fa] border border-[#c7cad5]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-[#fff4c4] text-[#746019] flex items-center justify-center">
+                      <Eye className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-extrabold text-[#1c1c1e]">Enable Peer Discussion</p>
+                      <p className="text-[11px] text-[#6a6d7c]">
+                        Allow other students to ask questions and comment on this resource
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleInputChange("showCommentBox", !formData.showCommentBox)}
+                    className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
+                      formData.showCommentBox ? "bg-[#1c1c1e]" : "bg-[#c7cad5]"
+                    }`}
+                  >
+                    <div
+                      className={`bg-[#ffd02f] w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                        formData.showCommentBox ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Form Action Controls */}
+                <div className="pt-4 border-t border-[#e6e8ec] flex flex-col sm:flex-row items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/filter-user-file")}
+                    className="w-full sm:w-auto px-6 py-3 rounded-full border border-[#c7cad5] bg-white text-[#1c1c1e] text-xs font-bold uppercase tracking-wider hover:bg-[#ebecf0] transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] disabled:bg-[#f7f8fa] disabled:border disabled:border-[#c7cad5] disabled:text-[#8e92a4] text-[#1c1c1e] text-xs font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-[#1c1c1e] border-t-transparent rounded-full animate-spin" />
+                        <span>Publishing Resource...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Publish Resource Document</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )
 }
-
-export default CreateFiles

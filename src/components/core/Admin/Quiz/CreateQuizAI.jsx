@@ -248,76 +248,75 @@ Respond ONLY with a valid JSON array. No markdown, no explanation, no code fence
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 bg-[#050038]/50 backdrop-blur-xs flex items-center justify-center z-50 p-4"
       >
         <motion.div
-          initial={{ scale: 0.9, y: 20 }}
+          initial={{ scale: 0.95, y: 15 }}
           animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 20 }}
-          className="bg-white rounded-2xl shadow-xl w-full max-w-md"
+          exit={{ scale: 0.95, y: 15 }}
+          className="bg-white rounded-2xl border-2 border-[#1c1c1e]/15 shadow-2xl w-full max-w-md overflow-hidden"
         >
-          <div className="p-6 space-y-6">
+          {/* Miro Header */}
+          <div className="bg-[#ffd8f4]/50 border-b-2 border-[#d1259e]/30 px-6 py-4 flex items-center justify-between">
+            <h3 className="text-base font-bold flex items-center gap-2 text-[#050038]">
+              <div className="w-8 h-8 rounded-xl bg-[#d1259e] text-white flex items-center justify-center">
+                <Bot className="w-4 h-4" />
+              </div>
+              AI Question Generator
+            </h3>
+            <button
+              onClick={onClose}
+              disabled={loading}
+              className="text-[#050038]/60 hover:text-[#050038] hover:bg-white/60 p-1.5 rounded-full transition-all disabled:opacity-40"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-            {/* Header */}
-            <div className="flex justify-between items-center">
-              <h3 className="text-xl font-bold flex items-center gap-2 text-indigo-600">
-                <Bot className="w-5 h-5" />
-                AI Question Generator
-              </h3>
-              <button
-                onClick={onClose}
-                disabled={loading}
-                className="text-gray-500 hover:text-gray-700 disabled:opacity-40"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
+          <div className="p-6 space-y-5">
             {/* Form — hidden while generating */}
             {!loading && (
               <div className="space-y-4">
-                <div>
-                  <Label className="block text-sm font-medium text-gray-700 mb-1">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-[#050038]/70">
                     Language
                   </Label>
                   <input
                     type="text"
                     value={formData.language}
                     onChange={(e) => handleChange("language", e.target.value)}
-                    placeholder="e.g. English, Kannada, Hindi"
-                    className="w-full h-10 px-3 border-2 border-gray-200 rounded-xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:outline-none"
+                    placeholder="e.g. English, Hindi, Spanish"
+                    className="w-full h-11 px-3.5 bg-white border-2 border-[#1c1c1e]/15 rounded-xl font-medium text-sm text-[#1c1c1e] transition-all hover:border-[#1c1c1e]/30 focus:border-[#4262ff] focus:ring-4 focus:ring-[#4262ff]/10 outline-none"
                   />
                 </div>
 
-                <div>
-                  <Label className="block text-sm font-medium text-gray-700 mb-1">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-[#050038]/70">
                     Number of Questions
                   </Label>
-                  {/* ← plain input, no min/max clamp on onChange so user can freely type */}
                   <input
                     type="number"
                     value={formData.totalQuestions}
                     onChange={(e) => handleChange("totalQuestions", e.target.value)}
                     onBlur={(e) => {
-                      // clamp only when user leaves the field
                       const val = parseInt(e.target.value)
                       if (!val || val < 1) handleChange("totalQuestions", 1)
                       else if (val > 20) handleChange("totalQuestions", 20)
                     }}
                     placeholder="e.g. 5"
-                    className="w-full h-10 px-3 border-2 border-gray-200 rounded-xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:outline-none"
+                    className="w-full h-11 px-3.5 bg-white border-2 border-[#1c1c1e]/15 rounded-xl font-medium text-sm text-[#1c1c1e] transition-all hover:border-[#1c1c1e]/30 focus:border-[#4262ff] focus:ring-4 focus:ring-[#4262ff]/10 outline-none"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Max 20 questions per generation</p>
+                  <p className="text-[11px] text-[#050038]/50">Max 20 questions per generation batch</p>
                 </div>
 
-                <div>
-                  <Label className="block text-sm font-medium text-gray-700 mb-1">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-[#050038]/70">
                     Difficulty Level
                   </Label>
                   <select
                     value={formData.difficulty}
                     onChange={(e) => handleChange("difficulty", e.target.value)}
-                    className="w-full h-10 px-3 border-2 border-gray-200 rounded-xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:outline-none"
+                    className="w-full h-11 px-3.5 bg-white border-2 border-[#1c1c1e]/15 rounded-xl font-medium text-sm text-[#1c1c1e] transition-all hover:border-[#1c1c1e]/30 focus:border-[#4262ff] focus:ring-4 focus:ring-[#4262ff]/10 outline-none"
                   >
                     <option value="Easy">Easy</option>
                     <option value="Average">Average</option>
@@ -336,64 +335,51 @@ Respond ONLY with a valid JSON array. No markdown, no explanation, no code fence
               >
                 {/* Animated text counter */}
                 <div className="text-center space-y-1">
-                  <p className="text-gray-500 text-sm">Generating questions</p>
-                  <p className="text-4xl font-bold text-indigo-600">
+                  <p className="text-[#050038]/60 text-xs font-bold uppercase tracking-wider">Generating questions</p>
+                  <p className="text-4xl font-black text-[#d1259e]">
                     {progress}
-                    <span className="text-xl text-gray-400 font-medium"> / {total}</span>
+                    <span className="text-xl text-[#050038]/40 font-bold"> / {total}</span>
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-[#050038]/60 font-medium">
                     {progress === 0
-                      ? "Thinking..."
+                      ? "AI reasoning & constructing questions..."
                       : progress === total
                         ? "Almost done!"
-                        : `${total - progress} more to go`}
+                        : `${total - progress} remaining`}
                   </p>
                 </div>
 
                 {/* Progress bar */}
-                <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                <div className="w-full bg-[#f7f8fa] border border-[#1c1c1e]/10 rounded-full h-3 overflow-hidden p-0.5">
                   <motion.div
-                    className="h-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
+                    className="h-full bg-[#d1259e] rounded-full"
                     initial={{ width: "0%" }}
                     animate={{ width: total > 0 ? `${(progress / total) * 100}%` : "0%" }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
                   />
-                </div>
-
-                {/* Pulsing dots */}
-                <div className="flex justify-center gap-1.5">
-                  {[0, 1, 2].map(i => (
-                    <motion.div
-                      key={i}
-                      className="w-2 h-2 rounded-full bg-indigo-400"
-                      animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
-                      transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
-                    />
-                  ))}
                 </div>
               </motion.div>
             )}
 
             {/* Actions */}
             {!loading && (
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex items-center justify-end gap-3 pt-2">
                 <Button
                   onClick={onClose}
                   variant="outline"
-                  className="border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-medium rounded-xl hover:bg-gray-50"
+                  className="border-2 border-[#1c1c1e]/15 hover:border-[#1c1c1e] text-[#050038] font-bold rounded-full px-5 py-2 text-xs"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={generateQuestions}
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium rounded-xl flex items-center gap-2"
+                  className="bg-[#d1259e] hover:bg-[#b01c83] text-white font-bold rounded-full px-6 py-2 text-xs shadow-sm flex items-center gap-2 transition-all active:scale-95"
                 >
                   <Sparkles className="w-4 h-4" />
                   Generate Questions
                 </Button>
               </div>
             )}
-
           </div>
         </motion.div>
       </motion.div>

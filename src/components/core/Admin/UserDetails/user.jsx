@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { getManagersAndUsers,blockOrUnblockUser } from "../../../../services/operations/profileAPI"
+import { useNavigate } from "react-router-dom"
+import { getManagersAndUsers, blockOrUnblockUser } from "../../../../services/operations/profileAPI"
 import {
   Search,
   Filter,
@@ -16,10 +17,25 @@ import {
   ChevronDown,
   ChevronUp,
   Calendar,
+  ArrowLeft,
+  RefreshCw
 } from "lucide-react"
 import { toast } from "react-hot-toast"
 
+const MiroLoader = ({ message = "Loading user directory..." }) => (
+  <div className="flex flex-col items-center justify-center py-20 gap-3">
+    <div className="relative w-12 h-12">
+      <div className="w-12 h-12 rounded-full border-4 border-[#eef0f3] border-t-[#ffd02f] border-r-[#1c1c1e] animate-spin" />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-3 h-3 rounded-full bg-[#ffd02f]" />
+      </div>
+    </div>
+    <span className="text-xs font-bold uppercase tracking-wider text-[#555a6a]">{message}</span>
+  </div>
+)
+
 const UserDetails = () => {
+  const navigate = useNavigate()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -30,60 +46,57 @@ const UserDetails = () => {
   const [sortField, setSortField] = useState("fullName")
   const [sortOrder, setSortOrder] = useState("asc")
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true)
-
-        const response = await getManagersAndUsers()
-
-        // Filter for users only (not managers)
-        const filtered = response.filter(user => user.role === "user")
-        setUsers(filtered)
-        setError(null)
-      } catch (err) {
-        console.error("Error fetching users:", err)
-        setError("Failed to fetch users.")
-        toast.error("Failed to fetch users.")
-      } finally {
-        setLoading(false)
-      }
+  const fetchUsers = async () => {
+    try {
+      setLoading(true)
+      const response = await getManagersAndUsers()
+      // Filter for users only (not managers)
+      const filtered = response.filter((user) => user.role === "user")
+      setUsers(filtered)
+      setError(null)
+    } catch (err) {
+      console.error("Error fetching users:", err)
+      setError("Failed to fetch users.")
+      toast.error("Failed to fetch users.")
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchUsers()
   }, [])
 
- const toggleBlockStatus = async (email, role, isCurrentlyBlocked) => {
-   try {
-     setBlockingId(email)
-     const newStatus = !isCurrentlyBlocked
-     const response = await blockOrUnblockUser({ email, role, block: newStatus })
-     const isSuccess =
-       response.success ||
-       (typeof response.message === "string" &&
-         response.message.toLowerCase().includes("has been"))
- 
-     if (isSuccess) {
-       setUsers(prev =>
-         prev.map(user =>
-           user.email === email ? { ...user, isBlocked: newStatus } : user
-         )
-       )
-       toast.success(response.message || `User has been ${newStatus ? 'blocked' : 'unblocked'} successfully`)
-     }
- 
-     if (!isSuccess) {
-       console.warn("Unexpected block/unblock response:", response)
-     }
- 
-   } catch (err) {
-     console.error("Error updating user status:", err)
-     toast.error(err.message || "Failed to update user status")
-   } finally {
-     setBlockingId(null)
-   }
- }
- 
+  const toggleBlockStatus = async (email, role, isCurrentlyBlocked) => {
+    try {
+      setBlockingId(email)
+      const newStatus = !isCurrentlyBlocked
+      const response = await blockOrUnblockUser({ email, role, block: newStatus })
+      const isSuccess =
+        response.success ||
+        (typeof response.message === "string" &&
+          response.message.toLowerCase().includes("has been"))
+
+      if (isSuccess) {
+        setUsers((prev) =>
+          prev.map((user) =>
+            user.email === email ? { ...user, isBlocked: newStatus } : user
+          )
+        )
+        toast.success(response.message || `User has been ${newStatus ? "blocked" : "unblocked"} successfully`)
+      }
+
+      if (!isSuccess) {
+        console.warn("Unexpected block/unblock response:", response)
+      }
+    } catch (err) {
+      console.error("Error updating user status:", err)
+      toast.error(err.message || "Failed to update user status")
+    } finally {
+      setBlockingId(null)
+    }
+  }
+
   // Sort users
   const handleSort = (field) => {
     if (sortField === field) {
@@ -98,8 +111,8 @@ const UserDetails = () => {
   const filteredAndSortedUsers = users
     .filter((user) => {
       const matchesSearch =
-        user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+        (user.fullName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.email || "").toLowerCase().includes(searchTerm.toLowerCase())
       const matchesCountry = filterCountry === "all" || user.country === filterCountry
       const matchesStatus =
         filterStatus === "all" ||
@@ -108,8 +121,8 @@ const UserDetails = () => {
       return matchesSearch && matchesCountry && matchesStatus
     })
     .sort((a, b) => {
-      let aValue = a[sortField]
-      let bValue = b[sortField]
+      let aValue = a[sortField] || ""
+      let bValue = b[sortField] || ""
 
       if (typeof aValue === "string") {
         aValue = aValue.toLowerCase()
@@ -124,10 +137,11 @@ const UserDetails = () => {
     })
 
   // Get unique countries for filter
-  const countries = ["all", ...new Set(users.map((user) => user.country))]
+  const countries = ["all", ...new Set(users.map((user) => user.country).filter(Boolean))]
 
   // Format date
   const formatDate = (dateString) => {
+    if (!dateString) return "N/A"
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -135,438 +149,425 @@ const UserDetails = () => {
     })
   }
 
-  const SortableHeader = ({ field, children }) => (
+  const SortableHeader = ({ field, children, align = "text-left" }) => (
     <th
-      className="px-3 md:px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+      className={`px-4 sm:px-6 py-3.5 ${align} text-xs font-bold text-[#555a6a] uppercase tracking-wider cursor-pointer hover:text-[#1c1c1e] hover:bg-[#ebedf2] transition-colors select-none`}
       onClick={() => handleSort(field)}
     >
-      <div className="flex items-center space-x-1">
+      <div className={`inline-flex items-center gap-1.5 ${align === "text-right" ? "justify-end" : ""}`}>
         <span>{children}</span>
-        {sortField === field &&
-          (sortOrder === "asc" ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />)}
+        {sortField === field && (
+          sortOrder === "asc" ? <ChevronUp className="w-3.5 h-3.5 text-[#1c1c1e]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#1c1c1e]" />
+        )}
       </div>
     </th>
   )
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-white rounded-3xl shadow-2xl p-8">
-            <div className="flex items-center justify-center py-20">
-              <div className="text-center">
-                <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-600 text-lg">Loading users...</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-white rounded-3xl shadow-2xl p-8">
-            <div className="text-center py-20">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-red-500" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Error Loading Users</h3>
-              <p className="text-gray-600 mb-6">{error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors duration-200"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-green-50 via-white to-blue-50 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl shadow-2xl overflow-hidden"
-        >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-green-600 to-blue-600 p-6 md:p-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">User Details</h1>
-                <p className="text-green-100">Manage and monitor all users in the system</p>
-              </div>
-              <div className="flex items-center space-x-4 text-white">
-                <Users className="w-6 h-6" />
-                <span className="text-lg font-semibold">{users.length} Total Users</span>
-              </div>
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-8 px-4 sm:px-6 lg:px-8 xl:px-12 w-full">
+      <div className="w-full space-y-6">
+        
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e0e2e8]">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Dashboard</span>
+            </button>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#ffd02f] text-[#1c1c1e]">
+              USER MANAGEMENT
+            </span>
+            <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#ffd8f4] text-[#86296b] border border-[#f3bee5]">
+              USER DIRECTORY
+            </span>
+          </div>
+          <div className="flex items-center gap-3 self-start sm:self-auto">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-[#c7cad5] text-xs font-bold text-[#1c1c1e]">
+              <Users className="w-3.5 h-3.5 text-[#4262ff]" />
+              <span>{users.length} Registered Users</span>
+            </span>
+            <button
+              onClick={fetchUsers}
+              className="p-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all shadow-sm active:scale-95"
+              title="Refresh Users"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Page Title */}
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#1c1c1e]">
+            User Directory & Access Control
+          </h1>
+          <p className="text-sm sm:text-base text-[#555a6a]">
+            Inspect registered student and learner profiles, verify credentials, and manage account authorization.
+          </p>
+        </div>
+
+        {/* Search & Filter Card */}
+        <div className="bg-white rounded-2xl border border-[#c7cad5] shadow-sm p-5 sm:p-6 space-y-4">
+          <div className="flex flex-col lg:flex-row gap-3">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#555a6a] w-4 h-4 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search users by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-11 min-h-[44px] pl-10 pr-4 text-sm font-semibold rounded-xl border border-[#c7cad5] bg-[#fffdf5] text-[#1c1c1e] placeholder-[#555a6a] hover:border-[#1c1c1e] focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 focus:outline-none transition-all"
+              />
+            </div>
+
+            {/* Country Filter */}
+            <div className="relative min-w-[180px]">
+              <select
+                value={filterCountry}
+                onChange={(e) => setFilterCountry(e.target.value)}
+                className="w-full h-11 min-h-[44px] px-3.5 pr-9 text-sm font-semibold rounded-xl border border-[#c7cad5] bg-[#f4fbfb] text-[#1c1c1e] hover:border-[#1c1c1e] focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 focus:outline-none transition-all appearance-none cursor-pointer"
+              >
+                {countries.map((country) => (
+                  <option key={country} value={country}>
+                    {country === "all" ? "All Countries" : country}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555a6a] pointer-events-none" />
+            </div>
+
+            {/* Status Filter */}
+            <div className="relative min-w-[150px]">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full h-11 min-h-[44px] px-3.5 pr-9 text-sm font-semibold rounded-xl border border-[#c7cad5] bg-[#fbf9fe] text-[#1c1c1e] hover:border-[#1c1c1e] focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 focus:outline-none transition-all appearance-none cursor-pointer"
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active Only</option>
+                <option value="blocked">Blocked Only</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555a6a] pointer-events-none" />
             </div>
           </div>
 
-          {/* Filters */}
-          <div className="p-6 md:p-8 border-b border-gray-100">
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* Search */}
-              <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search users by name or email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-100 outline-none transition-all duration-200"
-                />
-              </div>
-
-              {/* Country Filter */}
-              <div className="relative">
-                <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <select
-                  value={filterCountry}
-                  onChange={(e) => setFilterCountry(e.target.value)}
-                  className="pl-12 pr-8 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-100 outline-none transition-all duration-200 bg-white min-w-[200px]"
+          {/* Counts and stats */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-[#e0e2e8] text-xs">
+            <span className="font-semibold text-[#555a6a]">
+              Showing <strong className="text-[#1c1c1e]">{filteredAndSortedUsers.length}</strong> of{" "}
+              <strong className="text-[#1c1c1e]">{users.length}</strong> users
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#c3faf5] border border-[#9eece4] text-[#187574] font-bold">
+                <span className="w-2 h-2 rounded-full bg-[#187574]" />
+                Active: {users.filter((u) => !u.isBlocked).length}
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#fbd4d4] border border-[#e3c5c5] text-[#800000] font-bold">
+                <span className="w-2 h-2 rounded-full bg-[#800000]" />
+                Blocked: {users.filter((u) => u.isBlocked).length}
+              </span>
+              {(searchTerm || filterCountry !== "all" || filterStatus !== "all") && (
+                <button
+                  onClick={() => {
+                    setSearchTerm("")
+                    setFilterCountry("all")
+                    setFilterStatus("all")
+                  }}
+                  className="px-2.5 py-1 rounded-full bg-[#f7f8fa] hover:bg-[#ebedf2] border border-[#c7cad5] text-xs font-bold text-[#555a6a] hover:text-[#1c1c1e] transition-all ml-2"
                 >
-                  {countries.map((country) => (
-                    <option key={country} value={country}>
-                      {country === "all" ? "All Countries" : country}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Status Filter */}
-              <div className="relative">
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="pl-4 pr-8 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-100 outline-none transition-all duration-200 bg-white min-w-[150px]"
-                >
-                  <option value="all">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="blocked">Blocked</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Results count and stats */}
-            <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div className="text-sm text-gray-600">
-                Showing {filteredAndSortedUsers.length} of {users.length} users
-              </div>
-              <div className="flex items-center space-x-4 text-sm">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-gray-600">Active: {users.filter((u) => !u.isBlocked).length}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <span className="text-gray-600">Blocked: {users.filter((u) => u.isBlocked).length}</span>
-                </div>
-              </div>
+                  Clear
+                </button>
+              )}
             </div>
           </div>
+        </div>
 
-          {/* Desktop Table View */}
-          <div className="hidden md:block">
-            {filteredAndSortedUsers.length > 0 ? (
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <SortableHeader field="fullName">User</SortableHeader>
-                    <SortableHeader field="email">Email</SortableHeader>
-                    <SortableHeader field="country">Country</SortableHeader>
-                    <SortableHeader field="role">Role</SortableHeader>
-                    <SortableHeader field="mobile">Mobile</SortableHeader>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  <AnimatePresence>
-                    {filteredAndSortedUsers.map((user, index) => (
-                      <motion.tr
-                        key={user.email}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ delay: index * 0.03 }}
-                        className={`hover:bg-gray-50 transition-colors duration-200 ${
-                          user.isBlocked ? "bg-red-50/30" : ""
-                        }`}
-                      >
-                        {/* User Info */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-4">
-                            <div className="relative">
-                              <img
-                                src={user.avatar || "/placeholder.svg"}
-                                alt={user.fullName}
-                                className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
-                              />
-                              <div
-                                className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                                  user.isBlocked ? "bg-red-500" : "bg-green-500"
-                                }`}
-                              ></div>
-                            </div>
-                            <div>
-                              <div className="text-sm font-semibold text-gray-900">{user.fullName}</div>
-                              <div className="text-sm text-gray-500">Joined {formatDate(user.createdAt)}</div>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Email */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-2">
-                            <Mail className="w-4 h-4 text-blue-500" />
-                            <span className="text-sm text-gray-900">{user.email}</span>
-                          </div>
-                        </td>
-
-                        {/* Country */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-2">
-                            <MapPin className="w-4 h-4 text-red-500" />
-                            <span className="text-sm text-gray-900">{user.country}</span>
-                          </div>
-                        </td>
-
-                        {/* Role */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-2">
-                            <User className="w-4 h-4 text-purple-500" />
-                            <span className="text-sm text-gray-900 capitalize">{user.role}</span>
-                          </div>
-                        </td>
-
-                        {/* Mobile */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-2">
-                            <Phone className="w-4 h-4 text-green-500" />
-                            <span className="text-sm text-gray-900">{user.mobile}</span>
-                          </div>
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
-                              user.isBlocked ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
-                            }`}
-                          >
-                            {user.isBlocked ? "Blocked" : "Active"}
-                          </span>
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <button
-                            onClick={() => toggleBlockStatus(user.email, user.role, user.isBlocked)}
-                            disabled={blockingId === user.email}
-                            className={`inline-flex items-center space-x-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
-                              user.isBlocked
-                                ? "bg-green-600 hover:bg-green-700 text-white"
-                                : "bg-red-600 hover:bg-red-700 text-white"
-                            } disabled:opacity-50 disabled:cursor-not-allowed`}
-                          >
-                            {blockingId === user.email ? (
-                              <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                <span>Processing...</span>
-                              </>
-                            ) : (
-                              <>
-                                {user.isBlocked ? (
-                                  <>
-                                    <Shield className="w-4 h-4" />
-                                    <span>Unblock</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <ShieldOff className="w-4 h-4" />
-                                    <span>Block</span>
-                                  </>
-                                )}
-                              </>
-                            )}
-                          </button>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </AnimatePresence>
-                </tbody>
-              </table>
-            ) : (
-              <div className="text-center py-20">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">No Users Found</h3>
-                <p className="text-gray-600">
-                  {searchTerm || filterCountry !== "all" || filterStatus !== "all"
-                    ? "Try adjusting your search or filter criteria."
-                    : "No users are currently registered in the system."}
-                </p>
-                {(searchTerm || filterCountry !== "all" || filterStatus !== "all") && (
-                  <button
-                    onClick={() => {
-                      setSearchTerm("")
-                      setFilterCountry("all")
-                      setFilterStatus("all")
-                    }}
-                    className="mt-4 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors duration-200"
-                  >
-                    Clear Filters
-                  </button>
-                )}
-              </div>
+        {/* Content Section */}
+        {loading ? (
+          <MiroLoader message="Fetching users from system..." />
+        ) : error ? (
+          <div className="bg-white rounded-2xl border border-[#c7cad5] p-12 text-center space-y-4">
+            <div className="w-14 h-14 rounded-full bg-[#fbd4d4] border border-[#e3c5c5] flex items-center justify-center mx-auto text-[#800000]">
+              <Users className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-[#1c1c1e]">Error Loading Users</h3>
+              <p className="text-xs sm:text-sm text-[#555a6a] max-w-md mx-auto">{error}</p>
+            </div>
+            <button
+              onClick={fetchUsers}
+              className="px-5 py-2.5 rounded-full bg-[#1c1c1e] text-white hover:bg-[#2c2c34] text-xs font-bold transition-all shadow-sm active:scale-98"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : filteredAndSortedUsers.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-[#c7cad5] p-12 text-center space-y-4">
+            <div className="w-14 h-14 rounded-full bg-[#fff8e0] border border-[#fde89c] flex items-center justify-center mx-auto text-[#746019]">
+              <Search className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-[#1c1c1e]">No users found</h3>
+              <p className="text-xs sm:text-sm text-[#555a6a] max-w-md mx-auto">
+                {searchTerm || filterCountry !== "all" || filterStatus !== "all"
+                  ? "Try adjusting your search query or filter selection."
+                  : "No users are currently registered in the system."}
+              </p>
+            </div>
+            {(searchTerm || filterCountry !== "all" || filterStatus !== "all") && (
+              <button
+                onClick={() => {
+                  setSearchTerm("")
+                  setFilterCountry("all")
+                  setFilterStatus("all")
+                }}
+                className="px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-xs font-bold text-[#1c1c1e] hover:bg-[#f7f8fa]"
+              >
+                Reset Filters
+              </button>
             )}
           </div>
-
-          {/* Mobile Card View */}
-          <div className="md:hidden p-4">
-            {filteredAndSortedUsers.length > 0 ? (
-              <div className="space-y-4">
-                <AnimatePresence>
-                  {filteredAndSortedUsers.map((user, index) => (
-                    <motion.div
-                      key={user.email}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.03 }}
-                      className={`bg-white rounded-2xl border-2 p-4 shadow-sm transition-all duration-300 ${
-                        user.isBlocked ? "border-red-200 bg-red-50/30" : "border-gray-200"
-                      }`}
-                    >
-                      {/* User Header */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="relative">
-                            <img
-                              src={user.avatar || "/placeholder.svg"}
-                              alt={user.fullName}
-                              className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
-                            />
-                            <div
-                              className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                                user.isBlocked ? "bg-red-500" : "bg-green-500"
-                              }`}
-                            ></div>
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-900">{user.fullName}</h3>
-                            <p className="text-sm text-gray-500">Joined {formatDate(user.createdAt)}</p>
-                          </div>
-                        </div>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            user.isBlocked ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
+        ) : (
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block bg-white rounded-2xl border border-[#c7cad5] shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-[#f7f8fa] border-b border-[#e0e2e8]">
+                    <tr>
+                      <SortableHeader field="fullName">User</SortableHeader>
+                      <SortableHeader field="email">Email</SortableHeader>
+                      <SortableHeader field="country">Country</SortableHeader>
+                      <SortableHeader field="role">Role</SortableHeader>
+                      <SortableHeader field="mobile">Mobile</SortableHeader>
+                      <th className="px-6 py-3.5 text-left text-xs font-bold text-[#555a6a] uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3.5 text-right text-xs font-bold text-[#555a6a] uppercase tracking-wider">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#e0e2e8]">
+                    <AnimatePresence>
+                      {filteredAndSortedUsers.map((user) => (
+                        <motion.tr
+                          key={user.email}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className={`hover:bg-[#fbfbfd] transition-colors ${
+                            user.isBlocked ? "bg-[#fffafa]" : ""
                           }`}
                         >
-                          {user.isBlocked ? "Blocked" : "Active"}
-                        </span>
-                      </div>
+                          {/* User Info */}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              <div className="relative flex-shrink-0">
+                                <img
+                                  src={user.avatar || "/placeholder.svg"}
+                                  alt={user.fullName || "User"}
+                                  className="w-9 h-9 rounded-full object-cover border border-[#c7cad5]"
+                                />
+                                <span
+                                  className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
+                                    user.isBlocked ? "bg-[#800000]" : "bg-[#187574]"
+                                  }`}
+                                />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-sm font-bold text-[#1c1c1e] truncate">
+                                  {user.fullName || "Unnamed User"}
+                                </div>
+                                <div className="text-xs text-[#555a6a]">
+                                  Joined {formatDate(user.createdAt)}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
 
-                      {/* User Details */}
-                      <div className="space-y-3 mb-4">
-                        <div className="flex items-center space-x-3">
-                          <Mail className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                          <span className="text-sm text-gray-900 truncate">{user.email}</span>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <Phone className="w-4 h-4 text-green-500 flex-shrink-0" />
-                          <span className="text-sm text-gray-900">{user.mobile}</span>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <MapPin className="w-4 h-4 text-red-500 flex-shrink-0" />
-                          <span className="text-sm text-gray-900">{user.country}</span>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <User className="w-4 h-4 text-purple-500 flex-shrink-0" />
-                          <span className="text-sm text-gray-900 capitalize">{user.role}</span>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <Calendar className="w-4 h-4 text-orange-500 flex-shrink-0" />
-                          <span className="text-sm text-gray-900">Last active: {formatDate(user.lastActive)}</span>
-                        </div>
-                      </div>
+                          {/* Email */}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2 text-xs font-semibold text-[#1c1c1e]">
+                              <Mail className="w-3.5 h-3.5 text-[#4262ff]" />
+                              <span className="truncate max-w-[200px]">{user.email}</span>
+                            </div>
+                          </td>
 
-                      {/* Action Button */}
-                      <button
-                        onClick={() => toggleBlockStatus(user.email, user.role, user.isBlocked)}
-                        disabled={blockingId === user.email}
-                        className={`w-full py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center space-x-2 ${
-                          user.isBlocked
-                            ? "bg-green-600 hover:bg-green-700 text-white"
-                            : "bg-red-600 hover:bg-red-700 text-white"
-                        } disabled:opacity-50 disabled:cursor-not-allowed`}
-                      >
-                        {blockingId === user.email ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            <span>Processing...</span>
-                          </>
-                        ) : (
-                          <>
-                            {user.isBlocked ? (
-                              <>
-                                <Shield className="w-4 h-4" />
-                                <span>Unblock User</span>
-                              </>
-                            ) : (
-                              <>
-                                <ShieldOff className="w-4 h-4" />
-                                <span>Block User</span>
-                              </>
-                            )}
-                          </>
-                        )}
-                      </button>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                          {/* Country */}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#f7f8fa] border border-[#e0e2e8] text-xs font-semibold text-[#1c1c1e]">
+                              <MapPin className="w-3 h-3 text-[#555a6a]" />
+                              <span>{user.country || "Not specified"}</span>
+                            </span>
+                          </td>
+
+                          {/* Role */}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#fdf6fa] border border-[#f7d6ee] text-xs font-bold text-[#86296b] capitalize">
+                              {user.role || "user"}
+                            </span>
+                          </td>
+
+                          {/* Mobile */}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-xs font-semibold text-[#555a6a]">
+                              {user.mobile || "—"}
+                            </span>
+                          </td>
+
+                          {/* Status */}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
+                                user.isBlocked
+                                  ? "bg-[#fbd4d4] text-[#800000] border border-[#e3c5c5]"
+                                  : "bg-[#c3faf5] text-[#187574] border border-[#9eece4]"
+                              }`}
+                            >
+                              {user.isBlocked ? "Blocked" : "Active"}
+                            </span>
+                          </td>
+
+                          {/* Action Button */}
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <button
+                              onClick={() => toggleBlockStatus(user.email, user.role, user.isBlocked)}
+                              disabled={blockingId === user.email}
+                              className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                user.isBlocked
+                                  ? "bg-[#c3faf5] hover:bg-[#a6f5ed] border border-[#9eece4] text-[#187574]"
+                                  : "bg-[#fbd4d4] hover:bg-[#f9a9a9] border border-[#e3c5c5] text-[#800000]"
+                              }`}
+                            >
+                              {blockingId === user.email ? (
+                                <>
+                                  <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                  <span>Updating...</span>
+                                </>
+                              ) : user.isBlocked ? (
+                                <>
+                                  <Shield className="w-3.5 h-3.5" />
+                                  <span>Unblock</span>
+                                </>
+                              ) : (
+                                <>
+                                  <ShieldOff className="w-3.5 h-3.5" />
+                                  <span>Block User</span>
+                                </>
+                              )}
+                            </button>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </AnimatePresence>
+                  </tbody>
+                </table>
               </div>
-            ) : (
-              <div className="text-center py-20">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">No Users Found</h3>
-                <p className="text-gray-600">
-                  {searchTerm || filterCountry !== "all" || filterStatus !== "all"
-                    ? "Try adjusting your search or filter criteria."
-                    : "No users are currently registered in the system."}
-                </p>
-                {(searchTerm || filterCountry !== "all" || filterStatus !== "all") && (
-                  <button
-                    onClick={() => {
-                      setSearchTerm("")
-                      setFilterCountry("all")
-                      setFilterStatus("all")
-                    }}
-                    className="mt-4 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors duration-200"
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3">
+              <AnimatePresence>
+                {filteredAndSortedUsers.map((user) => (
+                  <motion.div
+                    key={user.email}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="bg-white rounded-2xl border border-[#c7cad5] p-4 space-y-3.5 shadow-sm"
                   >
-                    Clear Filters
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </motion.div>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="relative flex-shrink-0">
+                          <img
+                            src={user.avatar || "/placeholder.svg"}
+                            alt={user.fullName || "User"}
+                            className="w-10 h-10 rounded-full object-cover border border-[#c7cad5]"
+                          />
+                          <span
+                            className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
+                              user.isBlocked ? "bg-[#800000]" : "bg-[#187574]"
+                            }`}
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-bold text-sm text-[#1c1c1e] truncate">
+                            {user.fullName || "Unnamed User"}
+                          </h3>
+                          <p className="text-xs text-[#555a6a]">
+                            Joined {formatDate(user.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold flex-shrink-0 ${
+                          user.isBlocked
+                            ? "bg-[#fbd4d4] text-[#800000] border border-[#e3c5c5]"
+                            : "bg-[#c3faf5] text-[#187574] border border-[#9eece4]"
+                        }`}
+                      >
+                        {user.isBlocked ? "Blocked" : "Active"}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 pt-2 border-t border-[#e0e2e8] text-xs">
+                      <div className="flex items-center gap-2 text-[#1c1c1e] font-semibold">
+                        <Mail className="w-3.5 h-3.5 text-[#4262ff] flex-shrink-0" />
+                        <span className="truncate">{user.email}</span>
+                      </div>
+                      {user.mobile && (
+                        <div className="flex items-center gap-2 text-[#555a6a]">
+                          <Phone className="w-3.5 h-3.5 text-[#187574] flex-shrink-0" />
+                          <span>{user.mobile}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-[#555a6a]">
+                        <MapPin className="w-3.5 h-3.5 text-[#e5484d] flex-shrink-0" />
+                        <span>{user.country || "Country not specified"}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[#555a6a]">
+                        <User className="w-3.5 h-3.5 text-[#86296b] flex-shrink-0" />
+                        <span className="capitalize">Role: {user.role || "user"}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => toggleBlockStatus(user.email, user.role, user.isBlocked)}
+                      disabled={blockingId === user.email}
+                      className={`w-full h-11 min-h-[44px] rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed ${
+                        user.isBlocked
+                          ? "bg-[#c3faf5] hover:bg-[#a6f5ed] border border-[#9eece4] text-[#187574]"
+                          : "bg-[#fbd4d4] hover:bg-[#f9a9a9] border border-[#e3c5c5] text-[#800000]"
+                      }`}
+                    >
+                      {blockingId === user.email ? (
+                        <>
+                          <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          <span>Updating status...</span>
+                        </>
+                      ) : user.isBlocked ? (
+                        <>
+                          <Shield className="w-4 h-4" />
+                          <span>Unblock User</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldOff className="w-4 h-4" />
+                          <span>Block User</span>
+                        </>
+                      )}
+                    </button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

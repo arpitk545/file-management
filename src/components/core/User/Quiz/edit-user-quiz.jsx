@@ -1,89 +1,296 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { Card, CardContent, CardHeader, CardTitle } from "../../../ui/card"
-import { Button } from "../../../ui/button"
-import { Input } from "../../../ui/input"
-import { Label } from "../../../ui/label"
-import { useParams,useNavigate } from "react-router-dom"
-import { BookOpen, ArrowLeft, Trash2, StickyNote } from "lucide-react"
+import { useParams, useNavigate } from "react-router-dom"
+import {
+  BookOpen,
+  ArrowLeft,
+  Trash2,
+  Plus,
+  Save,
+  CheckCircle2,
+  Clock,
+  Award,
+  Layers,
+  HelpCircle,
+  StickyNote,
+  AlertCircle,
+  Image as ImageIcon,
+  X,
+  Upload,
+  MapPin,
+  FileText,
+  Check,
+  Lock,
+  Sparkles
+} from "lucide-react"
 import toast from "react-hot-toast"
+import {
+  getQuizById,
+  updateQuizById,
+  getAllQuizRegions
+} from "../../../../services/operations/quizAPI"
 
-const ModernInput = ({ label, type = "text", placeholder, value, onChange, icon: Icon }) => (
-  <div className="space-y-2">
-    <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-      {Icon && <Icon className="w-4 h-4" />}
-      {label}
-    </Label>
-    <Input
-      type={type}
-      placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="h-14 px-4 border-2 border-gray-200 rounded-2xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-    />
-  </div>
-)
+// Miro Thumbnail Uploader (Complete aspect ratio fit, no cropping)
+function ThumbnailUploader({ preview, onFileSelect, onClear }) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#555a6a]">
+        Quiz Cover Thumbnail (Optional)
+      </label>
+
+      {preview ? (
+        <div className="relative rounded-2xl overflow-hidden border border-[#c7cad5] bg-[#f0f1f4] h-48 flex items-center justify-center p-3">
+          <img src={preview} alt="Quiz thumbnail" className="w-full h-full object-contain object-center" />
+          <button
+            type="button"
+            onClick={onClear}
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white text-[#600000] hover:bg-[#fbd4d4] border border-[#e3c5c5] flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+            aria-label="Remove thumbnail"
+            title="Remove thumbnail"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      ) : (
+        <label className="flex flex-col items-center justify-center gap-2.5 p-6 border-2 border-dashed border-[#c7cad5] hover:border-[#1c1c1e] rounded-2xl bg-[#fafbfc] cursor-pointer transition-colors">
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              const reader = new FileReader()
+              reader.onload = () => {
+                onFileSelect({ file, dataUrl: reader.result })
+              }
+              reader.readAsDataURL(file)
+            }}
+          />
+          <div className="w-10 h-10 rounded-full bg-[#f0f1f4] border border-[#c7cad5] flex items-center justify-center">
+            <Upload className="w-4 h-4 text-[#555a6a]" />
+          </div>
+          <div className="text-center">
+            <p className="text-xs font-semibold text-[#1c1c1e]">Upload Cover Image</p>
+            <p className="text-[11px] text-[#555a6a]">PNG, JPG, WEBP up to 2MB (Full image displayed)</p>
+          </div>
+        </label>
+      )}
+    </div>
+  )
+}
+
+// Per-question diagram upload & note component
+function QuestionImageAndNote({ question, onUpdate }) {
+  const handleSelect = (file) => {
+    const reader = new FileReader()
+    reader.onload = () => onUpdate({ ...question, image: reader.result })
+    reader.readAsDataURL(file)
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-[#e6e8ec]">
+      {/* Question Diagram / Image */}
+      <div className="space-y-1.5">
+        <label className="block text-[11px] font-bold uppercase tracking-wider text-[#555a6a]">
+          Question Diagram / Image (Optional)
+        </label>
+
+        {question.image ? (
+          <div className="relative border border-[#c7cad5] rounded-xl overflow-hidden bg-[#f0f1f4] h-36 flex items-center justify-center p-2">
+            <img src={question.image} alt="Question Diagram" className="w-full h-full object-contain object-center" />
+            <button
+              type="button"
+              onClick={() => onUpdate({ ...question, image: "" })}
+              className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white text-[#600000] hover:bg-[#fbd4d4] border border-[#e3c5c5] flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+              aria-label="Remove diagram"
+              title="Remove diagram"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : (
+          <label className="flex items-center justify-center gap-2 p-4 border border-dashed border-[#c7cad5] hover:border-[#1c1c1e] rounded-xl bg-white cursor-pointer transition-colors h-36">
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) handleSelect(file)
+              }}
+            />
+            <div className="text-center">
+              <ImageIcon className="w-5 h-5 text-[#555a6a] mx-auto mb-1" />
+              <p className="text-xs font-semibold text-[#1c1c1e]">Add diagram or photo</p>
+              <p className="text-[10px] text-[#555a6a]">PNG or JPG format</p>
+            </div>
+          </label>
+        )}
+      </div>
+
+      {/* Question Solution / Note */}
+      <div className="space-y-1.5">
+        <label className="block text-[11px] font-bold uppercase tracking-wider text-[#555a6a]">
+          Explanatory Note / Solution (Optional)
+        </label>
+        <textarea
+          rows={4}
+          value={question.note || ""}
+          onChange={(e) => onUpdate({ ...question, note: e.target.value })}
+          placeholder="Detailed solution or reference note shown after answer submission..."
+          className="w-full h-36 p-3 bg-white border border-[#c7cad5] rounded-xl text-xs font-medium text-[#1c1c1e] placeholder-[#8e91a0] focus:outline-none focus:border-[#1c1c1e] transition-all resize-none"
+        />
+      </div>
+    </div>
+  )
+}
 
 export default function EditQuiz() {
   const params = useParams()
-  const router = useNavigate()
+  const navigate = useNavigate()
+  const quizId = params.quizId || params.id
+
   const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [regions, setRegions] = useState([])
+
   const [quizData, setQuizData] = useState({
     title: "",
     description: "",
+    thumbnailimage: "",
     region: "",
     examType: "",
     specificClass: "",
     subject: "",
     chapter: "",
     totalMarks: 100,
-    duration: 120,
+    duration: 60,
     difficulty: "Average",
+    author: "",
+    passcode: "",
+    approvalStatus: "Approved",
     questions: [],
   })
 
-  // Dummy quiz data
-  const dummyQuiz = {
-    _id: params.quizId || "1",
-    title: "Advanced Mathematics Quiz",
-    description: "A comprehensive quiz covering advanced mathematical concepts",
-    region: "Maharashtra",
-    examType: "Board Exam",
-    specificClass: "12th Class",
-    subject: "Mathematics",
-    chapter: "Calculus",
-    totalMarks: 100,
-    duration: 120,
-    difficulty: "Hard",
-    questions: [
-      {
-        _id: "q1",
-        text: "What is the derivative of x^2 + 3x + 5?",
-        image: null,
-        note: "Use the power rule",
-        options: { A: "2x + 3", B: "2x + 5", C: "x + 3", D: "3x + 2" },
-        correctAnswer: "A",
-      },
-    ],
-  }
-
+  // Load Regions and Quiz Data
   useEffect(() => {
-    const fetchQuiz = async () => {
+    let isMounted = true
+
+    const fetchData = async () => {
       try {
         setIsLoading(true)
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        setQuizData(dummyQuiz)
+
+        // 1. Fetch Region Taxonomy
+        let loadedRegions = []
+        try {
+          const regionsRes = await getAllQuizRegions()
+          loadedRegions = regionsRes?.data || []
+          if (isMounted) setRegions(loadedRegions)
+        } catch (err) {
+          console.warn("Could not load regions list:", err)
+        }
+
+        // 2. Fetch Quiz Data
+        if (quizId && quizId !== "1") {
+          const res = await getQuizById(quizId)
+          const data = res?.quiz || res?.data
+          if (data && isMounted) {
+            const cat = data.category || {}
+            setQuizData({
+              title: cat.quizTitle || data.quizTitle || data.title || "",
+              description: cat.description || data.description || "",
+              thumbnailimage: cat.thumbnailimage || data.thumbnailimage || "",
+              region: cat.region || data.region || "",
+              examType: cat.examType || data.examType || "",
+              specificClass: cat.specificClass || data.specificClass || "",
+              subject: cat.subject || data.subject || "",
+              chapter: cat.chapter || data.chapter || "",
+              totalMarks: cat.totalMarks || data.totalMarks || 100,
+              duration: cat.duration || data.duration || 60,
+              difficulty: cat.difficulty || data.difficulty || "Average",
+              author: cat.author || data.author || "Educator",
+              passcode: cat.passcode || data.passcode || "",
+              approvalStatus: cat.approvalStatus || data.approvalStatus || "Approved",
+              questions: Array.isArray(data.questions) ? data.questions : [],
+            })
+            return
+          }
+        }
       } catch (error) {
-        toast.error("Failed to load quiz")
+        console.error("Error loading quiz for edit:", error)
+        toast.error("Failed to load quiz details")
       } finally {
-        setIsLoading(false)
+        if (isMounted) setIsLoading(false)
       }
     }
 
-    fetchQuiz()
-  }, [])
+    fetchData()
+
+    return () => {
+      isMounted = false
+    }
+  }, [quizId])
+
+  // Derive active region object from regions list (matching either by .name or ._id)
+  const selectedRegion = regions.find(
+    (r) => r.name === quizData.region || r._id === quizData.region
+  ) || null
+
+  const getExamTypes = () => {
+    if (!selectedRegion) {
+      return quizData.examType ? [quizData.examType] : []
+    }
+    const types = selectedRegion.examTypes?.map((type) => type.name) || []
+    if (quizData.examType && !types.includes(quizData.examType)) {
+      types.unshift(quizData.examType)
+    }
+    return types
+  }
+
+  const getSpecificClasses = () => {
+    if (!selectedRegion || !quizData.examType) {
+      return quizData.specificClass ? [quizData.specificClass] : []
+    }
+    const selectedExamType = selectedRegion.examTypes?.find((et) => et.name === quizData.examType)
+    const classes = selectedExamType?.specificClasses?.map((cls) => cls.name) || []
+    if (quizData.specificClass && !classes.includes(quizData.specificClass)) {
+      classes.unshift(quizData.specificClass)
+    }
+    return classes
+  }
+
+  const getSubjects = () => {
+    if (!selectedRegion || !quizData.examType || !quizData.specificClass) {
+      return quizData.subject ? [quizData.subject] : []
+    }
+    const selectedExamType = selectedRegion.examTypes?.find((et) => et.name === quizData.examType)
+    const selectedSpecificClass = selectedExamType?.specificClasses?.find(
+      (sc) => sc.name === quizData.specificClass
+    )
+    const subjects = selectedSpecificClass?.subjects?.map((subject) => subject.name) || []
+    if (quizData.subject && !subjects.includes(quizData.subject)) {
+      subjects.unshift(quizData.subject)
+    }
+    return subjects
+  }
+
+  const getChapters = () => {
+    if (!selectedRegion || !quizData.examType || !quizData.specificClass || !quizData.subject) {
+      return quizData.chapter ? [quizData.chapter] : []
+    }
+    const selectedExamType = selectedRegion.examTypes?.find((et) => et.name === quizData.examType)
+    const selectedSpecificClass = selectedExamType?.specificClasses?.find(
+      (sc) => sc.name === quizData.specificClass
+    )
+    const selectedSubject = selectedSpecificClass?.subjects?.find((sub) => sub.name === quizData.subject)
+    const chapters = selectedSubject?.chapters?.map((ch) => ch.name) || []
+    if (quizData.chapter && !chapters.includes(quizData.chapter)) {
+      chapters.unshift(quizData.chapter)
+    }
+    return chapters
+  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -104,281 +311,603 @@ export default function EditQuiz() {
 
   const handleOptionChange = (questionIndex, optionKey, value) => {
     const updatedQuestions = [...quizData.questions]
-    updatedQuestions[questionIndex].options[optionKey] = value
+    const currentOptions = { ...(updatedQuestions[questionIndex].options || {}) }
+    currentOptions[optionKey] = value
+    updatedQuestions[questionIndex] = {
+      ...updatedQuestions[questionIndex],
+      options: currentOptions,
+    }
     setQuizData((prev) => ({
       ...prev,
       questions: updatedQuestions,
     }))
   }
 
+  const handleAddQuestion = () => {
+    const newQuestion = {
+      _id: `q_${Date.now()}`,
+      text: "",
+      image: "",
+      note: "",
+      options: { A: "", B: "", C: "", D: "" },
+      correctAnswer: "A",
+      difficulty: "Average",
+      tags: [],
+    }
+    setQuizData((prev) => ({
+      ...prev,
+      questions: [...prev.questions, newQuestion],
+    }))
+    toast.success("New question added")
+  }
+
   const handleDeleteQuestion = (index) => {
+    if (quizData.questions.length <= 1) {
+      toast.error("A quiz must have at least one question")
+      return
+    }
     setQuizData((prev) => ({
       ...prev,
       questions: prev.questions.filter((_, i) => i !== index),
     }))
-    toast.success("Question deleted")
+    toast.success("Question removed")
   }
 
   const handleSaveQuiz = async () => {
+    if (!quizData.title.trim() || !quizData.description.trim()) {
+      toast.error("Please fill in title and description")
+      return
+    }
+
     try {
-      if (!quizData.title || !quizData.description) {
-        toast.error("Please fill in all required fields")
-        return
+      setIsSaving(true)
+
+      const regionName = selectedRegion?.name || quizData.region || ""
+
+      // Structure category & questions matching the server Quiz schema
+      const payload = {
+        category: {
+          quizTitle: quizData.title,
+          description: quizData.description,
+          thumbnailimage: quizData.thumbnailimage || "",
+          region: regionName,
+          examType: quizData.examType || "",
+          specificClass: quizData.specificClass || "",
+          subject: quizData.subject || "",
+          chapter: quizData.chapter || "",
+          duration: Number(quizData.duration) || 60,
+          difficulty: quizData.difficulty || "Average",
+          totalMarks: Number(quizData.totalMarks) || 100,
+          author: quizData.author || "Educator",
+          passcode: quizData.passcode || "",
+          approvalStatus: quizData.approvalStatus || "Approved",
+        },
+        questions: quizData.questions.map((q) => ({
+          text: q.text || q.questionText || "",
+          image: q.image || "",
+          note: q.note || "",
+          options: q.options || { A: "", B: "", C: "", D: "" },
+          correctAnswer: q.correctAnswer || "A",
+          difficulty: q.difficulty || "Average",
+          tags: q.tags || [],
+        })),
       }
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      toast.success("Quiz updated successfully!")
-      router.push(`/view-quiz/${params.quizId}`)
+
+      if (quizId && quizId !== "1") {
+        await updateQuizById(quizId, payload)
+        toast.success("Quiz updated successfully!")
+      } else {
+        toast.success("Quiz settings saved!")
+      }
+      navigate("/filter-user-quiz")
     } catch (error) {
-      toast.error("Failed to save quiz")
+      console.error("Error updating quiz:", error)
+      toast.error("Failed to save changes")
+    } finally {
+      setIsSaving(false)
     }
   }
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-semibold">Loading quiz...</p>
+      <div className="min-h-screen bg-[#f7f8fa] flex flex-col items-center justify-center p-6 text-center font-sans w-full">
+        <div className="w-12 h-12 rounded-2xl bg-[#ffd02f] flex items-center justify-center mb-4 shadow-sm animate-pulse border border-[#c7cad5]">
+          <Clock className="h-6 w-6 text-[#1c1c1e]" />
         </div>
+        <p className="text-xs font-bold uppercase tracking-wider text-[#6a6d7c]">
+          Loading quiz editor...
+        </p>
       </div>
     )
   }
 
   return (
-    <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4 md:p-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="max-w-4xl mx-auto"
-      >
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex items-center gap-4"
-          >
-            <Button
-              onClick={() => router.back()}
-              variant="ghost"
-              className="p-2 hover:bg-gray-100 rounded-xl transition-all"
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-10 px-4 sm:px-6 lg:px-8 xl:px-12 w-full font-sans overflow-x-hidden">
+      {/* Full Width Container */}
+      <div className="w-full space-y-6 sm:space-y-8">
+        {/* Top Header & Navigation Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#c7cad5] w-full">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => navigate("/filter-user-quiz")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#ebecf0] transition-colors text-xs font-semibold shadow-sm active:scale-95 cursor-pointer"
             >
-              <ArrowLeft className="w-6 h-6" />
-            </Button>
-            <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl">
-              <BookOpen className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">Edit Quiz</h1>
-              <p className="text-gray-600">Modify quiz details and questions</p>
-            </div>
-          </motion.div>
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Quizzes</span>
+            </button>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest bg-[#ffd02f] text-[#1c1c1e] shadow-2xs border border-[#e5ba2a]">
+              QUIZ EDITOR
+            </span>
+            <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#c3faf5] text-[#187574] border border-[#9eece4]">
+              {quizData.subject || "Academic"}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              onClick={() => navigate("/filter-user-quiz")}
+              className="px-4 py-2 rounded-full bg-white border border-[#c7cad5] hover:bg-[#ebecf0] text-xs font-bold text-[#1c1c1e] transition-all shadow-sm active:scale-95 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveQuiz}
+              disabled={isSaving}
+              className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-[#1c1c1e] hover:bg-[#2c2c34] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50"
+            >
+              <Save className="w-4 h-4 text-[#ffd02f]" />
+              <span>{isSaving ? "Saving..." : "Save Quiz Changes"}</span>
+            </button>
+          </div>
         </div>
 
-        {/* Quiz Details Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-        >
-          <Card className="backdrop-blur-xl bg-white/90 border-0 shadow-2xl rounded-3xl overflow-visible mb-8">
-            <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-8">
-              <CardTitle className="text-2xl font-bold">Quiz Details</CardTitle>
-            </CardHeader>
+        {/* Page Title */}
+        <div className="space-y-1 text-left">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1c1c1e]">
+            Edit Quiz Details & Questions
+          </h1>
+          <p className="text-xs sm:text-sm text-[#6a6d7c] max-w-3xl leading-relaxed">
+            Update curriculum dropdown taxonomy (Region, Exam Type, Class, Subject, Chapter), adjust question statements, manage diagrams, and configure answer keys.
+          </p>
+        </div>
 
-            <CardContent className="p-8 space-y-6">
-              <ModernInput
-                label="Quiz Title"
-                placeholder="Enter quiz title"
+        {/* Basic Information & Taxonomy Card */}
+        <div className="bg-white rounded-3xl border border-[#c7cad5] shadow-sm p-6 sm:p-8 space-y-6 w-full text-left">
+          <div className="flex items-center gap-2.5 pb-3 border-b border-[#e6e8ec]">
+            <div className="w-8 h-8 rounded-xl bg-[#fff8e0] border border-[#fde89c] flex items-center justify-center text-[#746019]">
+              <BookOpen className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-extrabold text-[#1c1c1e]">Assessment Information & Taxonomy</h2>
+              <p className="text-xs text-[#6a6d7c]">Select region, exam, class, subject, and chapter using cascading dropdowns</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* Title */}
+            <div className="space-y-1.5 sm:col-span-2">
+              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                Quiz Title *
+              </label>
+              <input
+                type="text"
+                name="title"
                 value={quizData.title}
-                onChange={(value) => setQuizData({ ...quizData, title: value })}
+                onChange={handleInputChange}
+                className="w-full h-11 px-3.5 bg-[#f7f8fa] border border-[#c7cad5] rounded-xl text-xs font-semibold text-[#1c1c1e] focus:bg-white focus:outline-none focus:border-[#1c1c1e] transition-all"
+                placeholder="e.g. Higher Secondary Mathematics Assessment"
               />
+            </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-gray-700">Description</Label>
-                <textarea
-                  placeholder="Enter quiz description"
-                  value={quizData.description}
-                  onChange={(e) => setQuizData({ ...quizData, description: e.target.value })}
-                  className="w-full h-24 p-4 border-2 border-gray-200 rounded-2xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                />
+            {/* Author */}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                Author Name
+              </label>
+              <input
+                type="text"
+                name="author"
+                value={quizData.author}
+                onChange={handleInputChange}
+                className="w-full h-11 px-3.5 bg-[#f7f8fa] border border-[#c7cad5] rounded-xl text-xs font-semibold text-[#1c1c1e] focus:bg-white focus:outline-none focus:border-[#1c1c1e] transition-all"
+                placeholder="Educator / Mentor"
+              />
+            </div>
+
+            {/* Description */}
+            <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
+              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                Description *
+              </label>
+              <textarea
+                name="description"
+                value={quizData.description}
+                onChange={handleInputChange}
+                rows={2}
+                className="w-full p-3.5 bg-[#f7f8fa] border border-[#c7cad5] rounded-xl text-xs font-medium text-[#1c1c1e] focus:bg-white focus:outline-none focus:border-[#1c1c1e] transition-all resize-y"
+                placeholder="Brief overview of the syllabus and topics covered in this quiz..."
+              />
+            </div>
+          </div>
+
+          {/* CASCADING TAXONOMY DROPDOWNS - Exact same as create-quiz.jsx */}
+          <div className="pt-2 border-t border-[#e6e8ec] space-y-3">
+            <div className="flex items-center gap-2">
+              <Layers className="w-4 h-4 text-[#187574]" />
+              <label className="text-xs font-bold uppercase tracking-wider text-[#1c1c1e]">
+                Curriculum Classification (Cascading Selectors)
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+              {/* 1. Region / Board Dropdown */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-[#fff8e0] border border-[#fde89c]/70">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#746019]">
+                  Region / Board
+                </label>
+                <select
+                  value={selectedRegion?._id || quizData.region}
+                  onChange={(e) => {
+                    const selectedVal = e.target.value
+                    const foundObj = regions.find((r) => r._id === selectedVal || r.name === selectedVal)
+                    setQuizData((prev) => ({
+                      ...prev,
+                      region: foundObj ? foundObj.name : selectedVal,
+                      examType: "",
+                      specificClass: "",
+                      subject: "",
+                      chapter: "",
+                    }))
+                  }}
+                  className="w-full h-10 px-3 bg-white border border-[#fde89c] rounded-lg text-xs font-semibold text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#ffd02f] cursor-pointer"
+                >
+                  <option value="">Choose region</option>
+                  {regions.map((region) => (
+                    <option key={region._id} value={region._id}>
+                      {region.name}
+                    </option>
+                  ))}
+                  {quizData.region && !regions.some((r) => r.name === quizData.region || r._id === quizData.region) && (
+                    <option value={quizData.region}>{quizData.region}</option>
+                  )}
+                </select>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <ModernInput
-                  label="Region"
-                  placeholder="Enter region"
-                  value={quizData.region}
-                  onChange={(value) => setQuizData({ ...quizData, region: value })}
-                />
-                <ModernInput
-                  label="Exam Type"
-                  placeholder="Enter exam type"
+              {/* 2. Exam Type Dropdown */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-[#c3faf5]/40 border border-[#0fbcb0]/30">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#187574]">
+                  Exam Type
+                </label>
+                <select
                   value={quizData.examType}
-                  onChange={(value) => setQuizData({ ...quizData, examType: value })}
-                />
-                <ModernInput
-                  label="Class"
-                  placeholder="Enter class"
-                  value={quizData.specificClass}
-                  onChange={(value) => setQuizData({ ...quizData, specificClass: value })}
-                />
-                <ModernInput
-                  label="Subject"
-                  placeholder="Enter subject"
-                  value={quizData.subject}
-                  onChange={(value) => setQuizData({ ...quizData, subject: value })}
-                />
-                <ModernInput
-                  label="Chapter"
-                  placeholder="Enter chapter"
-                  value={quizData.chapter}
-                  onChange={(value) => setQuizData({ ...quizData, chapter: value })}
-                />
-                <ModernInput
-                  label="Duration (minutes)"
-                  type="number"
-                  placeholder="Enter duration"
-                  value={quizData.duration}
-                  onChange={(value) => setQuizData({ ...quizData, duration: Number.parseInt(value) })}
-                />
+                  disabled={!quizData.region}
+                  onChange={(e) =>
+                    setQuizData((prev) => ({
+                      ...prev,
+                      examType: e.target.value,
+                      specificClass: "",
+                      subject: "",
+                      chapter: "",
+                    }))
+                  }
+                  className="w-full h-10 px-3 bg-white border border-[#0fbcb0]/40 rounded-lg text-xs font-semibold text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#187574] disabled:bg-[#f7f8fa] disabled:text-[#a5a8b5] disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <option value="">Choose exam</option>
+                  {getExamTypes().map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <ModernInput
-                  label="Total Marks"
-                  type="number"
-                  placeholder="Enter total marks"
-                  value={quizData.totalMarks}
-                  onChange={(value) => setQuizData({ ...quizData, totalMarks: Number.parseInt(value) })}
-                />
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Difficulty Level</Label>
-                  <select
-                    value={quizData.difficulty}
-                    onChange={(e) => setQuizData({ ...quizData, difficulty: e.target.value })}
-                    className="w-full h-14 px-4 border-2 border-gray-200 rounded-2xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                  >
-                    <option value="Easy">Easy</option>
-                    <option value="Average">Average</option>
-                    <option value="Hard">Hard</option>
-                  </select>
-                </div>
+              {/* 3. Class Level Dropdown */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-[#ffd8f4]/40 border border-[#ffd8f4]">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#86296b]">
+                  Class Level
+                </label>
+                <select
+                  value={quizData.specificClass}
+                  disabled={!quizData.examType}
+                  onChange={(e) =>
+                    setQuizData((prev) => ({
+                      ...prev,
+                      specificClass: e.target.value,
+                      subject: "",
+                      chapter: "",
+                    }))
+                  }
+                  className="w-full h-10 px-3 bg-white border border-[#ffd8f4] rounded-lg text-xs font-semibold text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#86296b] disabled:bg-[#f7f8fa] disabled:text-[#a5a8b5] disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <option value="">Choose class</option>
+                  {getSpecificClasses().map((cls) => (
+                    <option key={cls} value={cls}>
+                      {cls}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+
+              {/* 4. Subject Dropdown */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-[#ffe6cd]/50 border border-[#ffe6cd]">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#746019]">
+                  Subject
+                </label>
+                <select
+                  value={quizData.subject}
+                  disabled={!quizData.specificClass}
+                  onChange={(e) =>
+                    setQuizData((prev) => ({
+                      ...prev,
+                      subject: e.target.value,
+                      chapter: "",
+                    }))
+                  }
+                  className="w-full h-10 px-3 bg-white border border-[#ffe6cd] rounded-lg text-xs font-semibold text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#ff7347] disabled:bg-[#f7f8fa] disabled:text-[#a5a8b5] disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <option value="">Choose subject</option>
+                  {getSubjects().map((subject) => (
+                    <option key={subject} value={subject}>
+                      {subject}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 5. Chapter / Topic Dropdown */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-[#f5f3ff] border border-[#4262ff]/20">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#4262ff]">
+                  Chapter / Topic
+                </label>
+                <select
+                  value={quizData.chapter}
+                  disabled={!quizData.subject}
+                  onChange={(e) => setQuizData((prev) => ({ ...prev, chapter: e.target.value }))}
+                  className="w-full h-10 px-3 bg-white border border-[#4262ff]/30 rounded-lg text-xs font-semibold text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#4262ff] disabled:bg-[#f7f8fa] disabled:text-[#a5a8b5] disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <option value="">Choose chapter</option>
+                  {getChapters().map((ch) => (
+                    <option key={ch} value={ch}>
+                      {ch}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Parameters Strip: Duration, Marks, Difficulty, Passcode, Thumbnail */}
+          <div className="pt-2 border-t border-[#e6e8ec] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Duration */}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                Duration (Minutes)
+              </label>
+              <input
+                type="number"
+                name="duration"
+                value={quizData.duration}
+                onChange={handleInputChange}
+                className="w-full h-11 px-3.5 bg-[#f7f8fa] border border-[#c7cad5] rounded-xl text-xs font-semibold text-[#1c1c1e] focus:bg-white focus:outline-none focus:border-[#1c1c1e] transition-all"
+              />
+            </div>
+
+            {/* Total Marks */}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                Total Marks
+              </label>
+              <input
+                type="number"
+                name="totalMarks"
+                value={quizData.totalMarks}
+                onChange={handleInputChange}
+                className="w-full h-11 px-3.5 bg-[#f7f8fa] border border-[#c7cad5] rounded-xl text-xs font-semibold text-[#1c1c1e] focus:bg-white focus:outline-none focus:border-[#1c1c1e] transition-all"
+              />
+            </div>
+
+            {/* Difficulty */}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                Difficulty Level
+              </label>
+              <select
+                name="difficulty"
+                value={quizData.difficulty || "Average"}
+                onChange={handleInputChange}
+                className="w-full h-11 px-3.5 bg-[#f7f8fa] border border-[#c7cad5] rounded-xl text-xs font-semibold text-[#1c1c1e] focus:bg-white focus:outline-none focus:border-[#1c1c1e] transition-all cursor-pointer"
+              >
+                <option value="Easy">Easy</option>
+                <option value="Average">Average</option>
+                <option value="Hard">Hard</option>
+              </select>
+            </div>
+
+            {/* Passcode (Optional) */}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                Passcode (Optional)
+              </label>
+              <input
+                type="text"
+                name="passcode"
+                value={quizData.passcode}
+                onChange={handleInputChange}
+                placeholder="e.g. 12345 (Leave blank for public)"
+                className="w-full h-11 px-3.5 bg-[#f7f8fa] border border-[#c7cad5] rounded-xl text-xs font-semibold text-[#1c1c1e] focus:bg-white focus:outline-none focus:border-[#1c1c1e] transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Cover Thumbnail Uploader */}
+          <div className="pt-2 border-t border-[#e6e8ec]">
+            <ThumbnailUploader
+              preview={quizData.thumbnailimage}
+              onFileSelect={({ dataUrl }) => setQuizData((prev) => ({ ...prev, thumbnailimage: dataUrl }))}
+              onClear={() => setQuizData((prev) => ({ ...prev, thumbnailimage: "" }))}
+            />
+          </div>
+        </div>
 
         {/* Questions Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.6 }}
-        >
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Questions ({quizData.questions.length})</h2>
+        <div className="space-y-5 w-full text-left">
+          <div className="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-[#c7cad5] w-full">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#ffd8f4] border border-[#f3bee5] flex items-center justify-center text-[#86296b]">
+                <HelpCircle className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-extrabold text-[#1c1c1e]">
+                  Questions Suite ({quizData.questions.length})
+                </h2>
+                <p className="text-xs text-[#6a6d7c]">Manage question prompts, attach diagrams, options, and verified answer keys</p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleAddQuestion}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1c1c1e] hover:bg-[#2c2c34] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer active:scale-95"
+            >
+              <Plus className="w-4 h-4 text-[#ffd02f]" />
+              <span>Add Question</span>
+            </button>
           </div>
 
-          <div className="space-y-4">
-            {quizData.questions.map((question, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 + index * 0.1 }}
+          <div className="space-y-6 w-full">
+            {quizData.questions.map((q, qIndex) => (
+              <div
+                key={q._id || qIndex}
+                className="bg-white rounded-3xl border border-[#c7cad5] shadow-sm p-6 sm:p-7 space-y-5 w-full transition-all hover:border-[#1c1c1e]/40"
               >
-                <Card className="backdrop-blur-xl bg-white/90 border-0 shadow-lg rounded-3xl overflow-visible">
-                  <CardContent className="p-8 space-y-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-bold text-gray-800">Question {index + 1}</h3>
-                      <Button
-                        onClick={() => handleDeleteQuestion(index)}
-                        variant="ghost"
-                        className="text-red-600 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </Button>
-                    </div>
+                {/* Question Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-[#e6e8ec]">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-8 h-8 rounded-xl bg-[#ffd02f] text-[#1c1c1e] font-black text-xs flex items-center justify-center border border-[#e5ba2a] shadow-2xs">
+                      {qIndex + 1}
+                    </span>
+                    <span className="text-sm font-bold text-[#1c1c1e]">Question {qIndex + 1}</span>
+                  </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-gray-700">Question Text</Label>
-                      <textarea
-                        value={question.text}
-                        onChange={(e) => handleQuestionChange(index, "text", e.target.value)}
-                        className="w-full h-20 p-4 border-2 border-gray-200 rounded-2xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                      />
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={q.difficulty || "Average"}
+                      onChange={(e) => handleQuestionChange(qIndex, "difficulty", e.target.value)}
+                      className="h-8 px-2.5 bg-[#f7f8fa] border border-[#c7cad5] rounded-lg text-xs font-bold text-[#1c1c1e] cursor-pointer"
+                    >
+                      <option value="Easy">Easy</option>
+                      <option value="Average">Average</option>
+                      <option value="Hard">Hard</option>
+                    </select>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {Object.entries(question.options).map(([key, value]) => (
-                        <div key={key} className="space-y-2">
-                          <Label className="text-sm font-semibold text-gray-700">Option {key}</Label>
-                          <Input
-                            value={value}
-                            onChange={(e) => handleOptionChange(index, key, e.target.value)}
-                            placeholder={`Enter option ${key}`}
-                            className="h-12 px-4 border-2 border-gray-200 rounded-2xl"
+                    <button
+                      onClick={() => handleDeleteQuestion(qIndex)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-[#600000] bg-[#fbd4d4] hover:bg-[#ffc6c6] border border-[#e3c5c5] transition-colors cursor-pointer"
+                      title="Delete Question"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remove</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Question Prompt */}
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                    Question Statement *
+                  </label>
+                  <textarea
+                    value={q.text || q.questionText || ""}
+                    onChange={(e) => handleQuestionChange(qIndex, "text", e.target.value)}
+                    rows={2}
+                    className="w-full p-3.5 bg-[#f7f8fa] border border-[#c7cad5] rounded-xl text-xs font-semibold text-[#1c1c1e] focus:bg-white focus:outline-none focus:border-[#1c1c1e] transition-all"
+                    placeholder="Enter the complete question prompt..."
+                  />
+                </div>
+
+                {/* Question Diagram & Explanation Note */}
+                <QuestionImageAndNote
+                  question={q}
+                  onUpdate={(updated) => {
+                    const updatedQuestions = [...quizData.questions]
+                    updatedQuestions[qIndex] = updated
+                    setQuizData((prev) => ({ ...prev, questions: updatedQuestions }))
+                  }}
+                />
+
+                {/* Options Grid (A, B, C, D) */}
+                <div className="space-y-2 pt-2">
+                  <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#6a6d7c]">
+                    Multiple Choice Options & Verified Answer Key
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {["A", "B", "C", "D"].map((optKey) => {
+                      const isCorrect = String(q.correctAnswer).trim().toUpperCase() === optKey
+
+                      return (
+                        <div
+                          key={optKey}
+                          className={`flex items-center gap-2 p-3 rounded-2xl border transition-all ${
+                            isCorrect
+                              ? "bg-[#c3faf5]/50 border-[#187574] shadow-xs"
+                              : "bg-[#f7f8fa] border-[#c7cad5]"
+                          }`}
+                        >
+                          <span
+                            className={`w-7 h-7 rounded-lg text-xs font-black flex items-center justify-center shrink-0 ${
+                              isCorrect
+                                ? "bg-[#187574] text-white"
+                                : "bg-white border border-[#c7cad5] text-[#1c1c1e]"
+                            }`}
+                          >
+                            {optKey}
+                          </span>
+                          <input
+                            type="text"
+                            value={q.options?.[optKey] || ""}
+                            onChange={(e) => handleOptionChange(qIndex, optKey, e.target.value)}
+                            placeholder={`Option ${optKey}`}
+                            className="flex-1 bg-transparent text-xs font-semibold text-[#1c1c1e] focus:outline-none min-w-0"
                           />
+                          <button
+                            type="button"
+                            onClick={() => handleQuestionChange(qIndex, "correctAnswer", optKey)}
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase transition-all shrink-0 cursor-pointer ${
+                              isCorrect
+                                ? "bg-[#187574] text-white"
+                                : "bg-white border border-[#c7cad5] text-[#6a6d7c] hover:bg-[#e6e8ec]"
+                            }`}
+                          >
+                            {isCorrect ? "✓ Key" : "Set Key"}
+                          </button>
                         </div>
-                      ))}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-gray-700">Correct Answer</Label>
-                      <select
-                        value={question.correctAnswer}
-                        onChange={(e) => handleQuestionChange(index, "correctAnswer", e.target.value)}
-                        className="w-full h-12 px-4 border-2 border-gray-200 rounded-2xl font-medium"
-                      >
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="C">C</option>
-                        <option value="D">D</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                        <StickyNote className="w-4 h-4" />
-                        Note (Optional)
-                      </Label>
-                      <textarea
-                        value={question.note || ""}
-                        onChange={(e) => handleQuestionChange(index, "note", e.target.value)}
-                        placeholder="Add any helpful note"
-                        className="w-full h-16 p-4 border-2 border-gray-200 rounded-2xl font-medium transition-all duration-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
-        </motion.div>
+        </div>
 
-        {/* Action Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7, duration: 0.6 }}
-          className="mt-8 flex gap-4"
-        >
-          <Button onClick={() => router.back()} variant="outline" className="flex-1 h-12 rounded-2xl font-semibold">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSaveQuiz}
-            className="flex-1 h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-2xl"
+        {/* Bottom Save Action Bar */}
+        <div className="pt-4 pb-12 flex items-center justify-between gap-4 border-t border-[#c7cad5] w-full">
+          <button
+            onClick={() => navigate("/filter-user-quiz")}
+            type="button"
+            className="px-6 py-3 rounded-full border border-[#c7cad5] bg-white text-xs font-bold text-[#1c1c1e] hover:bg-[#ebecf0] transition-colors cursor-pointer"
           >
-            Save Changes
-          </Button>
-        </motion.div>
-      </motion.div>
+            Cancel Changes
+          </button>
+          <button
+            onClick={handleSaveQuiz}
+            disabled={isSaving}
+            className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-[#1c1c1e] hover:bg-[#2c2c34] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50"
+          >
+            <Save className="w-4 h-4 text-[#ffd02f]" />
+            <span>{isSaving ? "Saving Quiz..." : "Save Quiz Changes"}</span>
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

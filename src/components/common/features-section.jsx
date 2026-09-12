@@ -1,238 +1,188 @@
 "use client"
 
+import React from "react"
 import { motion } from "framer-motion"
-import { Card, CardContent } from "../ui/card"
-import { BookOpen, Trophy, Upload, Filter, Users, BarChart3, Zap, Shield, Clock, Star, Download } from "lucide-react"
+import {
+  Users,
+  Clock,
+  Star,
+  Download,
+  Zap
+} from "lucide-react"
+import FeatureSteps from "../ui/feature-section"
 
 export default function FeaturesSection() {
-  const features = [
+  const academicFeatures = [
     {
-      icon: Filter,
-      title: "Smart Filter & Search",
-      description: "Advanced filtering system to find exactly what you need from thousands of study materials.",
-      color: "from-purple-500 to-pink-500",
-      delay: 0.1,
+      step: "Feature 01",
+      title: "Smart Filter & Resource Search",
+      content: "Find syllabus-aligned notes, past semester question papers, and verified study files instantly with advanced multi-category filtering.",
+      image: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=1200&auto=format&fit=crop",
     },
     {
-      icon: BookOpen,
-      title: "Interactive Quizzes",
-      description: "Engage with dynamic quizzes and get instant feedback with detailed performance analytics.",
-      color: "from-blue-500 to-cyan-500",
-      delay: 0.2,
+      step: "Feature 02",
+      title: "Interactive Quizzes & Timed Challenges",
+      content: "Test your mastery with chapter-wise assessments, faculty-approved quizzes, immediate answer analytics, and topic-level weak area tracking.",
+      image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop",
     },
     {
-      icon: Trophy,
-      title: "Global Competitions",
-      description: "Participate in worldwide academic contests and compete with students from around the globe.",
-      color: "from-yellow-500 to-orange-500",
-      delay: 0.3,
+      step: "Feature 03",
+      title: "Global Competitions & Live Arenas",
+      content: "Compete against peer scholars in scheduled academic contests, climb seasonal leaderboards, and showcase your verified subject competence.",
+      image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1200&auto=format&fit=crop",
     },
     {
-      icon: Upload,
-      title: "Content Sharing",
-      description: "Upload and share your study materials with the community and help others learn.",
-      color: "from-green-500 to-emerald-500",
-      delay: 0.4,
-    },
-    {
-      icon: BarChart3,
-      title: "Progress Analytics",
-      description: "Track your learning journey with detailed analytics and personalized insights.",
-      color: "from-indigo-500 to-purple-500",
-      delay: 0.5,
-    },
-    {
-      icon: Users,
-      title: "Study Groups",
-      description: "Join study groups, collaborate with peers, and learn together in a supportive environment.",
-      color: "from-pink-500 to-rose-500",
-      delay: 0.6,
+      step: "Feature 04",
+      title: "Peer Knowledge Sharing & Q&A",
+      content: "Collaborate with university peers, share handwritten lecture summaries, review verified files, and resolve difficult academic doubts collectively.",
+      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200&auto=format&fit=crop",
     },
   ]
 
   const stats = [
-    { icon: Download, value: "1M+", label: "Downloads", color: "from-blue-500 to-cyan-500" },
-    { icon: Users, value: "50K+", label: "Active Users", color: "from-green-500 to-emerald-500" },
-    { icon: Star, value: "4.9", label: "Rating", color: "from-yellow-500 to-orange-500" },
-    { icon: Clock, value: "24/7", label: "Support", color: "from-purple-500 to-pink-500" },
+    {
+      icon: Download,
+      value: "1M+",
+      label: "Downloads",
+      cardBg: "bg-[#e8edff]", // Miro Brand Blue tint
+      borderColor: "border-[#c7d8fe] hover:border-[#4262ff]/50",
+      iconTint: "text-[#4262ff]",
+      labelColor: "text-[#2e47c7]",
+      hoverShadow: "hover:shadow-[0_12px_28px_rgba(66,98,255,0.15)]",
+    },
+    {
+      icon: Users,
+      value: "50K+",
+      label: "Active Users",
+      cardBg: "bg-[#c3faf5]", // Miro Teal-light ({colors.teal-light})
+      borderColor: "border-[#8eefe6] hover:border-[#0fbcb0]/50",
+      iconTint: "text-[#187574]",
+      labelColor: "text-[#146665]",
+      hoverShadow: "hover:shadow-[0_12px_28px_rgba(15,188,176,0.15)]",
+    },
+    {
+      icon: Star,
+      value: "4.9",
+      label: "Rating",
+      cardBg: "bg-[#fff4c4]", // Miro Yellow-light ({colors.yellow-light})
+      borderColor: "border-[#ffd02f]/70 hover:border-[#fcb900]",
+      iconTint: "text-[#746019]",
+      labelColor: "text-[#625113]",
+      hoverShadow: "hover:shadow-[0_12px_28px_rgba(252,185,0,0.18)]",
+    },
+    {
+      icon: Clock,
+      value: "24/7",
+      label: "Support",
+      cardBg: "bg-[#ffd8f4]", // Miro Brand Rose ({colors.brand-rose})
+      borderColor: "border-[#f7b6e5] hover:border-[#ff9999]",
+      iconTint: "text-[#a02070]",
+      labelColor: "text-[#87195e]",
+      hoverShadow: "hover:shadow-[0_12px_28px_rgba(255,153,153,0.18)]",
+    },
   ]
 
   return (
-    <section id="features" className="py-20 bg-gradient-to-br from-white via-blue-100 to-purple-200 relative overflow-hidden">
-      {/* Background Elements */}
-      <motion.div
-        className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-br from-purple-200/30 to-pink-200/30 rounded-full blur-3xl"
-        animate={{
-          x: [0, 50, 0],
-          y: [0, -30, 0],
+    <section id="features" className="py-24 sm:py-32 bg-[#fafbfc] text-[#1c1c1e] relative overflow-hidden border-t border-[#e0e2e8]">
+      {/* Subtle Miro Whiteboard Grid Canvas */}
+      <div
+        className="absolute inset-0 opacity-[0.4] pointer-events-none"
+        style={{
+          backgroundImage: "radial-gradient(#d1d5db 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
         }}
-        transition={{ duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-br from-blue-200/30 to-cyan-200/30 rounded-full blur-3xl"
-        animate={{
-          x: [0, -30, 0],
-          y: [0, 20, 0],
-        }}
-        transition={{ duration: 10, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
       />
 
-      <div className="container mx-auto px-4 relative z-10">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
+      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 relative z-10">
+        {/* Header (Exact text preserved as requested by user) */}
+        <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
             viewport={{ once: true }}
-            className="inline-flex items-center bg-gradient-to-r from-purple-100 to-pink-100 rounded-full px-6 py-3 mb-6"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#fff4c4] border border-[#ffd02f]/60 text-[#746019] text-xs font-bold uppercase tracking-wider mb-5 shadow-sm"
           >
-            <Zap className="h-5 w-5 text-purple-600 mr-2" />
-            <span className="text-purple-600 font-semibold">Powerful Features</span>
+            <Zap className="h-3.5 w-3.5 text-[#fcb900] fill-[#fcb900]" />
+            <span>Powerful Learning Features</span>
           </motion.div>
 
-          <h2 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Everything You Need to{" "}
-            <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
-              Excel
-            </span>
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Our comprehensive platform combines cutting-edge technology with educational excellence to create an
-            unparalleled learning experience for students worldwide.
-          </p>
-        </motion.div>
+          <motion.h2
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[#1c1c1e] mb-4 leading-tight font-sans"
+          >
+            Everything You Need To Excel Academically
+          </motion.h2>
 
-        {/* Stats Row */}
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="text-base sm:text-lg text-[#555a6a] leading-relaxed font-sans max-w-2xl mx-auto"
+          >
+            Experience a comprehensive academic platform designed to make learning engaging, competitive, and rewarding.
+          </motion.p>
+        </div>
+
+        {/* FeatureSteps Interactive Component with Feature 01..04 */}
+        <div className="mb-16 sm:mb-24">
+          <FeatureSteps
+            features={academicFeatures}
+            autoPlayInterval={3500}
+            imageHeight="h-[380px] sm:h-[450px] lg:h-[500px]"
+          />
+        </div>
+
+        {/* 4 Stats Grid in DESIGN-miro.md Pastel Colors with Hover Upward Icon Animation */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 25 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
           viewport={{ once: true }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20"
+          className="p-6 sm:p-10 rounded-3xl bg-white border border-[#e0e2e8] shadow-[0_4px_24px_rgba(0,0,0,0.03)]"
         >
-          {stats.map((stat, index) => (
-            <motion.div key={index} whileHover={{ scale: 1.05, y: -5 }} className="text-center">
-              <div
-                className={`w-16 h-16 bg-gradient-to-br ${stat.color} rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg`}
-              >
-                <stat.icon className="h-8 w-8 text-white" />
-              </div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</div>
-              <div className="text-gray-600 font-medium">{stat.label}</div>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Features Grid */}
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={{
-            hidden: {},
-            visible: {
-              transition: {
-                staggerChildren: 0.1,
-              },
-            },
-          }}
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
-        >
-          {features.map((feature, index) => (
-            <motion.div
-              key={index}
-              variants={{
-                hidden: { opacity: 0, y: 50 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              transition={{ duration: 0.6, delay: feature.delay }}
-            >
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {stats.map((stat, i) => (
               <motion.div
-                whileHover={{
-                  scale: 1.05,
-                  rotateY: 5,
-                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-                }}
-                whileTap={{ scale: 0.98 }}
-                className="group cursor-pointer"
+                key={i}
+                initial="rest"
+                whileHover="hover"
+                animate="rest"
+                className={`relative py-7 px-4 rounded-2xl ${stat.cardBg} border ${stat.borderColor} ${stat.hoverShadow} shadow-sm transition-all duration-300 text-center flex flex-col items-center justify-center overflow-hidden cursor-pointer group min-h-[160px]`}
               >
-                <Card className="h-full border-0 shadow-xl hover:shadow-2xl transition-all duration-500 rounded-3xl overflow-hidden bg-white/80 backdrop-blur-sm">
-                  <CardContent className="p-8 relative">
-                    {/* Background Gradient */}
-                    <motion.div
-                      className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${feature.color}`}
-                      initial={{ scaleX: 0 }}
-                      whileInView={{ scaleX: 1 }}
-                      transition={{ duration: 0.8, delay: feature.delay + 0.2 }}
-                    />
+                {/* Main Text Container shifting upward on hover */}
+                <motion.div
+                  variants={{
+                    rest: { y: 14 },
+                    hover: { y: -10 },
+                  }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  className="flex flex-col items-center justify-center w-full"
+                >
+                  <div className="text-2xl sm:text-4xl font-extrabold text-[#1c1c1e] mb-1 font-sans tracking-tight">
+                    {stat.value}
+                  </div>
+                  <div className={`text-xs sm:text-sm font-bold ${stat.labelColor} font-sans`}>
+                    {stat.label}
+                  </div>
 
-                    {/* Icon */}
-                    <motion.div
-                      className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg`}
-                      whileHover={{ rotate: 10 }}
-                    >
-                      <feature.icon className="h-8 w-8 text-white" />
-                    </motion.div>
-
-                    {/* Content */}
-                    <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-purple-600 transition-colors duration-300">
-                      {feature.title}
-                    </h3>
-                    <p className="text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
-                      {feature.description}
-                    </p>
-
-                    {/* Hover Effect */}
-                    <motion.div className="absolute bottom-0 left-0 w-full h-0 bg-gradient-to-t from-purple-50 to-transparent opacity-0 group-hover:h-full group-hover:opacity-100 transition-all duration-500 -z-10" />
-
-                    {/* Decorative Elements */}
-                    <motion.div
-                      className="absolute top-4 right-4 w-2 h-2 bg-purple-300 rounded-full opacity-0 group-hover:opacity-100"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-                    />
-                    <motion.div
-                      className="absolute bottom-4 right-6 w-1 h-1 bg-pink-300 rounded-full opacity-0 group-hover:opacity-100"
-                      animate={{ scale: [1, 1.5, 1] }}
-                      transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY, delay: 0.5 }}
-                    />
-                  </CardContent>
-                </Card>
+                  {/* Icon rising smoothly from underneath on hover */}
+                  <motion.div
+                    variants={{
+                      rest: { opacity: 0, y: 35, scale: 0.6 },
+                      hover: { opacity: 1, y: 12, scale: 1 },
+                    }}
+                    transition={{ type: "spring", stiffness: 400, damping: 22 }}
+                    className={`w-11 h-11 rounded-2xl bg-white/95 ${stat.iconTint} backdrop-blur-sm flex items-center justify-center shadow-md`}
+                  >
+                    <stat.icon className="w-5 h-5" />
+                  </motion.div>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Bottom CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          viewport={{ once: true }}
-          className="text-center mt-16"
-        >
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="inline-flex items-center bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-2xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer group"
-          >
-            <Shield className="h-5 w-5 mr-2 group-hover:rotate-12 transition-transform duration-300" />
-            Explore All Features
-            <motion.div
-              className="ml-2"
-              animate={{ x: [0, 5, 0] }}
-              transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
-            >
-              →
-            </motion.div>
-          </motion.div>
+            ))}
+          </div>
         </motion.div>
       </div>
     </section>

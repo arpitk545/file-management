@@ -30,10 +30,14 @@ export default function Navbar({ onNavigate }) {
     }
 
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50)
+      const isScrolled = window.scrollY > 30
+      setScrolled(isScrolled)
+      if (isScrolled) {
+        setIsOpen(false)
+      }
     }
 
-    window.addEventListener("scroll", handleScroll)
+    window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
@@ -86,9 +90,7 @@ export default function Navbar({ onNavigate }) {
             variant="ghost"
             size="sm"
             onClick={() => navigate("/login")}
-            className={`font-medium text-sm lg:text-base ${
-              scrolled ? "text-gray-700 hover:text-purple-600" : "text-white hover:text-purple-200"
-            }`}
+            className="font-medium text-sm lg:text-base text-gray-200 hover:text-white hover:bg-white/10"
           >
             Login
           </Button>
@@ -96,7 +98,7 @@ export default function Navbar({ onNavigate }) {
             <Button
               size="sm"
               onClick={() => navigate("/signup")}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium px-4 lg:px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm lg:text-base"
+              className="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:brightness-110 text-white font-medium px-4 lg:px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm lg:text-base"
             >
               Get Started
             </Button>
@@ -127,7 +129,7 @@ const renderMobileAuthButtons = () => {
       <>
         <Button
           variant="ghost"
-          className="w-full text-gray-700 hover:text-purple-600"
+          className="w-full text-gray-200 hover:text-white hover:bg-white/10"
           onClick={() => navigate("/login")}
         >
           Login
@@ -145,13 +147,14 @@ const renderMobileAuthButtons = () => {
 
   return (
     <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.6 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-       scrolled
-  ? "bg-gradient-to-r from-gray-900 to-gray-800/90 backdrop-blur-md shadow-lg border-b border-gray-700/40"
-  : "bg-transparent"
+      initial={{ y: 0, opacity: 1 }}
+      animate={{
+        y: scrolled ? -100 : 0,
+        opacity: scrolled ? 0 : 1,
+      }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      className={`fixed top-0 left-0 right-0 z-50 bg-transparent transition-all duration-300 ${
+        scrolled ? "pointer-events-none" : ""
       }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -176,49 +179,51 @@ const renderMobileAuthButtons = () => {
                 transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
               />
             </div>
-            <span
-              className={`text-lg md:text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent ${
-                scrolled ? "text-gray-900" : "text-white"
-              }`}
-            >
-               clys
+            <span className="text-xl md:text-2xl font-extrabold bg-gradient-to-r from-white via-gray-100 to-purple-300 bg-clip-text text-transparent">
+              clys
             </span>
           </motion.div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-6 xl:space-x-8">
-            {navItems.map((item, index) => (
-              <motion.button
-                key={item.name}
-                onClick={() => handleNavClick(item.route, item.href)}
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className={`relative font-medium transition-colors duration-300 group text-sm xl:text-base ${
-                  scrolled ? "text-gray-700 hover:text-purple-600" : "text-white hover:text-purple-200"
-                }`}
-                whileHover={{ y: -2 }}
+          {/* Desktop Unified Floating Pill Navigation */}
+          <div className="hidden md:flex items-center">
+            <div className="flex items-center gap-1 rounded-full bg-white/5 px-2 py-1.5 ring-1 ring-white/10 backdrop-blur-md shadow-lg shadow-black/30">
+              {navItems.map((item) => (
+                <button
+                  key={item.name}
+                  onClick={() => handleNavClick(item.route, item.href)}
+                  className="px-3.5 py-1.5 text-sm font-medium text-white/80 hover:text-white transition-colors rounded-full hover:bg-white/10 font-sans"
+                >
+                  {item.name}
+                </button>
+              ))}
+              <button
+                onClick={() => {
+                  if (isLoggedIn) {
+                    if (userRole === "admin") navigate("/admin/dashboard")
+                    else if (userRole === "manager") navigate("/manager/dashboard")
+                    else navigate("/user/dashboard")
+                  } else {
+                    navigate("/signup")
+                  }
+                }}
+                className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-900 hover:bg-white/90 font-sans transition-all shadow"
               >
-                {item.name}
-                <motion.div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-pink-600 group-hover:w-full transition-all duration-300" />
-              </motion.button>
-            ))}
-          </div>
-
-          {/* CTA Buttons - Desktop */}
-          <div className="hidden md:flex items-center space-x-3 lg:space-x-4">
-            {renderAuthButtons()}
+                <span>{isLoggedIn ? "Dashboard" : "Get Started"}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                  <path d="M7 7h10v10" />
+                  <path d="M7 17 17 7" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsOpen(!isOpen)}
-            className={`lg:hidden p-2 rounded-lg transition-colors duration-300 ${
-              scrolled ? "text-gray-700 hover:bg-gray-100" : "text-white hover:bg-white/10"
-            }`}
+            className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/15 backdrop-blur-md text-white"
           >
-            {isOpen ? <X className="h-5 w-5 md:h-6 md:w-6" /> : <Menu className="h-5 w-5 md:h-6 md:w-6" />}
+            {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </motion.button>
         </div>
 
@@ -230,20 +235,20 @@ const renderMobileAuthButtons = () => {
             height: isOpen ? "auto" : 0,
           }}
           transition={{ duration: 0.3 }}
-          className="lg:hidden overflow-hidden bg-white/95 backdrop-blur-lg rounded-2xl mt-2 border border-gray-200/20"
+          className="lg:hidden overflow-hidden bg-[#090c18]/95 backdrop-blur-2xl rounded-2xl mt-2 border border-white/10 shadow-2xl"
         >
           <div className="px-4 py-6 space-y-4">
             {navItems.map((item) => (
               <motion.button
                 key={item.name}
                 onClick={() => handleNavClick(item.route, item.href)}
-                whileHover={{ x: 10 }}
-                className="block w-full text-left text-gray-700 hover:text-purple-600 font-medium transition-colors duration-300 py-2"
+                whileHover={{ x: 6 }}
+                className="block w-full text-left text-gray-200 hover:text-white font-medium transition-colors duration-300 py-2"
               >
                 {item.name}
               </motion.button>
             ))}
-            <div className="pt-4 border-t border-gray-200 space-y-3">
+            <div className="pt-4 border-t border-white/10 space-y-3">
               {renderMobileAuthButtons()}
             </div>
           </div>

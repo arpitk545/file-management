@@ -17,26 +17,27 @@ import {
   FileText,
   Lock,
   Play,
+  ArrowLeft,
+  Filter,
+  X,
 } from "lucide-react"
 import toast from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
 import { getAllQuizRegions } from "../../../../services/operations/quizAPI"
 import { getAllContest } from "../../../../services/operations/contestAPI"
 
-// Passcode Modal Component
+// Passcode Modal Component - Miro Style
 const PasscodeModal = ({ isOpen, onClose, onVerify, contestTitle }) => {
   const [passcode, setPasscode] = useState(["", "", "", "", ""])
   const [loading, setLoading] = useState(false)
 
   const handleDigitChange = (index, value) => {
-    // Only allow numbers
     if (value && !/^\d$/.test(value)) return
-    
+
     const newPasscode = [...passcode]
     newPasscode[index] = value
     setPasscode(newPasscode)
 
-    // Auto-focus next input
     if (value && index < 4) {
       const nextInput = document.getElementById(`passcode-input-${index + 1}`)
       if (nextInput) nextInput.focus()
@@ -44,15 +45,14 @@ const PasscodeModal = ({ isOpen, onClose, onVerify, contestTitle }) => {
   }
 
   const handleKeyDown = (index, e) => {
-    // Handle backspace
-    if (e.key === 'Backspace' && !passcode[index] && index > 0) {
+    if (e.key === "Backspace" && !passcode[index] && index > 0) {
       const prevInput = document.getElementById(`passcode-input-${index - 1}`)
       if (prevInput) prevInput.focus()
     }
   }
 
   const handleSubmit = async () => {
-    const enteredPasscode = passcode.join('')
+    const enteredPasscode = passcode.join("")
     if (enteredPasscode.length !== 5) {
       toast.error("Please enter a 5-digit passcode")
       return
@@ -71,25 +71,26 @@ const PasscodeModal = ({ isOpen, onClose, onVerify, contestTitle }) => {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-2xl p-6 w-full max-w-md"
+        exit={{ opacity: 0, scale: 0.96 }}
+        transition={{ duration: 0.15 }}
+        className="bg-white rounded-2xl border border-[#c7cad5] p-6 w-full max-w-md shadow-sm"
       >
         <div className="text-center mb-6">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-6 h-6 text-blue-600" />
+          <div className="w-12 h-12 bg-[#fff4c4] rounded-full flex items-center justify-center mx-auto mb-3 text-[#746019]">
+            <Lock className="w-5 h-5" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Enter Passcode</h3>
-          <p className="text-gray-600 text-sm">
-            Please enter the 5-digit passcode to enroll in <span className="font-semibold">"{contestTitle}"</span>
+          <h3 className="text-xl font-medium text-[#1c1c1e] mb-1">Enter Passcode</h3>
+          <p className="text-[#555a6a] text-xs leading-relaxed">
+            Please enter the 5-digit passcode to enroll in <span className="font-semibold text-[#1c1c1e]">"{contestTitle}"</span>
           </p>
         </div>
 
-        <div className="space-y-4">
-          <div className="flex justify-center gap-2 mb-6">
+        <div className="space-y-5">
+          <div className="flex justify-center gap-2.5 mb-5">
             {[0, 1, 2, 3, 4].map((index) => (
               <input
                 key={index}
@@ -100,30 +101,32 @@ const PasscodeModal = ({ isOpen, onClose, onVerify, contestTitle }) => {
                 value={passcode[index]}
                 onChange={(e) => handleDigitChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
-                className="w-12 h-12 text-center border-2 border-gray-300 rounded-lg font-medium text-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                className="w-11 h-12 text-center border border-[#c7cad5] rounded-lg font-medium text-lg text-[#1c1c1e] bg-white focus:border-2 focus:border-[#4262ff] focus:outline-none transition-colors"
                 placeholder="•"
               />
             ))}
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
             <button
               onClick={handleClose}
-              className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors duration-200"
+              type="button"
+              className="flex-1 py-3 px-6 border border-[#c7cad5] text-[#1c1c1e] rounded-full text-sm font-medium hover:bg-[#f7f8fa] transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center gap-2"
+              type="button"
+              className="flex-1 py-3 px-6 bg-[#1c1c1e] hover:bg-[#2c2c34] active:bg-[#2c2c34] text-white rounded-full text-sm font-medium disabled:bg-[#e0e2e8] disabled:text-[#a5a8b5] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
             >
               {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
               ) : (
-                <CheckCircle className="w-4 h-4" />
+                <CheckCircle className="w-4 h-4 text-[#ffd02f]" />
               )}
-              Verify & Enroll
+              <span>Verify & Enroll</span>
             </button>
           </div>
         </div>
@@ -138,7 +141,7 @@ const formatDateTime = (isoString) => {
   const date = new Date(isoString)
   return date.toLocaleString("en-US", {
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
@@ -156,7 +159,7 @@ export default function ContestDetails() {
     examType: "",
     specificClass: "",
     subject: "",
-    chapter: ""
+    chapter: "",
   })
   const [loading, setLoading] = useState(true)
   const [selectedContest, setSelectedContest] = useState(null)
@@ -169,7 +172,7 @@ export default function ContestDetails() {
         setLoading(true)
         const [contestsRes, regionsRes] = await Promise.all([
           getAllContest(),
-          getAllQuizRegions()
+          getAllQuizRegions(),
         ])
         setContests(contestsRes?.data || [])
         setRegions(regionsRes?.data || [])
@@ -185,16 +188,16 @@ export default function ContestDetails() {
 
   useEffect(() => {
     const handleBackButton = (event) => {
-      event.preventDefault();
-      navigate("/dashboard", { replace: true }); 
-    };
+      event.preventDefault()
+      navigate("/dashboard", { replace: true })
+    }
 
-    window.addEventListener("popstate", handleBackButton);
+    window.addEventListener("popstate", handleBackButton)
 
     return () => {
-      window.removeEventListener("popstate", handleBackButton);
-    };
-  }, [navigate]);
+      window.removeEventListener("popstate", handleBackButton)
+    }
+  }, [navigate])
 
   const toggleDetails = (id) => {
     setOpenDetails((prev) => ({
@@ -204,13 +207,11 @@ export default function ContestDetails() {
   }
 
   const handleEnroll = (contest) => {
-    // Check if contest has passcode
     if (contest.passcode) {
       setSelectedContest(contest)
       setShowPasscodeModal(true)
     } else {
-      // No passcode required, navigate directly
-      navigate(`/Contest-Enrollment/${contest._id}`);
+      navigate(`/Contest-Enrollment/${contest._id}`)
     }
   }
 
@@ -229,63 +230,84 @@ export default function ContestDetails() {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
       [name]: value,
-      // Reset dependent filters when parent changes
       ...(name === "region" && {
         examType: "",
         specificClass: "",
         subject: "",
-        chapter: ""
+        chapter: "",
       }),
       ...(name === "examType" && {
         specificClass: "",
         subject: "",
-        chapter: ""
+        chapter: "",
       }),
       ...(name === "specificClass" && {
         subject: "",
-        chapter: ""
+        chapter: "",
       }),
       ...(name === "subject" && {
-        chapter: ""
-      })
+        chapter: "",
+      }),
     }))
   }
 
+  const clearAllFilters = () => {
+    setFilters({
+      region: "",
+      examType: "",
+      specificClass: "",
+      subject: "",
+      chapter: "",
+    })
+  }
+
+  const isFiltered = Boolean(
+    filters.region ||
+    filters.examType ||
+    filters.specificClass ||
+    filters.subject ||
+    filters.chapter
+  )
+
   const getExamTypes = () => {
     if (!filters.region) return []
-    const selectedRegion = regions.find(region => region._id === filters.region)
-    return selectedRegion?.examTypes?.map(type => type.name) || []
+    const selectedRegion = regions.find((region) => region._id === filters.region)
+    return selectedRegion?.examTypes?.map((type) => type.name) || []
   }
 
   const getSpecificClasses = () => {
     if (!filters.region || !filters.examType) return []
-    const selectedRegion = regions.find(region => region._id === filters.region)
-    const selectedExamType = selectedRegion?.examTypes.find(et => et.name === filters.examType)
-    return selectedExamType?.specificClasses?.map(cls => cls.name) || []
+    const selectedRegion = regions.find((region) => region._id === filters.region)
+    const selectedExamType = selectedRegion?.examTypes.find((et) => et.name === filters.examType)
+    return selectedExamType?.specificClasses?.map((cls) => cls.name) || []
   }
 
   const getSubjects = () => {
     if (!filters.region || !filters.examType || !filters.specificClass) return []
-    const selectedRegion = regions.find(region => region._id === filters.region)
-    const selectedExamType = selectedRegion?.examTypes.find(et => et.name === filters.examType)
-    const selectedSpecificClass = selectedExamType?.specificClasses.find(sc => sc.name === filters.specificClass)
-    return selectedSpecificClass?.subjects?.map(subject => subject.name) || []
+    const selectedRegion = regions.find((region) => region._id === filters.region)
+    const selectedExamType = selectedRegion?.examTypes.find((et) => et.name === filters.examType)
+    const selectedSpecificClass = selectedExamType?.specificClasses.find(
+      (sc) => sc.name === filters.specificClass
+    )
+    return selectedSpecificClass?.subjects?.map((subject) => subject.name) || []
   }
 
   const getChapters = () => {
     if (!filters.region || !filters.examType || !filters.specificClass || !filters.subject) return []
-    const selectedRegion = regions.find(region => region._id === filters.region)
-    const selectedExamType = selectedRegion?.examTypes.find(et => et.name === filters.examType)
-    const selectedSpecificClass = selectedExamType?.specificClasses.find(sc => sc.name === filters.specificClass)
-    const selectedSubject = selectedSpecificClass?.subjects.find(sub => sub.name === filters.subject)
-    return selectedSubject?.chapters?.map(ch => ch.name) || []
+    const selectedRegion = regions.find((region) => region._id === filters.region)
+    const selectedExamType = selectedRegion?.examTypes.find((et) => et.name === filters.examType)
+    const selectedSpecificClass = selectedExamType?.specificClasses.find(
+      (sc) => sc.name === filters.specificClass
+    )
+    const selectedSubject = selectedSpecificClass?.subjects.find((sub) => sub.name === filters.subject)
+    return selectedSubject?.chapters?.map((ch) => ch.name) || []
   }
 
-  const filteredContests = contests.filter(contest => {
-    const selectedRegionName = regions.find(r => r._id === filters.region)?.name;
+  const filteredContests = contests.filter((contest) => {
+    const selectedRegionName = regions.find((r) => r._id === filters.region)?.name
 
     return (
       (!filters.region || contest.region === selectedRegionName) &&
@@ -293,33 +315,85 @@ export default function ContestDetails() {
       (!filters.specificClass || contest.specificClass === filters.specificClass) &&
       (!filters.subject || contest.subject === filters.subject) &&
       (!filters.chapter || contest.chapter === filters.chapter)
-    );
-  });
+    )
+  })
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-800">Loading your Contests...</h2>
-          <p className="text-gray-600">Please wait while we load your Contests</p>
+      <div className="min-h-screen bg-[#f7f8fa] flex flex-col items-center justify-center p-6 text-center font-sans">
+        <div className="w-12 h-12 rounded-2xl bg-[#ffd02f] flex items-center justify-center mb-4 shadow-sm animate-pulse">
+          <Loader2 className="animate-spin h-6 w-6 text-[#1c1c1e]" />
         </div>
+        <p className="text-xs font-semibold uppercase tracking-wider text-[#555a6a]">
+          Loading available contests...
+        </p>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-white via-indigo-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-gray-900 text-center mb-10">Available Contests</h1>
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-10 px-4 sm:px-6 lg:px-8 xl:px-12 w-full font-sans">
+      <div className="w-full space-y-6 sm:space-y-8">
+        {/* Navigation & Header */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#c7cad5] bg-white text-xs font-medium text-[#1c1c1e] hover:bg-[#f7f8fa] transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Dashboard</span>
+            </button>
 
-        {/* Filter Card */}
-        <div className="bg-white p-6 rounded-2xl shadow-lg mb-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Filter Contests</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 bg-[#ffd02f] text-[#1c1c1e] text-[11px] font-semibold uppercase tracking-wider rounded-full">
+                STUDENT ARENA
+              </span>
+              <span className="px-3 py-1 bg-[#c3faf5] text-[#187574] text-[11px] font-semibold uppercase tracking-wider rounded-full">
+                CONTEST DIRECTORY
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <h1 className="text-2xl sm:text-4xl font-medium tracking-tight text-[#1c1c1e]">
+              Available Contests
+            </h1>
+            <p className="text-xs sm:text-sm text-[#555a6a] max-w-2xl leading-relaxed">
+              Explore live academic competitions, timed challenges, and test your knowledge against peers.
+            </p>
+          </div>
+        </div>
+
+        {/* Filter Card - Miro card-base with defined border */}
+        <div className="bg-white rounded-2xl border border-[#c7cad5] shadow-sm p-5 sm:p-6 space-y-4 w-full">
+          <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#e6e8ec]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#fff4c4] flex items-center justify-center text-[#746019]">
+                <Filter className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-base font-medium text-[#1c1c1e]">Filter Contests</h2>
+                <p className="text-xs text-[#555a6a]">Select curriculum board and specific subject</p>
+              </div>
+            </div>
+
+            {isFiltered && (
+              <button
+                onClick={clearAllFilters}
+                type="button"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#fbd4d4] hover:bg-[#ffc6c6] text-[#600000] border border-[#e3c5c5] rounded-full text-xs font-semibold transition-colors cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span>Clear All Filters</span>
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
             {/* Region Filter */}
-            <div>
-              <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="space-y-1.5">
+              <label htmlFor="region" className="block text-[11px] font-semibold uppercase tracking-wider text-[#555a6a]">
                 Region
               </label>
               <select
@@ -327,10 +401,10 @@ export default function ContestDetails() {
                 name="region"
                 value={filters.region}
                 onChange={handleFilterChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full h-11 px-3.5 bg-white border border-[#c7cad5] rounded-full text-xs font-medium text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#4262ff] cursor-pointer"
               >
                 <option value="">All Regions</option>
-                {regions.map(region => (
+                {regions.map((region) => (
                   <option key={region._id} value={region._id}>
                     {region.name}
                   </option>
@@ -339,8 +413,8 @@ export default function ContestDetails() {
             </div>
 
             {/* Exam Type Filter */}
-            <div>
-              <label htmlFor="examType" className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="space-y-1.5">
+              <label htmlFor="examType" className="block text-[11px] font-semibold uppercase tracking-wider text-[#555a6a]">
                 Exam Type
               </label>
               <select
@@ -349,10 +423,10 @@ export default function ContestDetails() {
                 value={filters.examType}
                 onChange={handleFilterChange}
                 disabled={!filters.region}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full h-11 px-3.5 bg-white border border-[#c7cad5] rounded-full text-xs font-medium text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#4262ff] disabled:bg-[#f7f8fa] disabled:text-[#a5a8b5] disabled:cursor-not-allowed cursor-pointer"
               >
                 <option value="">All Exam Types</option>
-                {getExamTypes().map(type => (
+                {getExamTypes().map((type) => (
                   <option key={type} value={type}>
                     {type}
                   </option>
@@ -361,8 +435,8 @@ export default function ContestDetails() {
             </div>
 
             {/* Class Filter */}
-            <div>
-              <label htmlFor="specificClass" className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="space-y-1.5">
+              <label htmlFor="specificClass" className="block text-[11px] font-semibold uppercase tracking-wider text-[#555a6a]">
                 Class
               </label>
               <select
@@ -371,10 +445,10 @@ export default function ContestDetails() {
                 value={filters.specificClass}
                 onChange={handleFilterChange}
                 disabled={!filters.examType}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full h-11 px-3.5 bg-white border border-[#c7cad5] rounded-full text-xs font-medium text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#4262ff] disabled:bg-[#f7f8fa] disabled:text-[#a5a8b5] disabled:cursor-not-allowed cursor-pointer"
               >
                 <option value="">All Classes</option>
-                {getSpecificClasses().map(cls => (
+                {getSpecificClasses().map((cls) => (
                   <option key={cls} value={cls}>
                     {cls}
                   </option>
@@ -383,8 +457,8 @@ export default function ContestDetails() {
             </div>
 
             {/* Subject Filter */}
-            <div>
-              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="space-y-1.5">
+              <label htmlFor="subject" className="block text-[11px] font-semibold uppercase tracking-wider text-[#555a6a]">
                 Subject
               </label>
               <select
@@ -393,10 +467,10 @@ export default function ContestDetails() {
                 value={filters.subject}
                 onChange={handleFilterChange}
                 disabled={!filters.specificClass}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full h-11 px-3.5 bg-white border border-[#c7cad5] rounded-full text-xs font-medium text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#4262ff] disabled:bg-[#f7f8fa] disabled:text-[#a5a8b5] disabled:cursor-not-allowed cursor-pointer"
               >
                 <option value="">All Subjects</option>
-                {getSubjects().map(sub => (
+                {getSubjects().map((sub) => (
                   <option key={sub} value={sub}>
                     {sub}
                   </option>
@@ -405,8 +479,8 @@ export default function ContestDetails() {
             </div>
 
             {/* Chapter Filter */}
-            <div>
-              <label htmlFor="chapter" className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="space-y-1.5">
+              <label htmlFor="chapter" className="block text-[11px] font-semibold uppercase tracking-wider text-[#555a6a]">
                 Chapter
               </label>
               <select
@@ -415,10 +489,10 @@ export default function ContestDetails() {
                 value={filters.chapter}
                 onChange={handleFilterChange}
                 disabled={!filters.subject}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full h-11 px-3.5 bg-white border border-[#c7cad5] rounded-full text-xs font-medium text-[#1c1c1e] focus:outline-none focus:border-2 focus:border-[#4262ff] disabled:bg-[#f7f8fa] disabled:text-[#a5a8b5] disabled:cursor-not-allowed cursor-pointer"
               >
                 <option value="">All Chapters</option>
-                {getChapters().map(ch => (
+                {getChapters().map((ch) => (
                   <option key={ch} value={ch}>
                     {ch}
                   </option>
@@ -428,150 +502,217 @@ export default function ContestDetails() {
           </div>
         </div>
 
+        {/* Empty State */}
         {filteredContests.length === 0 ? (
-          <div className="text-center py-12">
-            <h3 className="text-lg font-medium text-gray-900">No contests found</h3>
-            <p className="mt-2 text-gray-600">Try adjusting your filters or check back later.</p>
+          <div className="text-center py-12 bg-white rounded-2xl border border-[#c7cad5] shadow-sm space-y-3">
+            <div className="w-12 h-12 bg-[#fff4c4] rounded-full flex items-center justify-center mx-auto text-[#746019]">
+              <Target className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-medium text-[#1c1c1e]">No contests found</h3>
+            <p className="text-xs text-[#555a6a] max-w-sm mx-auto">
+              {contests.length === 0
+                ? "There are currently no active contests available."
+                : "Try adjusting or clearing your filters to discover available competitions."}
+            </p>
+            {isFiltered && (
+              <div className="pt-1">
+                <button
+                  onClick={clearAllFilters}
+                  type="button"
+                  className="px-6 py-3 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          /* Contests Grid - Miro card-base with aligned rows and complete image fit */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
             {filteredContests.map((contest) => (
               <motion.div
                 key={contest._id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col h-full hover:shadow-xl transition-shadow duration-300"
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-2xl border border-[#c7cad5] shadow-sm overflow-hidden flex flex-col h-full transition-all"
               >
-                {/* Thumbnail */}
-                {contest.thumbnail && (
-                  <div className="h-48 bg-gray-200 overflow-hidden">
-                    <img 
-                      src={contest.thumbnail} 
+                {/* Complete Image Thumbnail or Pastel Header - Fixed h-48 for all cards */}
+                {contest.thumbnail ? (
+                  <div className="h-48 w-full bg-[#f0f1f4] flex items-center justify-center p-3 overflow-hidden border-b border-[#c7cad5]">
+                    <img
+                      src={contest.thumbnail}
                       alt={contest.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain object-center"
                     />
                   </div>
-                )}
-                
-                {/* Contest Content */}
-                <div className="p-6 flex-grow space-y-4">
-                  {/* Title */}
-                  <h2 className="text-xl font-bold text-gray-900 line-clamp-2">
-                    {contest.title}
-                  </h2>
-
-                  {/* Description */}
-                  {contest.description && (
-                    <p className="text-gray-600 text-sm line-clamp-2">
-                      {contest.description}
-                    </p>
-                  )}
-
-                  {/* Contest Info Grid */}
-                  <div className="grid grid-cols-2 gap-y-3 text-sm">
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Award className="w-4 h-4 text-yellow-600" />
-                      <span className="font-semibold">Prize:</span> 
-                      <span className="truncate">{contest.prize || "N/A"}</span>
+                ) : (
+                  <div className="h-48 w-full bg-[#fff8e0] border-b border-[#fde89c] p-5 flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#ffd02f] text-[#1c1c1e] text-[10px] font-semibold uppercase tracking-wider">
+                        COMPETITION
+                      </span>
+                      {contest.passcode && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ffc6c6] text-[#600000] text-[10px] font-semibold">
+                          <Lock className="w-3 h-3" />
+                          <span>Protected</span>
+                        </span>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <BookOpen className="w-4 h-4 text-blue-600" />
-                      <span className="font-semibold">Questions:</span> 
-                      <span>{contest.questions?.length || 0}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Calendar className="w-4 h-4 text-purple-600" />
-                      <span className="font-semibold">Deadline:</span> 
-                      <span className="text-xs">{formatDateTime(contest.deadline)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Timer className="w-4 h-4 text-green-600" />
-                      <span className="font-semibold">Start Time:</span> 
-                      <span className="text-xs">{formatDateTime(contest.startTime)}</span>
-                    </div>
-                    {contest.passcode && (
-                      <div className="flex items-center gap-2 text-gray-700 col-span-2">
-                        <Lock className="w-4 h-4 text-red-600" />
-                        <span className="font-semibold">Passcode:</span> 
-                        <span className="text-red-600">Protected</span>
+                    <div className="flex items-center justify-center py-2">
+                      <div className="w-14 h-14 rounded-2xl bg-[#ffd02f]/40 flex items-center justify-center text-[#746019]">
+                        <Award className="w-8 h-8 text-[#746019]" />
                       </div>
-                    )}
+                    </div>
+                    <div className="text-center text-[11px] font-medium text-[#746019] uppercase tracking-wider">
+                      Academic Arena
+                    </div>
+                  </div>
+                )}
+
+                {/* Contest Content - flex-grow flex flex-col justify-between to keep enroll button on exact same baseline */}
+                <div className="p-5 sm:p-6 flex-grow flex flex-col justify-between space-y-4">
+                  <div className="space-y-3">
+                    {/* Title with consistent min-height */}
+                    <div className="min-h-[2.75rem] flex items-start justify-between gap-2">
+                      <h2 className="text-base font-medium text-[#1c1c1e] line-clamp-2 leading-snug">
+                        {contest.title}
+                      </h2>
+                      {contest.thumbnail && contest.passcode && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ffc6c6] text-[#600000] text-[10px] font-semibold shrink-0">
+                          <Lock className="w-3 h-3" />
+                          <span>Passcode</span>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Description with consistent min-height */}
+                    <div className="min-h-[2.25rem] flex items-start">
+                      <p className="text-[#555a6a] text-xs line-clamp-2 leading-relaxed font-normal">
+                        {contest.description || "Active competitive assessment designed for verified academic benchmarking."}
+                      </p>
+                    </div>
+
+                    {/* Contest Info Grid */}
+                    <div className="grid grid-cols-2 gap-2.5 text-xs pt-1">
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-[#fff8e0] border border-[#fde89c]/60 text-[#1c1c1e]">
+                        <Award className="w-4 h-4 text-[#746019] shrink-0" />
+                        <div className="truncate">
+                          <span className="text-[10px] text-[#746019] block font-semibold uppercase">Prize</span>
+                          <span className="font-medium truncate block">{contest.prize || "Certificate"}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-[#c3faf5]/50 border border-[#0fbcb0]/30 text-[#1c1c1e]">
+                        <BookOpen className="w-4 h-4 text-[#187574] shrink-0" />
+                        <div className="truncate">
+                          <span className="text-[10px] text-[#187574] block font-semibold uppercase">Questions</span>
+                          <span className="font-medium truncate block">{contest.questions?.length || 0} MCQs</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-[#f5f3ff] border border-[#4262ff]/20 text-[#1c1c1e]">
+                        <Calendar className="w-4 h-4 text-[#4262ff] shrink-0" />
+                        <div className="truncate">
+                          <span className="text-[10px] text-[#4262ff] block font-semibold uppercase">Deadline</span>
+                          <span className="font-medium truncate block text-[11px]">{formatDateTime(contest.deadline)}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-[#f7f8fa] border border-[#c7cad5] text-[#1c1c1e]">
+                        <Timer className="w-4 h-4 text-[#555a6a] shrink-0" />
+                        <div className="truncate">
+                          <span className="text-[10px] text-[#555a6a] block font-semibold uppercase">Start</span>
+                          <span className="font-medium truncate block text-[11px]">{formatDateTime(contest.startTime)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Toggle for More Details */}
+                    <div className="pt-1">
+                      <button
+                        onClick={() => toggleDetails(contest._id)}
+                        type="button"
+                        className="w-full flex items-center justify-center gap-1.5 text-[#4262ff] hover:underline font-medium text-xs py-1.5 transition-colors cursor-pointer"
+                        aria-expanded={!!openDetails[contest._id]}
+                        aria-controls={`details-${contest._id}`}
+                      >
+                        {openDetails[contest._id] ? (
+                          <>
+                            <span>Hide Details</span>
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          </>
+                        ) : (
+                          <>
+                            <span>View Curriculum Details</span>
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </>
+                        )}
+                      </button>
+
+                      <AnimatePresence>
+                        {openDetails[contest._id] && (
+                          <motion.div
+                            id={`details-${contest._id}`}
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden border-t border-[#e6e8ec] pt-3 mt-2 text-xs space-y-2"
+                          >
+                            <div className="grid grid-cols-2 gap-2 text-[#555a6a]">
+                              <div className="flex items-center gap-1.5 truncate">
+                                <MapPin className="w-3.5 h-3.5 text-[#1c1c1e] shrink-0" />
+                                <span className="truncate">
+                                  <strong className="text-[#1c1c1e] font-medium">Region:</strong> {contest.regionName || contest.region || "All"}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 truncate">
+                                <FileText className="w-3.5 h-3.5 text-[#1c1c1e] shrink-0" />
+                                <span className="truncate">
+                                  <strong className="text-[#1c1c1e] font-medium">Exam:</strong> {contest.examType || "N/A"}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 truncate">
+                                <Users className="w-3.5 h-3.5 text-[#1c1c1e] shrink-0" />
+                                <span className="truncate">
+                                  <strong className="text-[#1c1c1e] font-medium">Class:</strong> {contest.specificClass || "N/A"}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 truncate">
+                                <BookOpen className="w-3.5 h-3.5 text-[#1c1c1e] shrink-0" />
+                                <span className="truncate">
+                                  <strong className="text-[#1c1c1e] font-medium">Subject:</strong> {contest.subject || "N/A"}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 col-span-2 truncate">
+                                <Target className="w-3.5 h-3.5 text-[#1c1c1e] shrink-0" />
+                                <span className="truncate">
+                                  <strong className="text-[#1c1c1e] font-medium">Chapter:</strong> {contest.chapter || "All Chapters"}
+                                </span>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
 
-                  {/* Toggle for More Details */}
-                  <button
-                    onClick={() => toggleDetails(contest._id)}
-                    className="w-full flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 font-semibold py-2 rounded-lg transition-colors duration-200"
-                    aria-expanded={!!openDetails[contest._id]}
-                    aria-controls={`details-${contest._id}`}
-                  >
-                    {openDetails[contest._id] ? (
-                      <>
-                        Hide Details <ChevronUp className="w-4 h-4" />
-                      </>
-                    ) : (
-                      <>
-                        Show Details <ChevronDown className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-
-                  <AnimatePresence>
-                    {openDetails[contest._id] && (
-                      <motion.div
-                        id={`details-${contest._id}`}
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="overflow-hidden border-t border-gray-200 pt-4 mt-4 text-sm"
-                      >
-                        <div className="grid grid-cols-2 gap-4 text-gray-700">
-                          {/* Region */}
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-indigo-600" />
-                            <span className="font-semibold">Region:</span> {contest.regionName || contest.region || "N/A"}
-                          </div>
-
-                          {/* Exam Type */}
-                          <div className="flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-indigo-600" />
-                            <span className="font-semibold">Exam Type:</span> {contest.examType || "N/A"}
-                          </div>
-
-                          {/* Class */}
-                          <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4 text-indigo-600" />
-                            <span className="font-semibold">Class:</span> {contest.specificClass || "N/A"}
-                          </div>
-
-                          {/* Subject */}
-                          <div className="flex items-center gap-2">
-                            <BookOpen className="w-4 h-4 text-indigo-600" />
-                            <span className="font-semibold">Subject:</span> {contest.subject || "N/A"}
-                          </div>
-
-                          {/* Chapter - full width on last row */}
-                          <div className="flex items-center gap-2 col-span-2">
-                            <Target className="w-4 h-4 text-indigo-600" />
-                            <span className="font-semibold">Chapter:</span> {contest.chapter || "N/A"}
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Enroll Button */}
-                <div className="px-6 pb-6 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={() => handleEnroll(contest)}
-                    className="w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium text-white bg-gray-900 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800 transition-colors duration-200"
-                  >
-                    <CheckCircle className="h-5 w-5 mr-3" />
-                    Enroll Now
-                  </button>
+                  {/* Enroll Button - Miro button-primary pinned to bottom line across all cards */}
+                  <div className="pt-3 mt-auto border-t border-[#e6e8ec]">
+                    <button
+                      onClick={() => handleEnroll(contest)}
+                      type="button"
+                      className="w-full py-3 px-6 bg-[#1c1c1e] hover:bg-[#2c2c34] active:bg-[#2c2c34] text-white text-sm font-medium rounded-full transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm group"
+                    >
+                      <Play className="w-4 h-4 text-[#ffd02f] fill-[#ffd02f] group-hover:translate-x-0.5 transition-transform" />
+                      <span>Enroll Now</span>
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}

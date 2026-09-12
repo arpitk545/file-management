@@ -54,6 +54,11 @@ module.exports = {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      fontFamily: {
+        serif: ['"Instrument Serif"', "Georgia", "serif"],
+        "instrument-serif": ['"Instrument Serif"', "Georgia", "serif"],
+        sans: ['"Inter"', "system-ui", "sans-serif"],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

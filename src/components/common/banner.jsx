@@ -1,125 +1,117 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import { motion } from "framer-motion"
 import { apiConnector } from "../../services/apiconnector"
 import { getAdAPI } from "../../services/apis"
 
-export default function Banner() {
-  const [adConfig, setAdConfig] = useState(null);
-  const [adInitialized, setAdInitialized] = useState(false);
-  const [loading, setLoading] = useState(true);
+// Official Google AdSense Test Credentials
+const GOOGLE_TEST_AD = {
+  client: "ca-pub-3940256099942544", // Official Google AdMob / AdSense Test Publisher ID
+  slot: "6300978111",              // Official Google AdSense Test Slot ID
+  format: "auto",
+}
 
-  // Fetch dynamic Ad Config from server
+export default function Banner() {
+  const [adConfig, setAdConfig] = useState(GOOGLE_TEST_AD);
+  const [isAdLoaded, setIsAdLoaded] = useState(false);
+  const adRef = useRef(null);
+
+  // Fetch dynamic Ad Config from server, fallback to official Google test credentials
   useEffect(() => {
+    let isMounted = true;
     const fetchAd = async () => {
       try {
-        setLoading(true);
         const response = await apiConnector("GET", getAdAPI);
         if (response.data?.success && response.data?.data) {
-          setAdConfig(response.data.data);
+          if (isMounted) {
+            setAdConfig({
+              client: response.data.data.client || GOOGLE_TEST_AD.client,
+              slot: response.data.data.slot || GOOGLE_TEST_AD.slot,
+              format: response.data.data.format || GOOGLE_TEST_AD.format,
+            });
+          }
         }
       } catch (err) {
-        console.error("Error fetching Ad configuration:", err);
-      } finally {
-        setLoading(false);
+        if (isMounted) {
+          setAdConfig(GOOGLE_TEST_AD);
+        }
       }
     };
     fetchAd();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Google AdSense initialization effect
+  // Initialize adsbygoogle and listen for when Google AdSense actually fills the ad
   useEffect(() => {
-    if (!adConfig) return;
-    if (adInitialized) return;
-
-    // Add the AdSense script if not already present
-    const existingScript = document.querySelector('script[src*="adsbygoogle.js"]');
-    if (!existingScript) {
-      const script = document.createElement('script');
-      script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adConfig.client}`;
-      script.async = true;
-      script.crossOrigin = 'anonymous';
-      document.head.appendChild(script);
+    try {
+      if (typeof window !== "undefined") {
+        ((window).adsbygoogle = (window).adsbygoogle || []).push({});
+      }
+    } catch (e) {
+      console.warn("Google AdSense init:", e);
     }
 
-    // Small delay to ensure script loads
-    const timer = setTimeout(() => {
-      try {
-        // Check if ad container exists and doesn't already have an ad
-        const adContainer = document.querySelector('.adsbygoogle');
-        if (adContainer && !adContainer.hasAttribute('data-ad-status')) {
-          ((window).adsbygoogle = (window).adsbygoogle || []).push({});
-          setAdInitialized(true);
-        }
-      } catch (error) {
-        console.error("AdSense error:", error);
+    const adElement = adRef.current;
+    if (!adElement) return;
+
+    // Function to check if Google AdSense has inserted an iframe or marked as filled
+    const checkAdStatus = () => {
+      const status = adElement.getAttribute("data-ad-status");
+      const iframe = adElement.querySelector("iframe");
+      if (status === "filled" || iframe) {
+        setIsAdLoaded(true);
+      } else if (status === "unfilled") {
+        setIsAdLoaded(false);
       }
-    }, 500);
+    };
 
-    return () => clearTimeout(timer);
-  }, [adConfig, adInitialized]);
+    checkAdStatus();
 
-  if (loading) {
-    return (
-      <section className="py-8 md:py-12 relative overflow-hidden">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative rounded-2xl md:rounded-3xl overflow-hidden shadow-sm bg-gray-50 border border-gray-100 flex items-center justify-center min-h-[120px]">
-             <div className="animate-pulse w-full max-w-2xl h-[90px] bg-gray-200 rounded-xl m-4"></div>
-          </div>
-        </div>
-      </section>
-    );
-  }
+    // Observe changes made by adsbygoogle script
+    const observer = new MutationObserver(() => {
+      checkAdStatus();
+    });
 
-  if (!adConfig) {
-    return (
-      <section className="py-8 md:py-12 relative overflow-hidden">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-center p-8 border-2 border-dashed border-gray-200 rounded-2xl md:rounded-3xl bg-gray-50/50 min-h-[120px]"
-          >
-            <p className="text-gray-400 font-medium text-center">No advertisement to show yet.</p>
-          </motion.div>
-        </div>
-      </section>
-    );
-  }
+    observer.observe(adElement, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+    });
+
+    return () => observer.disconnect();
+  }, [adConfig]);
 
   return (
-    <section className="py-8 md:py-12 relative overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-           initial={{ opacity: 0, y: 30 }}
-           whileInView={{ opacity: 1, y: 0 }}
-           transition={{ duration: 0.6 }}
-           viewport={{ once: true }}
-           className="relative"
+    <section
+      className={`relative overflow-hidden font-sans transition-all duration-300 ${
+        isAdLoaded
+          ? "w-full bg-[#fafbfc] border-y border-[#e0e2e8] py-4 sm:py-6 opacity-100 block"
+          : "h-0 min-h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none p-0 m-0 border-0 block"
+      }`}
+    >
+      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12">
+        <div
+          className={
+            isAdLoaded
+              ? "relative rounded-2xl overflow-hidden border border-[#c7cad5] bg-white p-2 sm:p-4 shadow-xs flex items-center justify-center min-h-[90px]"
+              : ""
+          }
         >
-          <div className="text-center mb-3">
-             <span className="inline-block px-3 py-1 bg-gray-100 text-gray-500 text-[10px] sm:text-xs font-semibold tracking-widest uppercase rounded-full">
-               Advertisement
-             </span>
-          </div>
-
-          <div className="relative rounded-2xl md:rounded-3xl overflow-hidden shadow-xl md:shadow-2xl bg-gradient-to-br from-gray-50 to-gray-100">
-            <div className="w-full flex justify-center items-center p-4 md:p-6 min-h-[120px]">
-              <div className="w-full max-w-4xl flex justify-center">
-                 <ins
-                  className="adsbygoogle"
-                  style={{ display: "block", width: "100%" }}
-                  data-ad-client={adConfig.client}
-                  data-ad-slot={adConfig.slot}
-                  data-ad-format={adConfig.format || "auto"}
-                  data-full-width-responsive="true"
-                 />
-              </div>
-            </div>
-          </div>
-        </motion.div>
+          <ins
+            ref={adRef}
+            className="adsbygoogle"
+            style={{ display: "block", width: "100%", textAlign: "center" }}
+            data-ad-client={adConfig.client}
+            data-ad-slot={adConfig.slot}
+            data-ad-format={adConfig.format || "auto"}
+            data-ad-test="on"
+            data-full-width-responsive="true"
+          />
+        </div>
       </div>
     </section>
-  )
+  );
 }

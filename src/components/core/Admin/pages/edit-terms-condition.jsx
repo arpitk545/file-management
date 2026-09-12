@@ -2,14 +2,28 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Save, Plus, X, Shield, Lock, Eye, FileText, Users, AlertCircle } from "lucide-react"
-import toast from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
+import { Save, Plus, Trash2, Shield, Lock, Eye, FileText, Users, AlertCircle, ArrowLeft, Layers } from "lucide-react"
+import toast from "react-hot-toast"
 import { getTermsCondition, updateTermsCondition } from "../../../../services/operations/pagesAPI"
 
+const MiroLoader = ({ message = "Loading terms & conditions..." }) => (
+  <div className="flex flex-col items-center justify-center py-20 gap-3">
+    <div className="relative w-12 h-12">
+      <div className="w-12 h-12 rounded-full border-4 border-[#eef0f3] border-t-[#ffd02f] border-r-[#1c1c1e] animate-spin" />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-3 h-3 rounded-full bg-[#ffd02f]" />
+      </div>
+    </div>
+    <span className="text-xs font-bold uppercase tracking-wider text-[#555a6a]">{message}</span>
+  </div>
+)
+
 export default function EditTermsCondition() {
+  const navigate = useNavigate()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const Navigate = useNavigate()
+  const [isLoading, setIsLoading] = useState(true)
+
   const [termsData, settermsData] = useState({
     header: {
       title: "",
@@ -18,19 +32,10 @@ export default function EditTermsCondition() {
     sections: [],
   })
 
-  const iconOptions = [
-    { value: "FileText", label: "File Text", icon: FileText },
-    { value: "Lock", label: "Lock", icon: Lock },
-    { value: "Shield", label: "Shield", icon: Shield },
-    { value: "Users", label: "Users", icon: Users },
-    { value: "Eye", label: "Eye", icon: Eye },
-    { value: "AlertCircle", label: "Alert Circle", icon: AlertCircle },
-  ]
-
-
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true)
         const res = await getTermsCondition()
         if (res) {
           settermsData(res)
@@ -38,11 +43,12 @@ export default function EditTermsCondition() {
       } catch (err) {
         toast.error("Failed to load Terms & Conditions.")
         console.error(err)
+      } finally {
+        setIsLoading(false)
       }
     }
     fetchData()
   }, [])
-
 
   const handleInputChange = (section, field, value, index = null) => {
     settermsData((prev) => {
@@ -70,7 +76,6 @@ export default function EditTermsCondition() {
     }))
   }
 
-
   const removeSection = (index) => {
     settermsData((prev) => ({
       ...prev,
@@ -78,171 +83,187 @@ export default function EditTermsCondition() {
     }))
   }
 
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsSubmitting(true)
-  
-      try {
-    const res = await updateTermsCondition(termsData)
-    if (res?._id && res?.updatedAt) {
-      toast.success("Terms & Conditions updated successfully!")
-      Navigate("/dashboard")
-    } else {
-      toast.error("Update failed. Please try again.")
+
+    try {
+      const res = await updateTermsCondition(termsData)
+      if (res?._id && res?.updatedAt) {
+        toast.success("Terms & Conditions updated successfully!")
+        navigate("/dashboard")
+      } else {
+        toast.error("Update failed. Please try again.")
+      }
+    } catch (err) {
+      console.error("Update error:", err)
+      toast.error("Something went wrong while updating.")
+    } finally {
+      setIsSubmitting(false)
     }
-   } catch (err) {
-    console.error("Update error:", err)
-    toast.error("Something went wrong.")
-   } finally {
-    setIsSubmitting(false)
-   }
   }
-  
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#f7f8fa] flex items-center justify-center">
+        <MiroLoader message="Loading page builder..." />
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-            Edit Terms & Conditions
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-6 sm:py-8 px-4 sm:px-6 lg:px-8 xl:px-12 w-full">
+      <div className="w-full space-y-6">
+        
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e0e2e8]">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Dashboard</span>
+            </button>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#ffd02f] text-[#1c1c1e]">
+              PAGE BUILDER
+            </span>
+            <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#f5f3ff] text-[#4262ff] border border-[#ddd6fe]">
+              TERMS & CONDITIONS
+            </span>
+          </div>
+        </div>
+
+        {/* Page Title */}
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#1c1c1e]">
+            Edit Terms & Conditions Page
           </h1>
-          <p className="text-gray-600 text-lg">Update your Terms & Conditions content and sections</p>
-        </motion.div>
+          <p className="text-sm sm:text-base text-[#555a6a]">
+            Manage platform service terms, user codes of conduct, subscription guidelines, and legal clauses.
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Header Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-3xl shadow-lg p-8"
-          >
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-              <Shield className="w-6 h-6 mr-2 text-purple-600" />
-              Header Section
-            </h2>
-
-            <div className="grid gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Title</label>
-                <input
-                  type="text"
-                  value={termsData.header.title}
-                  onChange={(e) => handleInputChange("header", "title", e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                <textarea
-                  value={termsData.header.description}
-                  onChange={(e) => handleInputChange("header", "description", e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 resize-none"
-                />
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Terms & Conditions Sections */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-3xl shadow-lg p-8"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                <Lock className="w-6 h-6 mr-2 text-blue-600" />
-                Terms & Conditions Sections
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Header Card */}
+          <div className="bg-white rounded-2xl border border-[#c7cad5] shadow-sm p-5 sm:p-7 space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-[#e0e2e8]">
+              <Layers className="w-5 h-5 text-[#4262ff]" />
+              <h2 className="text-base sm:text-lg font-bold text-[#1c1c1e]">
+                Terms Preamble & Header
               </h2>
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                Document Title
+              </label>
+              <input
+                type="text"
+                value={termsData.header?.title || ""}
+                onChange={(e) => handleInputChange("header", "title", e.target.value)}
+                className="w-full h-11 min-h-[44px] px-3.5 text-sm font-semibold rounded-xl border border-[#c7cad5] bg-[#fffdf5] text-[#1c1c1e] focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 focus:outline-none transition-all"
+                placeholder="e.g., Terms of Service & User Agreement"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                Preamble Description
+              </label>
+              <textarea
+                value={termsData.header?.description || ""}
+                onChange={(e) => handleInputChange("header", "description", e.target.value)}
+                rows={3}
+                className="w-full px-3.5 py-3 text-sm font-semibold rounded-xl border border-[#c7cad5] bg-white text-[#1c1c1e] focus:border-[#1c1c1e] focus:ring-2 focus:ring-[#ffd02f]/30 focus:outline-none transition-all resize-none"
+                placeholder="Introduction setting forth user agreement conditions..."
+              />
+            </div>
+          </div>
+
+          {/* Clauses / Sections Card */}
+          <div className="bg-white rounded-2xl border border-[#c7cad5] shadow-sm p-5 sm:p-7 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-[#e0e2e8]">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-[#4262ff]" />
+                <h2 className="text-base sm:text-lg font-bold text-[#1c1c1e]">
+                  Agreement Clauses ({termsData.sections?.length || 0})
+                </h2>
+              </div>
               <button
                 type="button"
                 onClick={addSection}
-                className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors duration-200"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] text-xs font-bold transition-all shadow-sm active:scale-95"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Section
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Clause</span>
               </button>
             </div>
 
-            <div className="grid gap-6">
-              {termsData.sections.map((section, index) => (
-                <div key={index} className="p-6 bg-gray-50 rounded-xl">
-                  <div className="flex items-start justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Section {index + 1}</h3>
-                    <button
-                      type="button"
-                      onClick={() => removeSection(index)}
-                      className="w-8 h-8 bg-red-100 hover:bg-red-200 rounded-lg flex items-center justify-center transition-colors duration-200"
-                    >
-                      <X className="w-4 h-4 text-red-600" />
-                    </button>
+            <div className="space-y-4">
+              {termsData.sections?.map((sec, index) => (
+                <div key={index} className="bg-[#f7f8fa] border border-[#e0e2e8] rounded-xl p-4 space-y-3 relative">
+                  <button
+                    type="button"
+                    onClick={() => removeSection(index)}
+                    className="absolute top-3 right-3 p-1 rounded-full text-[#800000] hover:bg-[#fbd4d4] transition-all"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <div className="pr-8 space-y-1.5">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                      Clause #{index + 1} Heading
+                    </label>
+                    <input
+                      type="text"
+                      value={sec.title}
+                      onChange={(e) => handleInputChange("sections", "title", e.target.value, index)}
+                      className="w-full h-10 px-3 text-sm font-semibold rounded-lg border border-[#c7cad5] bg-white text-[#1c1c1e] focus:border-[#1c1c1e] focus:outline-none"
+                      placeholder="e.g., Intellectual Property Rights"
+                    />
                   </div>
-
-                  <div className="grid gap-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Icon</label>
-                        <select
-                          value={section.icon}
-                          onChange={(e) => handleInputChange("sections", "icon", e.target.value, index)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
-                        >
-                          {iconOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-                        <input
-                          type="text"
-                          value={section.title}
-                          onChange={(e) => handleInputChange("sections", "title", e.target.value, index)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
-                      <textarea
-                        value={section.content}
-                        onChange={(e) => handleInputChange("sections", "content", e.target.value, index)}
-                        rows={4}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-100 resize-none"
-                      />
-                    </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#555a6a]">
+                      Clause Text
+                    </label>
+                    <textarea
+                      value={sec.content}
+                      onChange={(e) => handleInputChange("sections", "content", e.target.value, index)}
+                      rows={3}
+                      className="w-full px-3 py-2 text-sm font-semibold rounded-lg border border-[#c7cad5] bg-white text-[#1c1c1e] focus:border-[#1c1c1e] focus:outline-none resize-none"
+                      placeholder="Rights, obligations, dispute resolutions..."
+                    />
                   </div>
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
 
-          {/* Submit Button */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center">
+          {/* Centered Bottom Action Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard")}
+              className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] font-semibold text-sm shadow-sm transition-all active:scale-95 text-center"
+            >
+              Cancel
+            </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="w-full sm:w-auto px-10 py-3.5 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] font-extrabold text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
-                <div className="flex items-center">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Updating...
-                </div>
+                <>
+                  <div className="w-4 h-4 border-2 border-[#1c1c1e] border-t-transparent rounded-full animate-spin" />
+                  <span>Updating Terms & Conditions...</span>
+                </>
               ) : (
-                <div className="flex items-center">
-                  <Save className="w-5 h-5 mr-2" />
-                  Update Terms & Conditions
-                </div>
+                <>
+                  <Save className="w-4 h-4 text-[#1c1c1e]" />
+                  <span>Update Terms & Conditions</span>
+                </>
               )}
             </button>
-          </motion.div>
+          </div>
         </form>
       </div>
     </div>

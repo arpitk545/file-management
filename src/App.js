@@ -12,6 +12,7 @@ import TermsConditionPage from "./components/pages/Terms-condition";
 import Articles from "./components/pages/Articles";
 import Contest from "./components/pages/Contest";
 import Qanda from "./components/pages/qandqpage";
+import QuizCatalog from "./components/pages/Quiz";
 import Profile from "./components/core/Profile/profile";
 import Settings from "./components/core/Profile/settings";
 import AboutUs from "./components/pages/About-us";
@@ -162,6 +163,10 @@ function App() {
         <Route path="/articles" element={<Articles />} />
         <Route path="/contest" element={<Contest />} />
         <Route path="/qnada" element={<Qanda/>}/>
+        <Route path="/quiz" element={<QuizCatalog/>}/>
+        <Route path="/view-user-quiz" element={<QuizCatalog/>}/>
+        <Route path="/play-quiz/:quizId" element={<PlayQuiz/>}/>
+        <Route path="/filter-user-quiz" element={<FilterUserQuiz/>}/>
         <Route path="/advertisements" element={<Banner />} />
         <Route path="/about-us" element={<AboutUs />} />
         <Route path="/contact-us" element={<ContactUs />} />
@@ -301,9 +306,13 @@ function App() {
           <Route path="/create-quiz" element={<CreateQuiz />} />
           <Route path="/build-quiz" element={<BuildQuiz />} />
           <Route path="/view-all-user-quiz" element={<ViewUserQuiz/>}/>
+          <Route path="/view-all-user-quiz/:quizId" element={<ViewUserQuiz/>}/>
+          <Route path="/view-all-user-quiz/:id" element={<ViewUserQuiz/>}/>
           <Route path="/review-answer/:resultId" element={<ReviewQuiz />} />
           <Route path="/view-quiz" element={<ViewQuiz />} />
           <Route path="/edit-user-quiz" element={<EditQuiz />} />
+          <Route path="/edit-user-quiz/:quizId" element={<EditQuiz />} />
+          <Route path="/edit-user-quiz/:id" element={<EditQuiz />} />
           <Route path="/build-contest" element={<BuildContest/>}/>
           <Route path="/filter-user-quiz" element={<FilterUserQuiz/>}/>
           <Route path="/attempt" element={<Attempt />} />
@@ -338,7 +347,7 @@ function App() {
         <Route path="/login" element={<Login />} />
          <Route path="/post-view/:articleId" element={< UserPostView/>} />
          <Route path="/play-quiz/:quizId" element={<PlayQuiz/>}/>
-          <Route path="/view-user-quiz" element={<QuizDetails/>}/>
+          <Route path="/view-user-quiz" element={<QuizCatalog/>}/>
         <Route path="/show-file/:id" element={<FileView />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/logout" element={<Logout />} />
@@ -346,6 +355,12 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/dashboard" element={<DashboardRedirect />} />
+        <Route path="/edit-user-quiz/:quizId" element={<EditQuiz />} />
+        <Route path="/edit-user-quiz/:id" element={<EditQuiz />} />
+        <Route path="/view-all-user-quiz" element={<ViewUserQuiz/>}/>
+        <Route path="/view-all-user-quiz/:quizId" element={<ViewUserQuiz/>}/>
+        <Route path="/view-all-user-quiz/:id" element={<ViewUserQuiz/>}/>
+        <Route path="/filter-user-quiz" element={<FilterUserQuiz/>}/>
         <Route path="*" element={< NotFoundPage/>}/>
         <Route path="/oauth" element={<OAuthHandler />} />
         <Route path="/user/dashboard" element={<UserDashboard />} />

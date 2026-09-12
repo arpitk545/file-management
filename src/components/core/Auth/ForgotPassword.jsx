@@ -144,8 +144,8 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center w-full font-sans">
-      <div className="w-full max-w-lg space-y-6">
+    <div className="min-h-screen bg-[#f7f8fa] text-[#1c1c1e] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 xl:px-12 flex flex-col justify-center items-center w-full font-sans">
+      <div className="w-full max-w-xl lg:max-w-6xl space-y-4 sm:space-y-6">
         {/* Top Navigation Bar */}
         <div className="flex items-center justify-between">
           <button
@@ -155,241 +155,312 @@ export default function ForgotPassword() {
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Login</span>
           </button>
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#ffd02f] text-[#1c1c1e] shadow-xs">
-            SECURITY DESK
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#fff4c4] border border-[#ffd02f]/60 text-[#746019]">
+              Account Recovery
+            </span>
+            <span className="inline-flex items-center px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#ffd02f] text-[#1c1c1e] shadow-xs">
+              Security Desk
+            </span>
+          </div>
         </div>
 
-        {/* Main Card */}
-        <div className="bg-white rounded-2xl border border-[#c7cad5] shadow-sm p-6 sm:p-8 space-y-6">
-          {success ? (
-            <div className="text-center py-6 space-y-5">
-              <div className="w-16 h-16 rounded-2xl bg-[#c3faf5] text-[#187574] flex items-center justify-center mx-auto border border-[#9eece4] shadow-sm">
-                <CheckCircle2 className="w-8 h-8" />
+        {/* 2-Column Wide Grid (Showcase hidden on mobile, visible on desktop) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+          {/* Left Column: Security Recovery Showcase (Desktop only) */}
+          <div className="hidden lg:flex lg:col-span-5 bg-[#1c1c1e] text-white rounded-3xl p-8 sm:p-10 flex-col justify-between border border-[#1c1c1e] shadow-md relative overflow-hidden">
+            {/* Background ambient glow */}
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#ffd02f]/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-[#187574]/20 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[#ffd02f] text-xs font-bold uppercase tracking-wider">
+                <ShieldCheck className="w-4 h-4 text-[#ffd02f]" />
+                <span>Protected Credentials</span>
               </div>
 
-              <div className="space-y-2">
-                <span className="px-3 py-1 bg-[#c3faf5] text-[#187574] text-[11px] font-black uppercase tracking-wider rounded-full">
-                  CREDENTIALS UPDATED
-                </span>
-                <h2 className="text-2xl font-extrabold tracking-tight text-[#1c1c1e]">
-                  Password Successfully Reset
+              <div className="space-y-3">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight">
+                  Restore Access to Your Account
                 </h2>
-                <p className="text-xs sm:text-sm text-[#555a6a] max-w-sm mx-auto leading-relaxed">
-                  Your account password has been updated securely. You can now use your new credentials to log in to CLYS.
+                <p className="text-sm text-[#a1a1aa] leading-relaxed">
+                  Enter your registered academic email address to define a new secure password. Your account history, quiz records, and submissions remain completely intact.
                 </p>
               </div>
 
-              <div className="pt-2">
-                <button
-                  onClick={() => navigate("/login")}
-                  className="w-full h-12 min-h-[48px] bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] font-extrabold text-sm rounded-full shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider"
-                >
-                  <span>Return to Sign In</span>
-                  <ArrowLeft className="w-4 h-4 rotate-180" />
-                </button>
+              {/* Password Guidelines List */}
+              <div className="space-y-3 pt-2">
+                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm flex items-start gap-3">
+                  <span className="text-[#ffd02f] font-bold text-sm">01</span>
+                  <div>
+                    <p className="text-xs font-bold text-white">8+ Characters Length</p>
+                    <p className="text-[11px] text-[#a1a1aa]">Include at least one uppercase, one lowercase letter, and a number.</p>
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm flex items-start gap-3">
+                  <span className="text-[#ffd02f] font-bold text-sm">02</span>
+                  <div>
+                    <p className="text-xs font-bold text-white">Bcrypt One-Way Encryption</p>
+                    <p className="text-[11px] text-[#a1a1aa]">Your credentials are salt-hashed before database persistence.</p>
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm flex items-start gap-3">
+                  <span className="text-[#34A853] font-bold text-sm">✓</span>
+                  <div>
+                    <p className="text-xs font-bold text-white">Instant Sign-In After Update</p>
+                    <p className="text-[11px] text-[#a1a1aa]">Your new password is immediately active across all devices.</p>
+                  </div>
+                </div>
               </div>
             </div>
-          ) : (
-            <>
-              {/* Header */}
-              <div className="text-center space-y-2">
-                <div className="w-12 h-12 rounded-2xl bg-[#ffd02f] text-[#1c1c1e] flex items-center justify-center mx-auto shadow-sm">
-                  <Lock className="w-6 h-6" />
-                </div>
-                <h1 className="text-2xl font-bold tracking-tight text-[#1c1c1e]">
-                  Reset Your Password
-                </h1>
-                <p className="text-xs sm:text-sm text-[#555a6a]">
-                  Enter your verified account email and define a new secure password
-                </p>
+
+            {/* Bottom Support Note */}
+            <div className="relative z-10 pt-8 mt-8 border-t border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs text-[#a1a1aa]">
+                <span>Need support?</span>
+                <button
+                  onClick={() => navigate("/contact-us")}
+                  className="text-[#ffd02f] hover:underline font-bold cursor-pointer"
+                >
+                  Contact Desk
+                </button>
               </div>
+              <span className="text-[11px] text-[#71717a]">CLYS 2.0</span>
+            </div>
+          </div>
 
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Email Address */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#555a6a] block">
-                    Registered Email Address *
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555a6a] pointer-events-none" />
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder="name@example.com"
-                      className={`w-full h-11 min-h-[44px] pl-10 pr-4 bg-[#fffdf5] border rounded-xl focus:outline-none focus:ring-2 transition-all text-sm font-semibold text-[#1c1c1e] ${
-                        errors.email
-                          ? "border-[#800000] focus:ring-[#fbd4d4]"
-                          : "border-[#c7cad5] focus:border-[#1c1c1e] focus:ring-[#ffd02f]/30"
-                      }`}
-                      required
-                    />
-                  </div>
-                  {errors.email && (
-                    <div className="flex items-center gap-1.5 text-xs text-[#800000] font-bold mt-1">
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                      <span>{errors.email}</span>
-                    </div>
-                  )}
+          {/* Right Column: Main Reset Card (Full width on mobile) */}
+          <div className="col-span-1 lg:col-span-7 bg-white rounded-3xl border border-[#c7cad5] shadow-sm p-6 sm:p-10 flex flex-col justify-between">
+            {success ? (
+              <div className="text-center py-10 space-y-6">
+                <div className="w-16 h-16 rounded-2xl bg-[#c3faf5] text-[#187574] flex items-center justify-center mx-auto border border-[#9eece4] shadow-sm">
+                  <CheckCircle2 className="w-8 h-8" />
                 </div>
 
-                {/* New Password */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#555a6a] block">
-                    New Password *
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555a6a] pointer-events-none" />
-                    <input
-                      type={showPassword.newPassword ? "text" : "password"}
-                      name="newPassword"
-                      value={formData.newPassword}
-                      onChange={handleInputChange}
-                      placeholder="Enter new password (min. 8 chars)"
-                      className={`w-full h-11 min-h-[44px] pl-10 pr-11 bg-white border rounded-xl focus:outline-none focus:ring-2 transition-all text-sm font-semibold text-[#1c1c1e] ${
-                        errors.newPassword
-                          ? "border-[#800000] focus:ring-[#fbd4d4]"
-                          : "border-[#c7cad5] focus:border-[#1c1c1e] focus:ring-[#ffd02f]/30"
-                      }`}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => togglePasswordVisibility("newPassword")}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#555a6a] hover:text-[#1c1c1e] transition-colors cursor-pointer"
-                    >
-                      {showPassword.newPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-
-                  {/* Password Strength Indicator */}
-                  {formData.newPassword && (
-                    <div className="space-y-1 pt-1">
-                      <div className="flex space-x-1">
-                        {[1, 2, 3].map((level) => (
-                          <div
-                            key={level}
-                            className={`h-1.5 flex-1 rounded-full transition-all ${
-                              level <= passwordStrength.strength
-                                ? level === 1
-                                  ? "bg-[#800000]"
-                                  : level === 2
-                                    ? "bg-[#ffd02f]"
-                                    : "bg-[#187574]"
-                                : "bg-[#e0e2e8]"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <p className={`text-xs font-bold ${passwordStrength.color}`}>
-                        {passwordStrength.text}
-                      </p>
-                    </div>
-                  )}
-
-                  {errors.newPassword && (
-                    <div className="flex items-center gap-1.5 text-xs text-[#800000] font-bold mt-1">
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                      <span>{errors.newPassword}</span>
-                    </div>
-                  )}
+                <div className="space-y-2">
+                  <span className="px-3 py-1 bg-[#c3faf5] text-[#187574] text-[11px] font-black uppercase tracking-wider rounded-full">
+                    CREDENTIALS UPDATED
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1c1c1e]">
+                    Password Successfully Reset
+                  </h2>
+                  <p className="text-xs sm:text-sm text-[#555a6a] max-w-md mx-auto leading-relaxed">
+                    Your account password has been updated securely. You can now use your new credentials to log in to CLYS.
+                  </p>
                 </div>
 
-                {/* Confirm Password */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#555a6a] block">
-                    Confirm New Password *
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555a6a] pointer-events-none" />
-                    <input
-                      type={showPassword.confirmPassword ? "text" : "password"}
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                      placeholder="Confirm new password"
-                      className={`w-full h-11 min-h-[44px] pl-10 pr-11 bg-white border rounded-xl focus:outline-none focus:ring-2 transition-all text-sm font-semibold text-[#1c1c1e] ${
-                        passwordMatch === null
-                          ? "border-[#c7cad5] focus:border-[#1c1c1e] focus:ring-[#ffd02f]/30"
-                          : passwordMatch
-                            ? "border-[#9eece4] bg-[#f4fbfb] focus:ring-[#c3faf5]"
-                            : "border-[#e3c5c5] bg-[#fff8f8] focus:ring-[#fbd4d4]"
-                      }`}
-                      required
-                    />
-                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center space-x-2">
-                      {passwordMatch !== null && (
-                        <div className={passwordMatch ? "text-[#187574]" : "text-[#800000]"}>
-                          {passwordMatch ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => togglePasswordVisibility("confirmPassword")}
-                        className="text-[#555a6a] hover:text-[#1c1c1e] transition-colors cursor-pointer"
-                      >
-                        {showPassword.confirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-                  {passwordMatch === false && (
-                    <p className="text-xs text-[#800000] font-bold">Passwords do not match</p>
-                  )}
-                  {errors.confirmPassword && (
-                    <div className="flex items-center gap-1.5 text-xs text-[#800000] font-bold mt-1">
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                      <span>{errors.confirmPassword}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Submit Action */}
-                <div className="pt-2">
+                <div className="pt-4 max-w-sm mx-auto">
                   <button
-                    type="submit"
-                    disabled={isSubmitting || !formData.email || !formData.newPassword || passwordMatch === false}
-                    className="w-full h-12 min-h-[48px] bg-[#ffd02f] hover:bg-[#fcb900] disabled:bg-[#f7f8fa] disabled:border disabled:border-[#c7cad5] disabled:text-[#8e92a4] disabled:cursor-not-allowed text-[#1c1c1e] font-extrabold text-sm rounded-full shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider"
+                    onClick={() => navigate("/login")}
+                    className="w-full h-12 min-h-[48px] bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] font-extrabold text-sm rounded-full shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider"
                   >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin text-[#1c1c1e]" />
-                        <span>Updating Password...</span>
-                      </>
-                    ) : (
-                      <>
-                        <ShieldCheck className="w-4 h-4" />
-                        <span>Update Password</span>
-                      </>
-                    )}
+                    <span>Return to Sign In</span>
+                    <ArrowLeft className="w-4 h-4 rotate-180" />
                   </button>
                 </div>
-              </form>
-
-              {/* Security Footnote */}
-              <div className="pt-3 border-t border-[#e6e8ec] text-center">
-                <p className="text-[11px] text-[#6a6d7c] flex items-center justify-center gap-1.5 font-medium">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#187574]" />
-                  <span>Passwords are hashed and securely protected end-to-end</span>
-                </p>
               </div>
-            </>
-          )}
-        </div>
+            ) : (
+              <div>
+                {/* Header */}
+                <div className="space-y-1.5 mb-6">
+                  <div className="w-11 h-11 rounded-2xl bg-[#ffd02f] text-[#1c1c1e] flex items-center justify-center shadow-xs mb-3">
+                    <Lock className="w-5 h-5" />
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1c1c1e]">
+                    Reset Your Password
+                  </h1>
+                  <p className="text-xs sm:text-sm text-[#555a6a]">
+                    Enter your verified account email and define a new secure password.
+                  </p>
+                </div>
 
-        {/* Footer Support Link */}
-        <div className="text-center">
-          <p className="text-xs text-[#6a6d7c]">
-            Need further assistance?{" "}
-            <button
-              onClick={() => navigate("/contact-us")}
-              className="font-bold text-[#4262ff] hover:underline cursor-pointer"
-            >
-              Contact Support
-            </button>
-          </p>
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Email Address */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-[#555a6a] block">
+                      Registered Email Address *
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555a6a] pointer-events-none" />
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        placeholder="name@example.com"
+                        className={`w-full h-11 min-h-[44px] pl-10 pr-4 bg-[#fffdf5] border rounded-xl focus:outline-none focus:ring-2 transition-all text-sm font-semibold text-[#1c1c1e] ${
+                          errors.email
+                            ? "border-[#800000] focus:ring-[#fbd4d4]"
+                            : "border-[#c7cad5] focus:border-[#1c1c1e] focus:ring-[#ffd02f]/30"
+                        }`}
+                        required
+                      />
+                    </div>
+                    {errors.email && (
+                      <div className="flex items-center gap-1.5 text-xs text-[#800000] font-bold mt-1">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{errors.email}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* New Password */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-[#555a6a] block">
+                        New Password *
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555a6a] pointer-events-none" />
+                        <input
+                          type={showPassword.newPassword ? "text" : "password"}
+                          name="newPassword"
+                          value={formData.newPassword}
+                          onChange={handleInputChange}
+                          placeholder="Enter new password"
+                          className={`w-full h-11 min-h-[44px] pl-10 pr-11 bg-white border rounded-xl focus:outline-none focus:ring-2 transition-all text-sm font-semibold text-[#1c1c1e] ${
+                            errors.newPassword
+                              ? "border-[#800000] focus:ring-[#fbd4d4]"
+                              : "border-[#c7cad5] focus:border-[#1c1c1e] focus:ring-[#ffd02f]/30"
+                          }`}
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility("newPassword")}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#555a6a] hover:text-[#1c1c1e] transition-colors cursor-pointer"
+                        >
+                          {showPassword.newPassword ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Strength indicator */}
+                      {formData.newPassword && (
+                        <div className="space-y-1 pt-1">
+                          <div className="flex space-x-1">
+                            {[1, 2, 3].map((level) => (
+                              <div
+                                key={level}
+                                className={`h-1.5 flex-1 rounded-full transition-all ${
+                                  level <= passwordStrength.strength
+                                    ? level === 1
+                                      ? "bg-[#800000]"
+                                      : level === 2
+                                        ? "bg-[#ffd02f]"
+                                        : "bg-[#187574]"
+                                    : "bg-[#e0e2e8]"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <p className={`text-[11px] font-bold ${passwordStrength.color}`}>
+                            {passwordStrength.text}
+                          </p>
+                        </div>
+                      )}
+                      {errors.newPassword && (
+                        <div className="flex items-center gap-1.5 text-xs text-[#800000] font-bold mt-1">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          <span>{errors.newPassword}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Confirm Password */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-[#555a6a] block">
+                        Confirm New Password *
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555a6a] pointer-events-none" />
+                        <input
+                          type={showPassword.confirmPassword ? "text" : "password"}
+                          name="confirmPassword"
+                          value={formData.confirmPassword}
+                          onChange={handleInputChange}
+                          placeholder="Re-enter new password"
+                          className={`w-full h-11 min-h-[44px] pl-10 pr-11 bg-white border rounded-xl focus:outline-none focus:ring-2 transition-all text-sm font-semibold text-[#1c1c1e] ${
+                            errors.confirmPassword
+                              ? "border-[#800000] focus:ring-[#fbd4d4]"
+                              : passwordMatch === null
+                                ? "border-[#c7cad5] focus:border-[#1c1c1e] focus:ring-[#ffd02f]/30"
+                                : passwordMatch
+                                  ? "border-[#9eece4] bg-[#f4fbfb] focus:ring-[#c3faf5]"
+                                  : "border-[#e3c5c5] bg-[#fff8f8] focus:ring-[#fbd4d4]"
+                          }`}
+                          required
+                        />
+                        <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center space-x-2">
+                          {passwordMatch !== null && (
+                            <div className={passwordMatch ? "text-[#187574]" : "text-[#800000]"}>
+                              {passwordMatch ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => togglePasswordVisibility("confirmPassword")}
+                            className="text-[#555a6a] hover:text-[#1c1c1e] transition-colors cursor-pointer"
+                          >
+                            {showPassword.confirmPassword ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      {errors.confirmPassword && (
+                        <div className="flex items-center gap-1.5 text-xs text-[#800000] font-bold mt-1">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          <span>{errors.confirmPassword}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full h-12 min-h-[48px] bg-[#ffd02f] hover:bg-[#fcb900] disabled:bg-[#f7f8fa] disabled:border disabled:border-[#c7cad5] disabled:text-[#8e92a4] disabled:cursor-not-allowed text-[#1c1c1e] font-extrabold text-sm rounded-full shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-[#1c1c1e]" />
+                          <span>Updating Password...</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>Update Password</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+
+                {/* Footer Link */}
+                <div className="text-center pt-4 border-t border-[#f0f2f5] mt-6">
+                  <p className="text-xs text-[#555a6a]">
+                    Remembered your password?{" "}
+                    <button
+                      type="button"
+                      onClick={() => navigate("/login")}
+                      className="text-[#4262ff] hover:underline font-bold cursor-pointer"
+                    >
+                      Return to Sign In
+                    </button>
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

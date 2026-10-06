@@ -440,25 +440,35 @@ export default function CreateQuiz() {
   const fetchQuestions = async () => {
     try {
       setIsLoading(true)
-      const response = await getAllQuizQuestions()
+      const regionName = selectedRegion?.name || (regions.find((r) => r._id === formData.region)?.name) || formData.region
+      const payload = {
+        category: {
+          region: regionName,
+          examType: formData.examType,
+          specificClass: formData.specificClass,
+          subject: formData.subject,
+          ...(formData.chapter ? { chapter: formData.chapter } : {}),
+        },
+      }
+      const response = await getAllQuizQuestions(payload)
       const allQuestions = response?.data || []
 
       const filtered = allQuestions.filter(
         (q) =>
-          q.category?.region === selectedRegion?.name &&
-          q.category?.examType === formData.examType &&
-          q.category?.specificClass === formData.specificClass &&
-          q.category?.subject === formData.subject &&
-          (!formData.chapter || q.category?.chapter === formData.chapter)
+          (!regionName || q.category?.region?.toLowerCase() === regionName?.toLowerCase()) &&
+          (!formData.subject || q.category?.subject?.toLowerCase() === formData.subject?.toLowerCase()) &&
+          (!formData.chapter || q.category?.chapter?.toLowerCase() === formData.chapter?.toLowerCase())
       )
 
-      if (filtered.length > 0) {
-        setQuizBankQuestions(filtered)
+      const targetList = filtered.length > 0 ? filtered : allQuestions
+
+      if (targetList.length > 0) {
+        setQuizBankQuestions(targetList)
         setCurrentQuizBankIndex(0)
         setActiveSource("quizBank")
-        toast.success(`Found ${filtered.length} questions in Quiz Bank`)
+        toast.success(`Found ${targetList.length} questions in Quiz Bank`)
       } else {
-        toast.info("No matching questions found in Quiz Bank")
+        toast("No matching questions found in Quiz Bank for this category", { icon: "ℹ️" })
       }
     } catch (error) {
       console.error("Error fetching questions:", error)
@@ -1066,8 +1076,17 @@ export default function CreateQuiz() {
             <button
               type="button"
               onClick={handleCreateQuiz}
-              disabled={isLoading}
-              className="px-8 py-3.5 bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] rounded-full font-extrabold text-sm shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-98"
+              disabled={isLoading || questions.length === 0}
+              title={
+                questions.length === 0
+                  ? "Please add at least 1 question to publish the quiz"
+                  : "Publish Quiz"
+              }
+              className={`px-8 py-3.5 rounded-full font-extrabold text-sm transition-all flex items-center justify-center gap-2 ${
+                questions.length === 0 || isLoading
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300 shadow-none hover:bg-gray-200"
+                  : "bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] shadow-md hover:shadow-lg active:scale-98 cursor-pointer"
+              }`}
             >
               {isLoading ? (
                 <>
@@ -1079,7 +1098,7 @@ export default function CreateQuiz() {
                 </>
               ) : (
                 <>
-                  <span>Publish Quiz</span>
+                  <span>Publish Quiz {questions.length > 0 ? `(${questions.length})` : ""}</span>
                   <Sparkles className="w-4 h-4 text-[#1c1c1e]" />
                 </>
               )}

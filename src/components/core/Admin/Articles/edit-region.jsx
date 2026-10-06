@@ -245,7 +245,7 @@ const EditRegion = () => {
               <span>Back to Dashboard</span>
             </button>
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#ffd02f] text-[#1c1c1e]">
-              POSTS TAXONOMY
+              POSTS CATEGORIES
             </span>
           </div>
           <button
@@ -261,7 +261,7 @@ const EditRegion = () => {
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-[#fff4c4] text-[#746019] border border-[#fde89c] mb-1">
             <Edit className="w-3.5 h-3.5" />
-            <span>LIVE TAXONOMY EDITOR</span>
+            <span>LIVE CATEGORY EDITOR</span>
           </div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#1c1c1e]">
             Edit Regional Structure

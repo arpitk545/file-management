@@ -12,6 +12,9 @@ const ResponsiveHeroBanner = ({
         { label: "Reviews", href: "#testimonials" },
         { label: "Documentation", href: "/documentation" }
     ],
+    loginButtonText = "Login",
+    loginButtonHref = "/login",
+    onLoginClick,
     ctaButtonText = "Get Started",
     ctaButtonHref = "/signup",
     onCtaClick,
@@ -92,6 +95,13 @@ const ResponsiveHeroBanner = ({
                                     </a>
                                 ))}
                                 <a
+                                    href={loginButtonHref}
+                                    onClick={onLoginClick}
+                                    className="px-3.5 py-2 text-sm font-medium text-white/80 hover:text-white transition-colors rounded-full hover:bg-white/10"
+                                >
+                                    {loginButtonText}
+                                </a>
+                                <a
                                     href={ctaButtonHref}
                                     onClick={onCtaClick}
                                     className="ml-1 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 px-4 py-2 text-sm font-semibold text-white hover:brightness-110 shadow-md transition-all active:scale-95"
@@ -132,16 +142,28 @@ const ResponsiveHeroBanner = ({
                                     {link.label}
                                 </a>
                             ))}
-                            <a
-                                href={ctaButtonHref}
-                                onClick={(e) => {
-                                    setMobileMenuOpen(false);
-                                    if (onCtaClick) onCtaClick(e);
-                                }}
-                                className="block text-center py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold text-sm mt-2"
-                            >
-                                {ctaButtonText}
-                            </a>
+                            <div className="pt-2 border-t border-white/10 mt-2 space-y-2">
+                                <a
+                                    href={loginButtonHref}
+                                    onClick={(e) => {
+                                        setMobileMenuOpen(false);
+                                        if (onLoginClick) onLoginClick(e);
+                                    }}
+                                    className="block text-center py-2 rounded-xl text-gray-200 hover:text-white hover:bg-white/10 font-medium text-sm"
+                                >
+                                    {loginButtonText}
+                                </a>
+                                <a
+                                    href={ctaButtonHref}
+                                    onClick={(e) => {
+                                        setMobileMenuOpen(false);
+                                        if (onCtaClick) onCtaClick(e);
+                                    }}
+                                    className="block text-center py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold text-sm"
+                                >
+                                    {ctaButtonText}
+                                </a>
+                            </div>
                         </div>
                     )}
                 </div>

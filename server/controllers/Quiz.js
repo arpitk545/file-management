@@ -261,15 +261,11 @@ exports.deleteQuestionByText = async (req, res) => {
 //get all quiz questions
 exports.getAllQuizzesWithCategoryAndQuestions = async (req, res) => {
   try {
-    const quizzes = await Quiz.find({}); 
-
-    if (!quizzes || quizzes.length === 0) {
-      return res.status(404).json({ message: "No quizzes found." });
-    }
+    const quizzes = await Quiz.find({}, { "category.thumbnailimage": 0 }).lean(); 
 
     return res.status(200).json({
       message: "All quizzes fetched successfully.",
-      data: quizzes,
+      data: quizzes || [],
     });
   } catch (error) {
     console.error("Error fetching quizzes:", error);
@@ -280,30 +276,59 @@ exports.getAllQuizzesWithCategoryAndQuestions = async (req, res) => {
 // Get all quiz questions filtered by category.
 exports.getAllQuizQuestions = async (req, res) => {
   try {
-    const { category } = req.body;
+    const body = req.body || {};
+    const cat = body.category || body;
 
-    if (!category) {
-      return res.status(400).json({ error: "Category is required in request body." });
+    const escapeRegex = (str) => String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const query = {};
+    if (cat && typeof cat === "object") {
+      if (cat.region) query["category.region"] = { $regex: new RegExp(`^${escapeRegex(cat.region)}$`, "i") };
+      if (cat.examType) query["category.examType"] = { $regex: new RegExp(`^${escapeRegex(cat.examType)}$`, "i") };
+      if (cat.specificClass) query["category.specificClass"] = { $regex: new RegExp(`^${escapeRegex(cat.specificClass)}$`, "i") };
+      if (cat.subject) query["category.subject"] = { $regex: new RegExp(`^${escapeRegex(cat.subject)}$`, "i") };
+      if (cat.chapter) query["category.chapter"] = { $regex: new RegExp(`^${escapeRegex(cat.chapter)}$`, "i") };
     }
 
-    const quiz = await Quiz.findOne({
-      "category.region": category.region,
-      "category.examType": category.examType,
-      "category.specificClass": category.specificClass,
-      "category.subject": category.subject,
-      "category.chapter": category.chapter
+    let quizzes = await Quiz.find(query, { "category.thumbnailimage": 0 }).lean();
+
+    // Fallback: if exact match yields 0, try region + subject (+ chapter)
+    if ((!quizzes || quizzes.length === 0) && cat?.region && cat?.subject) {
+      const fallbackQuery = {
+        "category.region": { $regex: new RegExp(`^${escapeRegex(cat.region)}$`, "i") },
+        "category.subject": { $regex: new RegExp(`^${escapeRegex(cat.subject)}$`, "i") },
+      };
+      if (cat.chapter) {
+        fallbackQuery["category.chapter"] = { $regex: new RegExp(`^${escapeRegex(cat.chapter)}$`, "i") };
+      }
+      quizzes = await Quiz.find(fallbackQuery, { "category.thumbnailimage": 0 }).lean();
+    }
+
+    // Fallback: if still 0, try region
+    if ((!quizzes || quizzes.length === 0) && cat?.region) {
+      quizzes = await Quiz.find(
+        { "category.region": { $regex: new RegExp(`^${escapeRegex(cat.region)}$`, "i") } },
+        { "category.thumbnailimage": 0 }
+      ).lean();
+    }
+
+    const allQuestions = [];
+    (quizzes || []).forEach((quiz) => {
+      (quiz.questions || []).forEach((q) => {
+        allQuestions.push({
+          ...q,
+          id: q._id || q.id,
+          category: quiz.category,
+        });
+      });
     });
 
-    if (!quiz) {
-      return res.status(404).json({ error: "No quiz found for this category." });
-    }
-
-    res.status(200).json({ data: quiz.questions });
+    return res.status(200).json({ data: allQuestions });
   } catch (error) {
     console.error("Error fetching quiz questions:", error);
     res.status(500).json({ error: "Failed to fetch quiz questions." });
   }
-}
+};
 
 //Delete the quiz using the Title 
 exports.deleteQuizByTitle = async (req, res) => {

@@ -415,7 +415,11 @@ const ArticlesEditor = ({ content, onChange, placeholder = "Write your article c
           // Listen for content changes
           quillInstance.current.on('text-change', () => {
             const html = quillInstance.current.root.innerHTML;
-            onChange(html);
+            if (onChangeRef.current) {
+              onChangeRef.current(html);
+            } else if (typeof onChange === 'function') {
+              onChange(html);
+            }
             setTimeout(addImageControls, 50);
           });
 

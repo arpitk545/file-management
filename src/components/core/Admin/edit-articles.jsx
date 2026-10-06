@@ -147,20 +147,24 @@ const EditArticles = () => {
 
   // Tag management
   const addTag = () => {
-    if (tagInput.trim() && !article.tags.includes(tagInput.trim())) {
-      setArticle({
-        ...article,
-        tags: [...article.tags, tagInput.trim()],
+    if (tagInput.trim()) {
+      const newTag = tagInput.trim()
+      setArticle((prev) => {
+        if (prev.tags.includes(newTag)) return prev
+        return {
+          ...prev,
+          tags: [...prev.tags, newTag],
+        }
       })
       setTagInput("")
     }
   }
 
   const removeTag = (tagToRemove) => {
-    setArticle({
-      ...article,
-      tags: article.tags.filter((tag) => tag !== tagToRemove),
-    })
+    setArticle((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((t) => t !== tagToRemove),
+    }))
   }
 
   const handleTagInputKeyPress = (e) => {
@@ -175,25 +179,25 @@ const EditArticles = () => {
       id: Date.now(),
       image: null,
     }
-    setImageBlocks([...imageBlocks, newBlock])
+    setImageBlocks((prev) => [...prev, newBlock])
   }
 
   const removeImageBlock = (blockId) => {
-    setImageBlocks(imageBlocks.filter((b) => b.id !== blockId))
+    setImageBlocks((prev) => prev.filter((b) => b.id !== blockId))
   }
 
   const handleFileUpload = (file, blockId = null) => {
     if (blockId) {
-      setImageBlocks(
-        imageBlocks.map((block) => (block.id === blockId ? { ...block, [blockId]: file, image: file } : block))
+      setImageBlocks((prev) =>
+        prev.map((block) => (block.id === blockId ? { ...block, [blockId]: file, image: file } : block))
       )
     } else {
-      setArticle({ ...article, thumbnail: file })
+      setArticle((prev) => ({ ...prev, thumbnail: file }))
     }
   }
 
   const handleEditorContentChange = (content) => {
-    setArticle({ ...article, content })
+    setArticle((prev) => ({ ...prev, content }))
   }
 
   const handleUpdate = async () => {
@@ -355,7 +359,7 @@ const EditArticles = () => {
             Edit Post
           </h1>
           <p className="text-sm sm:text-base text-[#555a6a]">
-            Modify post taxonomy, content, cover image, or publication status
+            Modify post category, region, content, cover image, or publication status
           </p>
         </div>
 
@@ -365,7 +369,7 @@ const EditArticles = () => {
             <div className="w-7 h-7 rounded-full bg-[#4262ff] text-white flex items-center justify-center font-bold text-xs shadow-xs">
               <MapPin className="w-4 h-4" />
             </div>
-            <h2 className="text-base sm:text-lg font-bold text-[#1c1c1e]">Taxonomy Location</h2>
+            <h2 className="text-base sm:text-lg font-bold text-[#1c1c1e]">Category & Region Selection</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
@@ -435,7 +439,10 @@ const EditArticles = () => {
               <input
                 type="text"
                 value={article.title}
-                onChange={(e) => setArticle({ ...article, title: e.target.value })}
+                onChange={(e) => {
+                  const val = e.target.value
+                  setArticle((prev) => ({ ...prev, title: val }))
+                }}
                 placeholder="Post title..."
                 className="w-full h-12 px-4 bg-white border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all text-sm font-semibold"
               />
@@ -467,7 +474,7 @@ const EditArticles = () => {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setArticle({ ...article, thumbnail: null })}
+                    onClick={() => setArticle((prev) => ({ ...prev, thumbnail: null }))}
                     className="p-1.5 rounded-full bg-white text-red-500 hover:bg-red-50 border border-red-200"
                   >
                     <X className="w-4 h-4" />

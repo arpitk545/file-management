@@ -444,7 +444,7 @@ export default function UpdateQuiz() {
         setQuestions((prev) => [...prev, ...mapped])
         toast.success(`Added ${mapped.length} questions from Quiz Bank!`)
       } else {
-        toast.info("No matching questions found in Quiz Bank")
+        toast("No matching questions found in Quiz Bank", { icon: "ℹ️" })
       }
     } catch (error) {
       toast.error("Failed to fetch questions from Quiz Bank")

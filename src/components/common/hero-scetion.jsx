@@ -39,7 +39,29 @@ export default function HeroSection({
     setMounted(true)
   }, [])
 
-  // Auto-pause video when modal closes and handle ESC key
+  const demoVideos = [
+    {
+      id: "demo1",
+      title: "Platform Overview",
+      src: "https://vjs.zencdn.net/v/oceans.mp4",
+      poster: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop"
+    },
+    {
+      id: "demo2",
+      title: "Interactive Engine",
+      src: "https://media.w3.org/2010/05/sintel/trailer.mp4",
+      poster: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=1200&auto=format&fit=crop"
+    },
+    {
+      id: "demo3",
+      title: "HD Visual Tour",
+      src: "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-720p.mp4",
+      poster: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200&auto=format&fit=crop"
+    }
+  ]
+  const [activeDemoVideo, setActiveDemoVideo] = useState(demoVideos[0])
+
+  // Auto-play when modal opens with fallback handling and auto-pause when closed
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
@@ -49,6 +71,17 @@ export default function HeroSection({
     if (isDemoModalOpen) {
       window.addEventListener("keydown", handleKeyDown)
       document.body.style.overflow = "hidden"
+      if (videoRef.current) {
+        const playPromise = videoRef.current.play()
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            if (videoRef.current) {
+              videoRef.current.muted = true
+              videoRef.current.play().catch(() => {})
+            }
+          })
+        }
+      }
     } else {
       if (videoRef.current) {
         videoRef.current.pause()
@@ -59,7 +92,7 @@ export default function HeroSection({
       window.removeEventListener("keydown", handleKeyDown)
       document.body.style.overflow = "unset"
     }
-  }, [isDemoModalOpen])
+  }, [isDemoModalOpen, activeDemoVideo])
 
   // Mouse tilt tracking for 3D engine
   const mouseX = useMotionValue(0)
@@ -367,36 +400,65 @@ export default function HeroSection({
                 className="relative w-full max-w-4xl lg:max-w-5xl bg-[#1c1c1e] text-white border border-white/20 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[95vh]"
               >
                 {/* Modal Header */}
-                <div className="flex items-center justify-between px-3.5 sm:px-6 py-2.5 sm:py-4 border-b border-white/10 bg-[#141517] shrink-0 gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between px-3.5 sm:px-6 py-2.5 sm:py-3.5 border-b border-white/10 bg-[#141517] shrink-0 gap-2.5">
                   <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                     <span className="px-2 sm:px-2.5 py-0.5 bg-[#ffd02f] text-[#1c1c1e] text-[10px] sm:text-xs font-black uppercase tracking-wider rounded-full flex items-center gap-1 shadow-sm shrink-0">
                       <Video className="w-3 h-3 text-[#1c1c1e]" />
                       <span>DEMO</span>
                     </span>
-                    <h3 className="text-xs sm:text-sm md:text-base font-bold text-white tracking-tight truncate max-w-[200px] xs:max-w-[280px] sm:max-w-none">
-                      CLYS Neural Learning Engine Walkthrough
+                    <h3 className="text-xs sm:text-sm md:text-base font-bold text-white tracking-tight truncate">
+                      CLYS Interactive Platform Demo
                     </h3>
                   </div>
-                  <button
-                    onClick={() => setIsDemoModalOpen(false)}
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors flex items-center justify-center shrink-0 cursor-pointer active:scale-95 border border-white/10"
-                    aria-label="Close modal"
-                  >
-                    <X className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
+
+                  {/* Switch Demo Tracks */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto py-1 sm:py-0">
+                    {demoVideos.map((video) => (
+                      <button
+                        key={video.id}
+                        onClick={() => {
+                          setActiveDemoVideo(video)
+                          if (videoRef.current) {
+                            videoRef.current.currentTime = 0
+                            videoRef.current.play().catch(() => {})
+                          }
+                        }}
+                        className={`text-[11px] sm:text-xs px-2.5 py-1 rounded-full font-medium transition-all whitespace-nowrap cursor-pointer ${
+                          activeDemoVideo.id === video.id
+                            ? "bg-[#ffd02f] text-[#1c1c1e] font-bold shadow"
+                            : "bg-white/10 text-white/70 hover:text-white hover:bg-white/15"
+                        }`}
+                      >
+                        {video.title}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setIsDemoModalOpen(false)}
+                      className="ml-2 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors flex items-center justify-center shrink-0 cursor-pointer active:scale-95 border border-white/10"
+                      aria-label="Close modal"
+                    >
+                      <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Video Player Container */}
-                <div className="relative aspect-video w-full bg-black flex items-center justify-center shrink-0 max-h-[48vh] sm:max-h-[60vh] overflow-hidden">
+                <div className="relative aspect-video w-full bg-black flex items-center justify-center shrink-0 max-h-[50vh] sm:max-h-[62vh] overflow-hidden">
                   <video
+                    key={activeDemoVideo.src}
                     ref={videoRef}
-                    src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
-                    poster="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop"
+                    poster={activeDemoVideo.poster}
                     controls
                     autoPlay
                     playsInline
+                    preload="auto"
                     className="w-full h-full object-contain"
-                  />
+                  >
+                    <source src={activeDemoVideo.src} type="video/mp4" />
+                    <source src="https://vjs.zencdn.net/v/oceans.mp4" type="video/mp4" />
+                    <source src="https://media.w3.org/2010/05/sintel/trailer.mp4" type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
                 </div>
 
                 {/* Modal Bottom / Action Footer */}

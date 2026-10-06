@@ -64,7 +64,7 @@ export default function Navbar({ onNavigate }) {
     setIsOpen(false);
   };
 
-    const renderAuthButtons = () => {
+  const renderAuthButtons = () => {
     if (isLoggedIn && userRole) {
       let dashboardPath = "/"
 
@@ -109,41 +109,41 @@ export default function Navbar({ onNavigate }) {
   }
 
   // Render mobile auth buttons based on auth status
-const renderMobileAuthButtons = () => {
-  if (isLoggedIn && userRole) {
-    let dashboardPath = "/"
-    if (userRole === "admin") dashboardPath = "/admin/dashboard"
-    else if (userRole === "manager") dashboardPath = "/manager/dashboard"
-    else if (userRole === "user") dashboardPath = "/user/dashboard"
+  const renderMobileAuthButtons = () => {
+    if (isLoggedIn && userRole) {
+      let dashboardPath = "/"
+      if (userRole === "admin") dashboardPath = "/admin/dashboard"
+      else if (userRole === "manager") dashboardPath = "/manager/dashboard"
+      else if (userRole === "user") dashboardPath = "/user/dashboard"
 
-    return (
-      <Button 
-        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
-        onClick={() => navigate(dashboardPath)}
-      >
-        Go to Dashboard
-      </Button>
-    )
-  } else {
-    return (
-      <>
+      return (
         <Button
-          variant="ghost"
-          className="w-full text-gray-200 hover:text-white hover:bg-white/10"
-          onClick={() => navigate("/login")}
-        >
-          Login
-        </Button>
-        <Button 
           className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
-          onClick={() => navigate("/signup")}
+          onClick={() => navigate(dashboardPath)}
         >
-          Get Started
+          Go to Dashboard
         </Button>
-      </>
-    )
+      )
+    } else {
+      return (
+        <>
+          <Button
+            variant="ghost"
+            className="w-full text-gray-200 hover:text-white hover:bg-white/10"
+            onClick={() => navigate("/login")}
+          >
+            Login
+          </Button>
+          <Button
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+            onClick={() => navigate("/signup")}
+          >
+            Get Started
+          </Button>
+        </>
+      )
+    }
   }
-}
 
   return (
     <motion.nav
@@ -153,9 +153,8 @@ const renderMobileAuthButtons = () => {
         opacity: scrolled ? 0 : 1,
       }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className={`fixed top-0 left-0 right-0 z-50 bg-transparent transition-all duration-300 ${
-        scrolled ? "pointer-events-none" : ""
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 bg-transparent transition-all duration-300 ${scrolled ? "pointer-events-none" : ""
+        }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
@@ -196,24 +195,41 @@ const renderMobileAuthButtons = () => {
                   {item.name}
                 </button>
               ))}
-              <button
-                onClick={() => {
-                  if (isLoggedIn) {
+              {!isLoggedIn ? (
+                <>
+                  <button
+                    onClick={() => navigate("/login")}
+                    className="px-3.5 py-1.5 text-sm font-medium text-white/80 hover:text-white transition-colors rounded-full hover:bg-white/10 font-sans"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => navigate("/signup")}
+                    className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-900 hover:bg-white/90 font-sans transition-all shadow"
+                  >
+                    <span>Get Started</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                      <path d="M7 7h10v10" />
+                      <path d="M7 17 17 7" />
+                    </svg>
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
                     if (userRole === "admin") navigate("/admin/dashboard")
                     else if (userRole === "manager") navigate("/manager/dashboard")
                     else navigate("/user/dashboard")
-                  } else {
-                    navigate("/signup")
-                  }
-                }}
-                className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-900 hover:bg-white/90 font-sans transition-all shadow"
-              >
-                <span>{isLoggedIn ? "Dashboard" : "Get Started"}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                  <path d="M7 7h10v10" />
-                  <path d="M7 17 17 7" />
-                </svg>
-              </button>
+                  }}
+                  className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-900 hover:bg-white/90 font-sans transition-all shadow"
+                >
+                  <span>Dashboard</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                    <path d="M7 7h10v10" />
+                    <path d="M7 17 17 7" />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
 

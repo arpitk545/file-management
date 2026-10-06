@@ -90,20 +90,24 @@ const CreateArticles = () => {
 
   // Tag management
   const addTag = () => {
-    if (tagInput.trim() && !articleData.tags.includes(tagInput.trim())) {
-      setArticleData({
-        ...articleData,
-        tags: [...articleData.tags, tagInput.trim()],
+    if (tagInput.trim()) {
+      const newTag = tagInput.trim()
+      setArticleData((prev) => {
+        if (prev.tags.includes(newTag)) return prev
+        return {
+          ...prev,
+          tags: [...prev.tags, newTag],
+        }
       })
       setTagInput("")
     }
   }
 
   const removeTag = (tagToRemove) => {
-    setArticleData({
-      ...articleData,
-      tags: articleData.tags.filter((tag) => tag !== tagToRemove),
-    })
+    setArticleData((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((tag) => tag !== tagToRemove),
+    }))
   }
 
   const handleTagInputKeyPress = (e) => {
@@ -118,23 +122,25 @@ const CreateArticles = () => {
       id: Date.now(),
       image: null,
     }
-    setImageBlocks([...imageBlocks, newBlock])
+    setImageBlocks((prev) => [...prev, newBlock])
   }
 
   const removeImageBlock = (id) => {
-    setImageBlocks(imageBlocks.filter((block) => block.id !== id))
+    setImageBlocks((prev) => prev.filter((block) => block.id !== id))
   }
 
   const handleFileUpload = (file, blockId = null) => {
     if (blockId) {
-      setImageBlocks(imageBlocks.map((block) => (block.id === blockId ? { ...block, [blockId]: file, image: file } : block)))
+      setImageBlocks((prev) =>
+        prev.map((block) => (block.id === blockId ? { ...block, [blockId]: file, image: file } : block))
+      )
     } else {
-      setArticleData({ ...articleData, thumbnail: file })
+      setArticleData((prev) => ({ ...prev, thumbnail: file }))
     }
   }
 
   const handleEditorContentChange = (content) => {
-    setArticleData({ ...articleData, content })
+    setArticleData((prev) => ({ ...prev, content }))
   }
 
   const handleSubmit = async () => {
@@ -315,7 +321,7 @@ const CreateArticles = () => {
               <div className="w-7 h-7 rounded-full bg-[#4262ff] text-white flex items-center justify-center font-bold text-xs shadow-xs">
                 <MapPin className="w-4 h-4" />
               </div>
-              <h2 className="text-base sm:text-lg font-bold text-[#1c1c1e]">Taxonomy Details</h2>
+              <h2 className="text-base sm:text-lg font-bold text-[#1c1c1e]">Category & Region Selection</h2>
             </div>
             <span className="text-xs font-bold px-3 py-1 rounded-full bg-white text-[#4262ff] border border-[#ddd6fe]">
               Step 1 of 2
@@ -418,7 +424,10 @@ const CreateArticles = () => {
                   <input
                     type="text"
                     value={articleData.title}
-                    onChange={(e) => setArticleData({ ...articleData, title: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setArticleData((prev) => ({ ...prev, title: val }))
+                    }}
                     placeholder="Enter an engaging post title..."
                     className="w-full h-12 px-4 bg-white border border-[#c7cad5] rounded-xl text-[#1c1c1e] placeholder-[#8e91a0] focus:outline-none focus:border-2 focus:border-[#4262ff] transition-all text-sm font-semibold"
                   />
@@ -443,7 +452,7 @@ const CreateArticles = () => {
                       </div>
                       <button
                         type="button"
-                        onClick={() => setArticleData({ ...articleData, thumbnail: null })}
+                        onClick={() => setArticleData((prev) => ({ ...prev, thumbnail: null }))}
                         className="p-1.5 rounded-full bg-white text-red-500 hover:bg-red-50 border border-red-200"
                       >
                         <X className="w-4 h-4" />
@@ -526,10 +535,10 @@ const CreateArticles = () => {
                       type="checkbox"
                       checked={articleData.commentsEnabled}
                       onChange={() =>
-                        setArticleData({
-                          ...articleData,
-                          commentsEnabled: !articleData.commentsEnabled,
-                        })
+                        setArticleData((prev) => ({
+                          ...prev,
+                          commentsEnabled: !prev.commentsEnabled,
+                        }))
                       }
                       className="sr-only peer"
                     />

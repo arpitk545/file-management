@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
+import { useSelector } from "react-redux"
 import {
   BookOpen,
   ArrowLeft,
@@ -151,6 +152,7 @@ export default function EditQuiz() {
   const params = useParams()
   const navigate = useNavigate()
   const quizId = params.quizId || params.id
+  const { user } = useSelector((state) => state.profile)
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -198,6 +200,18 @@ export default function EditQuiz() {
           const data = res?.quiz || res?.data
           if (data && isMounted) {
             const cat = data.category || {}
+
+            // Permission check: If user role is "user", verify ownership
+            const currentUserId = user?._id || user?.id
+            if (user?.role === "user" && currentUserId) {
+              const quizOwnerId = (typeof data.user === "object" ? data.user?._id : data.user) || cat.userId
+              if (quizOwnerId && quizOwnerId.toString() !== currentUserId.toString()) {
+                toast.error("You are only allowed to edit your own quizzes.")
+                navigate("/filter-user-quiz")
+                return
+              }
+            }
+
             setQuizData({
               title: cat.quizTitle || data.quizTitle || data.title || "",
               description: cat.description || data.description || "",
@@ -402,7 +416,7 @@ export default function EditQuiz() {
       navigate("/filter-user-quiz")
     } catch (error) {
       console.error("Error updating quiz:", error)
-      toast.error("Failed to save changes")
+      toast.error(error?.response?.data?.error || "Failed to save changes")
     } finally {
       setIsSaving(false)
     }

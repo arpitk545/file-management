@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { ArrowLeft, Save, Tag, X, Edit, Sparkles, Target, Layers } from "lucide-react"
+import { ArrowLeft, Save, Tag, X, Edit, Sparkles, Target, Layers, Home } from "lucide-react"
 import toast from "react-hot-toast"
 import { useNavigate, useParams } from "react-router-dom"
 import { getAllQuizRegions, getQuizBankQuestion, updateQuizBankQuestion } from "../../../../services/operations/quizAPI"
@@ -203,10 +203,17 @@ export default function UpdateQuizBank() {
         
         {/* Header Bar (Posts Pattern) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e0e2e8]">
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95 cursor-pointer"
+            >
+              <Home className="w-4 h-4 text-blue-600" />
+              <span>Dashboard</span>
+            </button>
             <button
               onClick={() => navigate(-1)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95 cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Questions</span>

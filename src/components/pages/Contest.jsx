@@ -13,7 +13,8 @@ import {
   RotateCcw,
   Sparkles,
   ChevronRight,
-  Award
+  Award,
+  Home
 } from "lucide-react"
 import toast from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
@@ -226,6 +227,15 @@ export default function Contest() {
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Reset Filters</span>
+                </button>
+              )}
+              {localStorage.getItem("token") && (
+                <button
+                  onClick={() => navigate("/dashboard")}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold text-[#1c1c1e] bg-white border border-[#c7cad5] hover:bg-[#f7f8fa] shadow-xs active:scale-98 transition-all whitespace-nowrap cursor-pointer"
+                >
+                  <Home className="w-4 h-4 text-blue-600" />
+                  <span>Dashboard</span>
                 </button>
               )}
               <button
@@ -630,11 +640,6 @@ export default function Contest() {
                         {contest.chapter && (
                           <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-[#fce8e6] text-[#c5221f]">
                             {contest.chapter}
-                          </span>
-                        )}
-                        {contest.prize && (
-                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[#fff1c2] text-[#805000]">
-                            Prize: {contest.prize}
                           </span>
                         )}
                       </div>

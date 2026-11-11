@@ -15,7 +15,8 @@ import {
   TrendingUp,
   Filter,
   Search,
-  Crown
+  Crown,
+  Home
 } from "lucide-react"
 
 function formatTimestamp(ts) {
@@ -384,15 +385,26 @@ export default function StageLeaderboard() {
       <div className="mx-auto max-w-7xl px-4 py-8">
         {/* Header */}
         <motion.header variants={item} className="mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="group inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:shadow-md hover:-translate-x-1 transition-all mb-6 border border-gray-200"
-            aria-label="Go back"
-            type="button"
-          >
-            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Back to Contest
-          </button>
+          <div className="flex items-center gap-3 mb-6 flex-wrap">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="group inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:shadow-md transition-all border border-gray-200 cursor-pointer"
+              aria-label="Go to Dashboard"
+              type="button"
+            >
+              <Home className="w-4 h-4 text-blue-600" />
+              Dashboard
+            </button>
+            <button
+              onClick={() => navigate(-1)}
+              className="group inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:shadow-md hover:-translate-x-0.5 transition-all border border-gray-200 cursor-pointer"
+              aria-label="Go back"
+              type="button"
+            >
+              <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+              Back to Contest
+            </button>
+          </div>
 
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 rounded-3xl blur-3xl" />

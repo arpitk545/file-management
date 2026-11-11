@@ -84,7 +84,6 @@ const CreateContest = () => {
     specificClass: "",
     subject: "",
     chapter: "",
-    prize: "",
     deadline: "",
     startTime: "",
     duration: "",
@@ -406,7 +405,6 @@ const CreateContest = () => {
           specificClass: "",
           subject: "",
           chapter: "",
-          prize: "",
           deadline: "",
           startTime: "",
           duration: "",
@@ -477,7 +475,7 @@ const CreateContest = () => {
             Create Contest
           </h1>
           <p className="text-sm sm:text-base text-[#555a6a]">
-            Design competitive contests, configure taxonomy and rewards, and compile question sets.
+            Design competitive contests, configure taxonomy, and compile question sets.
           </p>
         </div>
 
@@ -514,13 +512,6 @@ const CreateContest = () => {
               value={contestData.author}
               onChange={(value) => handleContestDataChange("author", value)}
               icon={User}
-            />
-            <ModernInput
-              label="Prize / Reward"
-              placeholder="e.g. $500 Cash Prize or Gold Medal"
-              value={contestData.prize}
-              onChange={(value) => handleContestDataChange("prize", value)}
-              icon={Award}
             />
             <ModernInput
               label="Start Date & Time"

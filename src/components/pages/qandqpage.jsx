@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Layers,
   GraduationCap,
-  RotateCcw
+  RotateCcw,
+  Home
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -249,6 +250,15 @@ export default function Qanda() {
               >
                 <RotateCcw className="w-4 h-4" />
                 Clear Filters
+              </button>
+            )}
+            {localStorage.getItem("token") && (
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold text-[#1c1c1e] bg-white border border-[#c7cad5] hover:bg-[#f7f8fa] shadow-xs active:scale-98 transition-all whitespace-nowrap cursor-pointer"
+              >
+                <Home className="w-4 h-4 text-blue-600" />
+                <span>Dashboard</span>
               </button>
             )}
             <button

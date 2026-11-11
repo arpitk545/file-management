@@ -22,7 +22,8 @@ import toast from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
 import {
   getAllQuizRegions,
-  getAllQuizzesWithCategoryAndQuestions,
+  getUserQuizzes,
+  deleteQuizById,
   deleteQuizByTitle,
 } from "../../../../services/operations/quizAPI"
 
@@ -47,7 +48,7 @@ export default function FilterUserQuiz() {
         setIsLoading(true)
         const [regionsRes, quizzesRes] = await Promise.all([
           getAllQuizRegions(),
-          getAllQuizzesWithCategoryAndQuestions(),
+          getUserQuizzes(),
         ])
 
         const regionList = (regionsRes?.data || []).map((r) => r.name)
@@ -75,7 +76,7 @@ export default function FilterUserQuiz() {
         setQuizzes(allQuizzes)
       } catch (error) {
         console.error("Failed to load user quizzes:", error)
-        toast.error("Failed to load quizzes")
+        toast.error("Failed to load your quizzes")
       } finally {
         setIsLoading(false)
       }
@@ -194,12 +195,16 @@ export default function FilterUserQuiz() {
   const handleDeleteQuiz = async (quiz) => {
     if (window.confirm(`Are you sure you want to delete "${quiz.quizTitle}"?`)) {
       try {
-        await deleteQuizByTitle(quiz.fileTitle || quiz.quizTitle)
+        if (quiz._id) {
+          await deleteQuizById(quiz._id)
+        } else {
+          await deleteQuizByTitle(quiz.fileTitle || quiz.quizTitle)
+        }
         setQuizzes((prev) => prev.filter((q) => q._id !== quiz._id))
         toast.success("Quiz deleted successfully")
       } catch (err) {
         console.error("Failed to delete quiz:", err)
-        toast.error("Failed to delete quiz")
+        toast.error(err?.response?.data?.error || "Failed to delete quiz")
       }
     }
   }

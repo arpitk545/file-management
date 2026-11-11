@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useSelector } from "react-redux"
 import { useParams, useNavigate } from "react-router-dom"
 import toast from "react-hot-toast"
-import { School, Users, Phone, Award, CheckCircle, Loader2, X, Play } from "lucide-react"
+import { School, Users, Phone, Award, CheckCircle, Loader2, X, Play, ArrowLeft, Home } from "lucide-react"
 import { enrollInContest, checkContestAttempt } from "../../../../services/operations/contestAPI"
 
 // Reusable input component
@@ -142,7 +142,26 @@ export default function ContestEnrollment() {
   if (enrollmentStatus?.enrolled) {
     return (
       <div className="fixed inset-0 overflow-auto flex items-center justify-center bg-gradient-to-br from-blue-200 via-white to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-lg w-full bg-white p-8 shadow-xl rounded-lg border border-gray-100">
+        <div className="max-w-lg w-full bg-white p-8 shadow-xl rounded-2xl border border-gray-100">
+          <div className="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-gray-100">
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-300 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+            >
+              <Home className="w-3.5 h-3.5 text-blue-600" />
+              <span>Dashboard</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-300 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-gray-600" />
+              <span>Back</span>
+            </button>
+          </div>
+
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Ready to Start</h2>
             <p className="mt-2 text-sm text-gray-600">
@@ -185,7 +204,26 @@ export default function ContestEnrollment() {
   // Show enrollment form if not enrolled
   return (
     <div className="fixed inset-0 overflow-auto flex items-center justify-center bg-gradient-to-br from-blue-200 via-white to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-lg w-full bg-white p-8 shadow-xl rounded-lg border border-gray-100">
+      <div className="max-w-lg w-full bg-white p-8 shadow-xl rounded-2xl border border-gray-100">
+        <div className="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-gray-100">
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard")}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-300 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+          >
+            <Home className="w-3.5 h-3.5 text-blue-600" />
+            <span>Dashboard</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-300 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-gray-600" />
+            <span>Back</span>
+          </button>
+        </div>
+
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900">Enroll in Contest</h2>
           <p className="mt-2 text-sm text-gray-600">

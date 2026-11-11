@@ -1,5 +1,7 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const fileUpload = require('express-fileupload');
@@ -57,15 +59,27 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
+// Ensure uploads directories exist
+const uploadsDir = path.join(__dirname, 'uploads');
+const filesUploadDir = path.join(uploadsDir, 'files');
+const imagesUploadDir = path.join(uploadsDir, 'images');
+const tempDir = path.join(os.tmpdir(), 'file-management-temp');
+
+[uploadsDir, filesUploadDir, imagesUploadDir, tempDir].forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    try { fs.mkdirSync(dir, { recursive: true }); } catch (_) {}
+  }
+});
+
 // File upload middleware (for multipart/form-data)
 app.use(fileUpload({
   useTempFiles: true,
-  tempFileDir: '/tmp/',
+  tempFileDir: tempDir,
   createParentPath: true,
 }));
 // app.use(passport.initialize());
 // Static folder for serving uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadsDir));
 
 app.get("/", (req, res) => {
 	return res.json({

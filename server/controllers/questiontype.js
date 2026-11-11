@@ -70,10 +70,10 @@ exports.deletequestionTypeRegionByName = async (req, res) => {
   }
 };
 
-// UPDATE a region by name
+// UPDATE a region by name with cascading updates to Q&A items
 exports.updatequestionTypeRegionByName = async (req, res) => {
   try {
-      const name = decodeURIComponent(req.params.name);
+    const name = decodeURIComponent(req.params.name);
     const { updatedData } = req.body;
 
     if (!name) {
@@ -83,17 +83,78 @@ exports.updatequestionTypeRegionByName = async (req, res) => {
       return res.status(400).json({ error: "No data provided for update." });
     }
 
+    const existingRegion = await questionTypeRegion.findOne({ name });
+    if (!existingRegion) {
+      return res.status(404).json({ error: "No region found with that name." });
+    }
+
+    const oldRegionName = name;
+    const newRegionName = (updatedData.name && updatedData.name.trim() !== '') ? updatedData.name.trim() : oldRegionName;
+
+    // 1. Cascade region rename to Q&A
+    if (newRegionName !== oldRegionName) {
+      await QandA.updateMany(
+        { "category.region": oldRegionName },
+        { $set: { "category.region": newRegionName } }
+      );
+    }
+
+    // 2. Cascade hierarchy renames (examType -> specificClass -> subject)
+    if (Array.isArray(updatedData.examTypes)) {
+      for (let i = 0; i < updatedData.examTypes.length; i++) {
+        const oldExam = existingRegion.examTypes?.[i];
+        const newExam = updatedData.examTypes[i];
+        if (oldExam && newExam && oldExam.name && newExam.name && oldExam.name !== newExam.name) {
+          await QandA.updateMany(
+            { "category.region": { $in: [oldRegionName, newRegionName] }, "category.examType": oldExam.name },
+            { $set: { "category.examType": newExam.name } }
+          );
+        }
+
+        if (oldExam && newExam && Array.isArray(newExam.specificClasses)) {
+          for (let j = 0; j < newExam.specificClasses.length; j++) {
+            const oldClass = oldExam.specificClasses?.[j];
+            const newClass = newExam.specificClasses[j];
+            if (oldClass && newClass && oldClass.name && newClass.name && oldClass.name !== newClass.name) {
+              await QandA.updateMany(
+                {
+                  "category.region": { $in: [oldRegionName, newRegionName] },
+                  "category.examType": { $in: [oldExam.name, newExam.name] },
+                  "category.specificClass": oldClass.name
+                },
+                { $set: { "category.specificClass": newClass.name } }
+              );
+            }
+
+            if (oldClass && newClass && Array.isArray(newClass.subjects)) {
+              for (let k = 0; k < newClass.subjects.length; k++) {
+                const oldSub = oldClass.subjects?.[k];
+                const newSub = newClass.subjects[k];
+                if (oldSub && newSub && oldSub.name && newSub.name && oldSub.name !== newSub.name) {
+                  await QandA.updateMany(
+                    {
+                      "category.region": { $in: [oldRegionName, newRegionName] },
+                      "category.examType": { $in: [oldExam.name, newExam.name] },
+                      "category.specificClass": { $in: [oldClass.name, newClass.name] },
+                      "category.subject": oldSub.name
+                    },
+                    { $set: { "category.subject": newSub.name } }
+                  );
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
     const updatedRegion = await questionTypeRegion.findOneAndUpdate(
       { name },
       updatedData,
       { new: true, runValidators: true }
     );
 
-    if (!updatedRegion) {
-      return res.status(404).json({ error: "No region found with that name." });
-    }
-
-    res.status(200).json({ message: `Region updated successfully.`, data: updatedRegion });
+    res.status(200).json({ message: `Region and related Q&A items updated successfully.`, data: updatedRegion });
   } catch (error) {
     console.error("Error updating region:", error);
     res.status(500).json({ error: "Server error during update." });

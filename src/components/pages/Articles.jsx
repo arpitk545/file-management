@@ -14,7 +14,8 @@ import {
   ArrowRight,
   RotateCcw,
   Search,
-  Loader2
+  Loader2,
+  Home
 } from "lucide-react";
 import {
   getAllArticles,
@@ -191,6 +192,16 @@ export default function Articles() {
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Reset Filters</span>
+                </button>
+              )}
+              {localStorage.getItem("token") && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/dashboard")}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold text-[#1c1c1e] bg-white border border-[#c7cad5] hover:bg-[#f7f8fa] shadow-xs active:scale-98 transition-all whitespace-nowrap cursor-pointer"
+                >
+                  <Home className="w-4 h-4 text-blue-600" />
+                  <span>Dashboard</span>
                 </button>
               )}
               <button

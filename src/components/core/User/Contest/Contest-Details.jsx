@@ -13,6 +13,7 @@ import {
   ChevronDown,
   ChevronUp,
   Timer,
+  Clock,
   Award,
   FileText,
   Lock,
@@ -596,10 +597,10 @@ export default function ContestDetails() {
                     {/* Contest Info Grid */}
                     <div className="grid grid-cols-2 gap-2.5 text-xs pt-1">
                       <div className="flex items-center gap-2 p-2 rounded-lg bg-[#fff8e0] border border-[#fde89c]/60 text-[#1c1c1e]">
-                        <Award className="w-4 h-4 text-[#746019] shrink-0" />
+                        <Clock className="w-4 h-4 text-[#746019] shrink-0" />
                         <div className="truncate">
-                          <span className="text-[10px] text-[#746019] block font-semibold uppercase">Prize</span>
-                          <span className="font-medium truncate block">{contest.prize || "Certificate"}</span>
+                          <span className="text-[10px] text-[#746019] block font-semibold uppercase">Duration</span>
+                          <span className="font-medium truncate block">{contest.duration ? `${contest.duration} mins` : "Standard"}</span>
                         </div>
                       </div>
 

@@ -39,6 +39,11 @@ exports.updateRegionByName = async (req, res) => {
   }
 
   try {
+    const existingRegion = await Region.findOne({ name: oldName });
+    if (!existingRegion) {
+      return res.status(404).json({ error: 'Region not found.' });
+    }
+
     const sanitizedCategory = category.map(cat => ({
       name: cat.name,
       subCategory: (cat.subCategory || []).map(sub => {
@@ -52,9 +57,48 @@ exports.updateRegionByName = async (req, res) => {
       category: sanitizedCategory
     };
 
+    const finalRegionName = (newName && newName.trim() !== '' && newName !== oldName) ? newName.trim() : oldName;
+
     // Only update name if a new name is provided and is different
-    if (newName && newName.trim() !== '' && newName !== oldName) {
-      updateData.name = newName;
+    if (finalRegionName !== oldName) {
+      updateData.name = finalRegionName;
+
+      // 1. Cascade region rename to Articles
+      await Article.updateMany(
+        { region: oldName },
+        { $set: { region: finalRegionName } }
+      );
+    }
+
+    // 2. Cascade category and subCategory renames to Articles
+    for (let i = 0; i < sanitizedCategory.length; i++) {
+      const oldCat = existingRegion.category?.[i];
+      const newCat = sanitizedCategory[i];
+      if (oldCat && newCat && oldCat.name && newCat.name && oldCat.name !== newCat.name) {
+        await Article.updateMany(
+          { region: { $in: [oldName, finalRegionName] }, category: oldCat.name },
+          { $set: { category: newCat.name } }
+        );
+      }
+
+      if (oldCat && newCat && Array.isArray(newCat.subCategory)) {
+        for (let j = 0; j < newCat.subCategory.length; j++) {
+          const oldSub = oldCat.subCategory?.[j];
+          const newSub = newCat.subCategory[j];
+          const oldSubName = typeof oldSub === 'string' ? oldSub : oldSub?.name;
+          const newSubName = typeof newSub === 'string' ? newSub : newSub?.name;
+          if (oldSubName && newSubName && oldSubName !== newSubName) {
+            await Article.updateMany(
+              {
+                region: { $in: [oldName, finalRegionName] },
+                category: { $in: [oldCat.name, newCat.name] },
+                subCategory: oldSubName
+              },
+              { $set: { subCategory: newSubName } }
+            );
+          }
+        }
+      }
     }
 
     const updatedRegion = await Region.findOneAndUpdate(
@@ -63,12 +107,8 @@ exports.updateRegionByName = async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    if (!updatedRegion) {
-      return res.status(404).json({ error: 'Region not found.' });
-    }
-
     res.status(200).json({ 
-      message: 'Region updated successfully', 
+      message: 'Region and related articles updated successfully', 
       region: updatedRegion,
       nameChanged: !!newName && newName !== oldName // Indicate if name was changed
     });

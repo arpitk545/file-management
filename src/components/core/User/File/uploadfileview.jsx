@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useParams, useNavigate } from "react-router-dom"
-import { FileText, Calendar, Tag, MapPin, Layers, Clock, Eye, Download, X, BookOpen } from "lucide-react"
+import { FileText, Calendar, Tag, MapPin, Layers, Clock, Eye, Download, X, BookOpen, ArrowLeft, Home } from "lucide-react"
 import { getFileById } from "../../../../services/operations/filesAPI"
 import toast from "react-hot-toast"
 
@@ -45,11 +45,25 @@ const ViewFiles = () => {
     })
   }
 
+  const resolveClientFileUrl = (url) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    const backendOrigin = process.env.REACT_APP_BASE_URL
+      ? process.env.REACT_APP_BASE_URL.replace(/\/api\/v1\/?$/, "")
+      : window.location.origin;
+    return `${backendOrigin}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
+
   const viewFileInGoogleDocs = () => {
-    if (!fileData?.fileUrl) return
-    const googleDocsViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileData.fileUrl)}&embedded=true`
-    window.open(googleDocsViewerUrl, "_blank")
-  }
+    if (!fileData?.fileUrl) return;
+    const targetUrl = resolveClientFileUrl(fileData.fileUrl);
+    if (targetUrl.includes("localhost") || targetUrl.includes("127.0.0.1")) {
+      window.open(targetUrl, "_blank");
+      return;
+    }
+    const googleDocsViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(targetUrl)}&embedded=true`;
+    window.open(googleDocsViewerUrl, "_blank");
+  };
 
   if (loading) {
     return (
@@ -80,6 +94,32 @@ const ViewFiles = () => {
   return (
     <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
+        {/* Navigation Bar */}
+        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-800 hover:bg-gray-50 transition-colors shadow-sm cursor-pointer"
+            >
+              <Home className="w-4 h-4 text-blue-600" />
+              <span>Dashboard</span>
+            </button>
+            <button
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-800 hover:bg-gray-50 transition-colors shadow-sm cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4 text-gray-700" />
+              <span>Back</span>
+            </button>
+          </div>
+          <button
+            onClick={() => navigate("/filter-user-file")}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white text-blue-600 border border-blue-200 text-xs font-semibold hover:bg-blue-50 transition-colors cursor-pointer"
+          >
+            File Vault
+          </button>
+        </div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -206,7 +246,7 @@ const ViewFiles = () => {
                     View File
                   </button>
                   <a
-                    href={fileData.fileUrl}
+                    href={resolveClientFileUrl(fileData.fileUrl)}
                     download={downloadName}
                     target="_blank"
                     rel="noopener noreferrer"

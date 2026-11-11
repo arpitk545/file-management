@@ -18,6 +18,7 @@ import {
   FileText,
   Save,
   Layers,
+  Home,
 } from "lucide-react"
 import { getAllQuizRegions } from "../../../../services/operations/quizAPI"
 import { getContestById, updateContest, deleteContest } from "../../../../services/operations/contestAPI"
@@ -73,7 +74,6 @@ const EditContest = () => {
   const [contestData, setContestData] = useState({
     title: "",
     description: "",
-    prize: "",
     duration: "",
     region: "",
     regionName: "",
@@ -113,7 +113,6 @@ const EditContest = () => {
         setContestData({
           title: contest.title || "",
           description: contest.description || "",
-          prize: contest.prize || "",
           duration: contest.duration || "",
           region: regionObj?._id || "",
           regionName: contest.region || "",
@@ -283,7 +282,6 @@ const EditContest = () => {
       const formData = new FormData()
       formData.append("title", contestData.title)
       formData.append("description", contestData.description)
-      formData.append("prize", contestData.prize)
       formData.append("duration", contestData.duration)
       formData.append("region", contestData.regionName)
       formData.append("examType", contestData.examType)
@@ -344,10 +342,17 @@ const EditContest = () => {
       <div className="w-full space-y-6">
         {/* Header Bar matching Posts edit-articles.jsx */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e0e2e8]">
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95 cursor-pointer"
+            >
+              <Home className="w-4 h-4 text-blue-600" />
+              <span>Dashboard</span>
+            </button>
             <button
               onClick={() => navigate("/filter-contest")}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95 cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Contests</span>
@@ -375,7 +380,7 @@ const EditContest = () => {
             Edit Contest
           </h1>
           <p className="text-sm sm:text-base text-[#555a6a]">
-            Modify contest schedule, curriculum taxonomy, prize metadata, and interactive questions.
+            Modify contest schedule, curriculum taxonomy, and interactive questions.
           </p>
         </div>
 
@@ -402,13 +407,6 @@ const EditContest = () => {
               onChange={(value) => handleContestDataChange("title", value)}
               icon={BookOpen}
               required
-            />
-            <ModernInput
-              label="Prize / Reward"
-              placeholder="e.g. $500 Cash Prize"
-              value={contestData.prize}
-              onChange={(value) => handleContestDataChange("prize", value)}
-              icon={Award}
             />
             <ModernInput
               label="Duration (minutes)"

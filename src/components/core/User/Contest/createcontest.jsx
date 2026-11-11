@@ -26,6 +26,7 @@ import {
 import { getAllQuizRegions, getAllQuizQuestions } from "../../../../services/operations/quizAPI"
 import { createContest } from "../../../../services/operations/contestAPI"
 import ContestAI from "../../Manager/Contest/AIContest"
+import QuizBankSelector from "../Quiz/QuizBankSelector"
 import toast from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
 
@@ -81,7 +82,6 @@ export default function BuildContest() {
     specificClass: "",
     subject: "",
     chapter: "",
-    prize: "",
     deadline: "",
     startTime: "",
     duration: "",
@@ -95,6 +95,7 @@ export default function BuildContest() {
   const [regions, setRegions] = useState([])
   const selectedRegion = regions.find((region) => region._id === contestData.region)
   const [questions, setQuestions] = useState([])
+  const [quizBankQuestions, setQuizBankQuestions] = useState([])
   const [showQuestionForm, setShowQuestionForm] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(0)
@@ -253,6 +254,11 @@ export default function BuildContest() {
       setIsLoading(true)
       const selectedReg = regions.find((region) => region._id === contestData.region)
 
+      if (!selectedReg?.name) {
+        toast.error("Please select a region first before pulling from Quiz Bank")
+        return
+      }
+
       const payload = {
         category: {
           region: selectedReg?.name || "",
@@ -266,12 +272,11 @@ export default function BuildContest() {
 
       const response = await getAllQuizQuestions(payload)
       if (response?.data && response.data.length > 0) {
-        setQuestions(response.data)
-        toast.success(`Loaded ${response.data.length} questions from quiz bank`)
-        setShowQuestionForm(true)
-        setCurrentQuestionNumber(response.data.length)
+        setQuizBankQuestions(response.data)
+        toast.success(`Found ${response.data.length} questions in Quiz Bank. Review and add below.`)
       } else {
-        toast.error(`No questions found in ${selectedReg?.name || "selected region"}`)
+        toast.error(`No questions found in ${selectedReg?.name || "selected region"} quiz bank`)
+        setQuizBankQuestions([])
       }
     } catch (error) {
       toast.error("Failed to fetch questions from quiz bank")
@@ -282,8 +287,18 @@ export default function BuildContest() {
   }
 
   const handlePublish = async () => {
-    if (!contestData.title || questions.length === 0) {
-      toast.error("Please enter a title and at least one question.")
+    if (!contestData.title || !contestData.title.trim()) {
+      toast.error("Please enter a contest title.")
+      return
+    }
+
+    if (!contestData.region) {
+      toast.error("Please select a region for the contest.")
+      return
+    }
+
+    if (questions.length === 0) {
+      toast.error("Please add at least one question.")
       return
     }
 
@@ -295,7 +310,14 @@ export default function BuildContest() {
         if (key === "region") {
           const regionName = regions.find((region) => region._id === value)?.name || ""
           formData.append("region", regionName)
-        } else {
+        } else if (key === "description") {
+          const cleanDesc = value && value.trim()
+            ? value.trim()
+            : `${contestData.title.trim()} Contest guidelines and overview.`
+          formData.append("description", cleanDesc)
+        } else if (key === "author") {
+          formData.append("author", value && value.trim() ? value.trim() : "Organizer")
+        } else if (value !== undefined && value !== null && value !== "") {
           formData.append(key, value)
         }
       })
@@ -304,7 +326,40 @@ export default function BuildContest() {
         formData.append("thumbnail", thumbnail)
       }
 
-      formData.append("questions", JSON.stringify(questions))
+      // Format questions for Contest schema: options array of strings, normalized prompt
+      const formattedPayloadQuestions = questions.map((q) => {
+        let opts = []
+        if (Array.isArray(q.options)) {
+          opts = q.options.map((opt) => (opt !== null && opt !== undefined ? String(opt) : ""))
+        } else if (q.options && typeof q.options === "object") {
+          opts = [
+            String(q.options.A || ""),
+            String(q.options.B || ""),
+            String(q.options.C || ""),
+            String(q.options.D || ""),
+          ]
+          if (q.options.E) opts.push(String(q.options.E))
+        }
+
+        while (opts.length < 4) {
+          opts.push(`Option ${String.fromCharCode(65 + opts.length)}`)
+        }
+        if (opts.length > 5) opts = opts.slice(0, 5)
+
+        let ans = (q.correctAnswer || "A").trim().toUpperCase()
+        if (!["A", "B", "C", "D", "E"].includes(ans)) ans = "A"
+
+        return {
+          topic: q.topic || contestData.chapter || "General",
+          questionType: q.questionType || "Average",
+          image: typeof q.image === "string" ? q.image : "",
+          question: q.question || q.text || "Question prompt",
+          options: opts,
+          correctAnswer: ans,
+        }
+      })
+
+      formData.append("questions", JSON.stringify(formattedPayloadQuestions))
       formData.append("status", "Approved")
 
       const response = await createContest(formData)
@@ -333,7 +388,6 @@ export default function BuildContest() {
         specificClass: "",
         subject: "",
         chapter: "",
-        prize: "",
         deadline: "",
         startTime: "",
         duration: "",
@@ -443,15 +497,8 @@ export default function BuildContest() {
             />
           </div>
 
-          {/* Secondary Details: Prize, Author & Passcode */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <ModernInput
-              label="Prize / Reward (Optional)"
-              placeholder="e.g. Certificate of Merit, 500 Points"
-              value={contestData.prize}
-              onChange={(value) => handleContestDataChange("prize", value)}
-              icon={Award}
-            />
+          {/* Secondary Details: Author & Passcode */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <ModernInput
               label="Host / Author Name"
               placeholder="e.g. Taksha, Department of Mathematics"
@@ -713,6 +760,37 @@ export default function BuildContest() {
             </div>
           )}
         </div>
+
+        {/* Quiz Bank 1-by-1 Question Review & Selector */}
+        {quizBankQuestions.length > 0 && (
+          <QuizBankSelector
+            questions={quizBankQuestions}
+            onAddQuestion={(q) => {
+              const opts = Array.isArray(q.options)
+                ? q.options
+                : [q.options?.A || "", q.options?.B || "", q.options?.C || "", q.options?.D || ""]
+              const newQ = {
+                id: q._id || Date.now() + Math.random(),
+                topic: contestData.chapter || "",
+                questionType: q.difficulty || "Average",
+                image: q.image || null,
+                question: q.text || q.question || "",
+                options: opts,
+                correctAnswer: q.correctAnswer || "A",
+              }
+              setQuestions((prev) => [...prev, newQ])
+              setShowQuestionForm(true)
+              setCurrentQuestionNumber((prev) => prev + 1)
+            }}
+            alreadyAdded={(q) => {
+              const qText = (q.text || q.question || "").trim().toLowerCase()
+              return questions.some(
+                (existing) => (existing.question || existing.text || "").trim().toLowerCase() === qText
+              )
+            }}
+            onClose={() => setQuizBankQuestions([])}
+          />
+        )}
 
         {/* Questions Section */}
         {showQuestionForm && (

@@ -19,7 +19,8 @@ import {
   MapPin,
   Tag,
   CheckCircle2,
-  BookOpen
+  BookOpen,
+  Home
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getArticleById, getAllArticles } from "../../../../services/operations/articelsAPI";
@@ -282,7 +283,14 @@ const UserPostView = () => {
       <div className="w-full space-y-6 sm:space-y-8">
         {/* Top Header & Navigation Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e6e8ec]">
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#ebecf0] transition-colors text-xs font-semibold shadow-sm active:scale-95 cursor-pointer"
+            >
+              <Home className="w-3.5 h-3.5 text-blue-600" />
+              <span>Dashboard</span>
+            </button>
             <button
               onClick={handleBack}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#ebecf0] transition-colors text-xs font-semibold shadow-sm active:scale-95 cursor-pointer"

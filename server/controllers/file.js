@@ -7,6 +7,14 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
+const resolveFileUrl = (url, req) => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  const protocol = req?.headers?.["x-forwarded-proto"] || req?.protocol || "http";
+  const host = req?.headers?.["x-forwarded-host"] || req?.get?.("host") || "localhost:4000";
+  return `${protocol}://${host}${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
 exports.createFileRegions = async (req, res) => {
   try {
    
@@ -57,7 +65,7 @@ exports.getAllFileRegions = async (req, res) => {
   }
 };
 
-// Update region by name
+// Update region by name with cascading updates to files
 exports.updateFileRegionByName = async (req, res) => {
   const { name } = req.params;
 
@@ -66,17 +74,117 @@ exports.updateFileRegionByName = async (req, res) => {
   delete updateData._id;
 
   try {
+    const existingRegion = await FileRegion.findOne({ name });
+    if (!existingRegion) {
+      return res.status(404).json({ error: `Region with name '${name}' not found.` });
+    }
+
+    const oldRegionName = name;
+    const newRegionName = (updateData.name && updateData.name.trim() !== '') ? updateData.name.trim() : oldRegionName;
+
+    // 1. Cascade region name rename to all files
+    if (newRegionName !== oldRegionName) {
+      await CreateFile.updateMany(
+        { region: oldRegionName },
+        { $set: { region: newRegionName } }
+      );
+    }
+
+    // 2. Cascade category 1 to 5 renames to all files
+    if (Array.isArray(updateData.category1)) {
+      for (let i = 0; i < updateData.category1.length; i++) {
+        const oldCat1 = existingRegion.category1?.[i];
+        const newCat1 = updateData.category1[i];
+        if (oldCat1 && newCat1 && oldCat1.name && newCat1.name && oldCat1.name !== newCat1.name) {
+          await CreateFile.updateMany(
+            { region: { $in: [oldRegionName, newRegionName] }, category1: oldCat1.name },
+            { $set: { category1: newCat1.name } }
+          );
+        }
+
+        if (oldCat1 && newCat1 && Array.isArray(newCat1.category2)) {
+          for (let j = 0; j < newCat1.category2.length; j++) {
+            const oldCat2 = oldCat1.category2?.[j];
+            const newCat2 = newCat1.category2[j];
+            if (oldCat2 && newCat2 && oldCat2.name && newCat2.name && oldCat2.name !== newCat2.name) {
+              await CreateFile.updateMany(
+                {
+                  region: { $in: [oldRegionName, newRegionName] },
+                  category1: { $in: [oldCat1.name, newCat1.name] },
+                  category2: oldCat2.name
+                },
+                { $set: { category2: newCat2.name } }
+              );
+            }
+
+            if (oldCat2 && newCat2 && Array.isArray(newCat2.category3)) {
+              for (let k = 0; k < newCat2.category3.length; k++) {
+                const oldCat3 = oldCat2.category3?.[k];
+                const newCat3 = newCat2.category3[k];
+                if (oldCat3 && newCat3 && oldCat3.name && newCat3.name && oldCat3.name !== newCat3.name) {
+                  await CreateFile.updateMany(
+                    {
+                      region: { $in: [oldRegionName, newRegionName] },
+                      category1: { $in: [oldCat1.name, newCat1.name] },
+                      category2: { $in: [oldCat2.name, newCat2.name] },
+                      category3: oldCat3.name
+                    },
+                    { $set: { category3: newCat3.name } }
+                  );
+                }
+
+                if (oldCat3 && newCat3 && Array.isArray(newCat3.category4)) {
+                  for (let l = 0; l < newCat3.category4.length; l++) {
+                    const oldCat4 = oldCat3.category4?.[l];
+                    const newCat4 = newCat3.category4[l];
+                    if (oldCat4 && newCat4 && oldCat4.name && newCat4.name && oldCat4.name !== newCat4.name) {
+                      await CreateFile.updateMany(
+                        {
+                          region: { $in: [oldRegionName, newRegionName] },
+                          category1: { $in: [oldCat1.name, newCat1.name] },
+                          category2: { $in: [oldCat2.name, newCat2.name] },
+                          category3: { $in: [oldCat3.name, newCat3.name] },
+                          category4: oldCat4.name
+                        },
+                        { $set: { category4: newCat4.name } }
+                      );
+                    }
+
+                    if (oldCat4 && newCat4 && Array.isArray(newCat4.category5)) {
+                      for (let m = 0; m < newCat4.category5.length; m++) {
+                        const oldCat5 = oldCat4.category5?.[m];
+                        const newCat5 = newCat4.category5[m];
+                        if (oldCat5 && newCat5 && oldCat5.name && newCat5.name && oldCat5.name !== newCat5.name) {
+                          await CreateFile.updateMany(
+                            {
+                              region: { $in: [oldRegionName, newRegionName] },
+                              category1: { $in: [oldCat1.name, newCat1.name] },
+                              category2: { $in: [oldCat2.name, newCat2.name] },
+                              category3: { $in: [oldCat3.name, newCat3.name] },
+                              category4: { $in: [oldCat4.name, newCat4.name] },
+                              category5: oldCat5.name
+                            },
+                            { $set: { category5: newCat5.name } }
+                          );
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
     const updatedRegion = await FileRegion.findOneAndUpdate(
       { name },
       updateData,
       { new: true, runValidators: true }
     );
 
-    if (!updatedRegion) {
-      return res.status(404).json({ error: `Region with name '${name}' not found.` });
-    }
-
-    res.status(200).json({ message: 'Region updated successfully.', data: updatedRegion });
+    res.status(200).json({ message: 'Region and related file categories updated successfully.', data: updatedRegion });
   } catch (error) {
     console.error('Error updating region:', error);
     res.status(500).json({ error: 'Server error while updating region.' });
@@ -133,51 +241,64 @@ exports.createFile = async (req, res) => {
       status,
     } = req.body
 
-   // Upload file
-let fileUrl = "";
-let fileName = "";
+    // Upload file
+    let fileUrl = "";
+    let fileName = "";
 
-if (uploadMethod === "file"){
-const fileFiles = Array.isArray(req.files.file) ? req.files.file : [req.files.file];
-const file = fileFiles[0];
+    if (uploadMethod === "file") {
+      if (!req.files || !req.files.file) {
+        return res.status(400).json({ success: false, message: "Please select a document file to upload" });
+      }
 
-if (!file || !file.tempFilePath) {
-  return res.status(400).json({ success: false, message: "File is missing or invalid" });
-}
+      const fileFiles = Array.isArray(req.files.file) ? req.files.file : [req.files.file];
+      const file = fileFiles[0];
 
+      if (!file || (!file.tempFilePath && !file.data)) {
+        return res.status(400).json({ success: false, message: "File is missing or invalid" });
+      }
 
-
-try {
-  const uploadResult = await uploadFileToCloudinary(file.tempFilePath, "files", file.name);
-  fileUrl = uploadResult.url;
-  fileName = uploadResult.fileName;
-} catch (error) {
-  console.error("File upload failed:", error);
-} finally {
-  fs.unlinkSync(file.tempFilePath);
-}
-}else if (uploadMethod === "link") {
-  fileUrl = externalLink;
-  const parts = externalLink.trim().split('/');
-  fileName = parts[parts.length - 1] || externalLink; 
-}
+      try {
+        const uploadResult = await uploadFileToCloudinary(file.tempFilePath || file, "files", file.name);
+        fileUrl = resolveFileUrl(uploadResult.url, req);
+        fileName = uploadResult.fileName || file.name || "document";
+      } catch (uploadError) {
+        console.error("File upload failed:", uploadError);
+        return res.status(500).json({
+          success: false,
+          message: `Failed to upload file: ${uploadError.message || "Upload service error"}`,
+        });
+      } finally {
+        if (file.tempFilePath && fs.existsSync(file.tempFilePath)) {
+          try { fs.unlinkSync(file.tempFilePath); } catch (_) {}
+        }
+      }
+    } else if (uploadMethod === "link") {
+      if (!externalLink || !externalLink.trim()) {
+        return res.status(400).json({ success: false, message: "Please provide a valid external resource link" });
+      }
+      fileUrl = externalLink.trim();
+      const parts = fileUrl.split('/');
+      fileName = parts[parts.length - 1] || fileUrl;
+    }
 
     // Upload image (optional)
-   const imageUrl = [];
-   if (req.files?.image) {
-  const imageFiles = Array.isArray(req.files.image) ? req.files.image : [req.files.image];
+    const imageUrl = [];
+    if (req.files?.image) {
+      const imageFiles = Array.isArray(req.files.image) ? req.files.image : [req.files.image];
 
-  for (const file of imageFiles) {
-    try {
-      const uploadedUrl = await uploadImageToCloudinary(file.tempFilePath, 'articles/images');
-      if (uploadedUrl) imageUrl.push(uploadedUrl);
-    } catch (error) {
-      console.error('Image upload error:', error);
-    } finally {
-      fs.unlinkSync(file.tempFilePath);
+      for (const file of imageFiles) {
+        try {
+          const uploadedUrl = await uploadImageToCloudinary(file.tempFilePath || file, 'articles/images');
+          if (uploadedUrl) imageUrl.push(resolveFileUrl(uploadedUrl, req));
+        } catch (error) {
+          console.error('Image upload error:', error);
+        } finally {
+          if (file.tempFilePath && fs.existsSync(file.tempFilePath)) {
+            try { fs.unlinkSync(file.tempFilePath); } catch (_) {}
+          }
+        }
+      }
     }
-  }
-}
 
     const newFile = await CreateFile.create({
        user: userId,
@@ -372,18 +493,27 @@ exports.updateById = async (req, res) => {
       const fileFiles = Array.isArray(req.files.file) ? req.files.file : [req.files.file];
       const newFile = fileFiles[0];
 
-      if (newFile?.tempFilePath) {
-        // Delete old file from Cloudinary
-        if (existingFile.fileName) {
-          await deleteFileFromCloudinary(existingFile.fileName);
+      if (newFile && (newFile.tempFilePath || newFile.data)) {
+        // Delete old file from Cloudinary or local
+        if (existingFile.fileUrl || existingFile.fileName) {
+          try {
+            await deleteFileFromCloudinary(existingFile.fileUrl || existingFile.fileName);
+          } catch (_) {}
         }
 
         // Upload new file
-        const uploadResult = await uploadFileToCloudinary(newFile.tempFilePath, "files", newFile.name);
-        updateData.fileUrl = uploadResult.url;
-        updateData.fileName = uploadResult.fileName;
-
-        fs.unlinkSync(newFile.tempFilePath); // clean up temp file
+        try {
+          const uploadResult = await uploadFileToCloudinary(newFile.tempFilePath || newFile, "files", newFile.name);
+          updateData.fileUrl = resolveFileUrl(uploadResult.url, req);
+          updateData.fileName = uploadResult.fileName || newFile.name || "document";
+        } catch (uploadErr) {
+          console.error("File update upload failed:", uploadErr);
+          return res.status(500).json({ success: false, message: `Failed to update file: ${uploadErr.message}` });
+        } finally {
+          if (newFile.tempFilePath && fs.existsSync(newFile.tempFilePath)) {
+            try { fs.unlinkSync(newFile.tempFilePath); } catch (_) {}
+          }
+        }
       }
     }
 
@@ -391,21 +521,27 @@ exports.updateById = async (req, res) => {
     if (req.files?.image) {
       const newImageFiles = Array.isArray(req.files.image) ? req.files.image : [req.files.image];
 
-      // Delete old images from Cloudinary
+      // Delete old images from Cloudinary or local
       for (const oldUrl of existingFile.imageUrl || []) {
-        const publicId = getCloudinaryPublicId(oldUrl);
-        if (publicId) {
-          await deleteImageFromCloudinary(publicId);
-        }
+        try {
+          await deleteImageFromCloudinary(oldUrl);
+        } catch (_) {}
       }
 
       // Upload new images
       const newImageUrls = [];
       for (const imageFile of newImageFiles) {
-        if (imageFile?.tempFilePath) {
-          const uploadedUrl = await uploadImageToCloudinary(imageFile.tempFilePath, 'articles/images');
-          if (uploadedUrl) newImageUrls.push(uploadedUrl);
-          fs.unlinkSync(imageFile.tempFilePath);
+        if (imageFile && (imageFile.tempFilePath || imageFile.data)) {
+          try {
+            const uploadedUrl = await uploadImageToCloudinary(imageFile.tempFilePath || imageFile, 'articles/images');
+            if (uploadedUrl) newImageUrls.push(resolveFileUrl(uploadedUrl, req));
+          } catch (imgErr) {
+            console.error("Image update upload failed:", imgErr);
+          } finally {
+            if (imageFile.tempFilePath && fs.existsSync(imageFile.tempFilePath)) {
+              try { fs.unlinkSync(imageFile.tempFilePath); } catch (_) {}
+            }
+          }
         }
       }
 

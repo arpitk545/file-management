@@ -25,7 +25,8 @@ import {
   ArrowLeft,
   ArrowRight,
   Layers,
-  FileText
+  FileText,
+  Home
 } from 'lucide-react';
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -492,10 +493,19 @@ export default function CreateQandAWithQuestions() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 self-start sm:self-auto">
+          <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
             <button
+              type="button"
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#c7cad5] bg-white text-xs font-semibold text-[#1c1c1e] hover:bg-[#ebecf0] transition-colors shadow-sm active:scale-95 cursor-pointer"
+            >
+              <Home className="w-4 h-4 text-blue-600" />
+              <span>Dashboard</span>
+            </button>
+            <button
+              type="button"
               onClick={() => navigate("/view-your-q-and-a")}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-[#1c1c1e] bg-[#f7f8fa] hover:bg-[#eef0f3] border border-[#c7cad5] transition-all"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-[#1c1c1e] bg-[#f7f8fa] hover:bg-[#eef0f3] border border-[#c7cad5] transition-all cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               My Q & A Sets

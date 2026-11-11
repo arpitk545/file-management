@@ -9,6 +9,7 @@ import {
   extractQuestionsFromFile,
 } from "../../../../services/operations/quizAPI"
 import QuizAI from "../../Admin/Quiz/CreateQuizAI"
+import QuizBankSelector from "./QuizBankSelector"
 import {
   Database,
   X,
@@ -340,6 +341,7 @@ export default function BuildQuiz() {
   const selectedRegion = regions.find((region) => region._id === formData.region)
   const [isLoading, setIsLoading] = useState(false)
   const [questions, setQuestions] = useState([])
+  const [quizBankQuestions, setQuizBankQuestions] = useState([])
   const [importedQuestions, setImportedQuestions] = useState([])
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [selectedFile, setSelectedFile] = useState(null)
@@ -445,7 +447,6 @@ export default function BuildQuiz() {
   const fetchQuestions = async () => {
     try {
       setIsLoading(true)
-      setActiveSource("quizBank")
       const selectedRegionObj = regions.find((region) => region._id === formData.region)
 
       const payload = {
@@ -459,16 +460,19 @@ export default function BuildQuiz() {
         },
       }
       const response = await getAllQuizQuestions(payload)
+      const list = response?.data || []
 
-      setQuestions(response?.data || [])
-
-      if (!response?.data || response.data.length === 0) {
-        toast.error(`No question found in ${selectedRegionObj?.name || "selected region"}`)
+      if (!list || list.length === 0) {
+        toast.error(`No questions found in Quiz Bank for ${selectedRegionObj?.name || "selected category"}`)
+        setQuizBankQuestions([])
+        setActiveSource(null)
       } else {
-        toast.success(`Loaded ${response.data.length} questions from quiz bank`)
+        setQuizBankQuestions(list)
+        setActiveSource("quizBank")
+        toast.success(`Found ${list.length} questions in Quiz Bank. Review and add below.`)
       }
     } catch (error) {
-      toast.error(`Failed to fetch questions.`)
+      toast.error(`Failed to fetch questions from Quiz Bank.`)
       console.error(error)
     } finally {
       setIsLoading(false)
@@ -971,6 +975,21 @@ export default function BuildQuiz() {
                 <span>Generate via AI</span>
               </button>
             </div>
+
+            {/* Quiz Bank 1-by-1 Question Review & Selector */}
+            {activeSource === "quizBank" && quizBankQuestions.length > 0 && (
+              <QuizBankSelector
+                questions={quizBankQuestions}
+                existingQuestions={questions}
+                onAddQuestion={(newQ) => {
+                  setQuestions((prev) => [...prev, newQ])
+                }}
+                onClose={() => {
+                  setActiveSource(null)
+                  setQuizBankQuestions([])
+                }}
+              />
+            )}
 
             {/* File Upload Area */}
             {activeSource === "fileImport" && (

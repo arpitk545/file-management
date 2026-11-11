@@ -12,7 +12,8 @@ import {
   Eye, 
   Sparkles, 
   FileText, 
-  MessageSquare 
+  MessageSquare,
+  Home
 } from "lucide-react";
 import { getallqnadabyId } from "../../../../services/operations/qandA";
 
@@ -180,6 +181,35 @@ export default function UserListQuestions() {
         }
       `}</style>
 
+      {/* Navigation Bar */}
+      <div className="w-full flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard")}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#c7cad5] bg-white text-xs font-semibold text-[#1c1c1e] hover:bg-[#ebecf0] transition-colors shadow-sm active:scale-95 cursor-pointer"
+          >
+            <Home className="w-4 h-4 text-blue-600" />
+            <span>Dashboard</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#c7cad5] bg-white text-xs font-semibold text-[#1c1c1e] hover:bg-[#ebecf0] transition-colors shadow-sm active:scale-95 cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4 text-[#1c1c1e]" />
+            <span>Back</span>
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate("/view-your-q-and-a")}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] text-xs font-bold transition-all shadow-sm cursor-pointer"
+        >
+          My Q&A Sets
+        </button>
+      </div>
+
       {/* Top Banner */}
       <div className="w-full bg-white border border-[#e0e2e8] rounded-2xl p-6 sm:p-8 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
@@ -340,10 +370,19 @@ export default function UserListQuestions() {
       </div>
 
       {/* Bottom Back Button */}
-      <div className="flex justify-center pt-6">
+      <div className="flex items-center justify-center gap-3 pt-6 flex-wrap">
         <button
+          type="button"
+          onClick={() => navigate("/dashboard")}
+          className="inline-flex items-center gap-2 px-6 py-3 border border-[#c7cad5] bg-white hover:bg-[#ebecf0] text-[#1c1c1e] rounded-full font-bold text-sm shadow-sm transition-all cursor-pointer"
+        >
+          <Home className="w-4 h-4 text-blue-600" />
+          Dashboard
+        </button>
+        <button
+          type="button"
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 px-8 py-3 bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] rounded-full font-bold text-sm shadow-sm transition-all"
+          className="inline-flex items-center gap-2 px-8 py-3 bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] rounded-full font-bold text-sm shadow-sm transition-all cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Question List

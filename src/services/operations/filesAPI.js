@@ -57,18 +57,20 @@ export const DeleteFileRegion = async (name) => {
 
 //create file
 export const CreateFileNew = async (formData) => {
-   try {
-         const token = localStorage.getItem("token");
-          const response = await apiConnector("POST", createFileAPI, formData, {
-               "Content-Type": "multipart/form-data",
-                "Authorization": `Bearer ${token}`,
-          });
-          return response.data;
-      } catch (error) {
-          console.error("Error in create File API:", error);
-          throw error;
-      }
-  } 
+  try {
+    const token = localStorage.getItem("token");
+    const headers = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const response = await apiConnector("POST", createFileAPI, formData, headers);
+    return response.data;
+  } catch (error) {
+    const errorMsg = error.response?.data?.message || error.message || "Failed to create file";
+    console.error("Error in create File API:", errorMsg);
+    throw new Error(errorMsg);
+  }
+}; 
 
 //get all files 
 export const getAllFiles = async () => {
@@ -119,16 +121,20 @@ export const getFileById = async (id) => {
 };
 
 export const updateFile = async (id, formData) => {
-    try {
-        const response = await apiConnector("PATCH", updateFileAPI(id), formData, {
-            "Content-Type": "multipart/form-data",
-        });
-        return response.data;
-    } catch (error) {
-        console.error("Error in updating File API:", error);
-        throw error;
+  try {
+    const token = localStorage.getItem("token");
+    const headers = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
     }
-}
+    const response = await apiConnector("PATCH", updateFileAPI(id), formData, headers);
+    return response.data;
+  } catch (error) {
+    const errorMsg = error.response?.data?.message || error.message || "Failed to update file";
+    console.error("Error in updating File API:", errorMsg);
+    throw new Error(errorMsg);
+  }
+};
 
 //delete article 
 export const deleteFile = async (id) => {

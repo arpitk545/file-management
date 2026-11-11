@@ -7,6 +7,7 @@ import { Button } from "../../../ui/button"
 import { Input } from "../../../ui/input"
 import { Label } from "../../../ui/label"
 import { useParams, useNavigate } from "react-router-dom"
+import QuizBankSelector from "../../User/Quiz/QuizBankSelector"
 import {
   BookOpen,
   X,
@@ -28,6 +29,7 @@ import {
   CheckCircle2,
   MapPin,
   FileText,
+  Home,
 } from "lucide-react"
 import {
   getQuizById,
@@ -303,6 +305,7 @@ export default function UpdateQuiz() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [activeSource, setActiveSource] = useState(null)
   const [showAIModal, setShowAIModal] = useState(false)
+  const [quizBankQuestions, setQuizBankQuestions] = useState([])
 
   // Fetch regions and quiz data
   useEffect(() => {
@@ -424,25 +427,17 @@ export default function UpdateQuiz() {
       const allQ = res?.data || []
       const filtered = allQ.filter(
         (q) =>
-          q.category?.region === formData.regionName &&
-          q.category?.examType === formData.examType &&
-          q.category?.specificClass === formData.specificClass &&
-          q.category?.subject === formData.subject &&
+          (!formData.regionName || q.category?.region?.toLowerCase() === formData.regionName?.toLowerCase()) &&
+          (!formData.examType || q.category?.examType === formData.examType) &&
+          (!formData.specificClass || q.category?.specificClass === formData.specificClass) &&
+          (!formData.subject || q.category?.subject === formData.subject) &&
           (!formData.chapter || q.category?.chapter === formData.chapter)
       )
-      if (filtered.length) {
-        const mapped = filtered.map((q, i) => ({
-          id: q._id || `qb-${i}`,
-          text: q.text,
-          options: q.options,
-          correctAnswer: q.correctAnswer,
-          difficulty: q.difficulty || "Average",
-          image: q.image || null,
-          note: q.note || "",
-          tags: q.tags || [],
-        }))
-        setQuestions((prev) => [...prev, ...mapped])
-        toast.success(`Added ${mapped.length} questions from Quiz Bank!`)
+      const targetList = filtered.length > 0 ? filtered : allQ
+      if (targetList.length) {
+        setQuizBankQuestions(targetList)
+        setActiveSource("quizBank")
+        toast.success(`Found ${targetList.length} questions in Quiz Bank`)
       } else {
         toast("No matching questions found in Quiz Bank", { icon: "ℹ️" })
       }
@@ -590,11 +585,19 @@ export default function UpdateQuiz() {
         
         {/* Posts-Style Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e0e2e8]">
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95 cursor-pointer"
+            >
+              <Home className="w-4 h-4 text-blue-600" />
+              <span>Dashboard</span>
+            </button>
             <button
               type="button"
               onClick={() => navigate("/view-quiz")}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#c7cad5] text-[#1c1c1e] hover:bg-[#f7f8fa] hover:border-[#1c1c1e] transition-all text-sm font-semibold shadow-sm active:scale-95 cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Quizzes</span>
@@ -882,6 +885,21 @@ export default function UpdateQuiz() {
               AI Generator
             </button>
           </div>
+
+          {/* Quiz Bank Questions 1-by-1 Cycler */}
+          {quizBankQuestions.length > 0 && activeSource === "quizBank" && (
+            <QuizBankSelector
+              questions={quizBankQuestions}
+              existingQuestions={questions}
+              onAddQuestion={(newQ) => {
+                setQuestions((prev) => [...prev, newQ])
+              }}
+              onClose={() => {
+                setActiveSource(null)
+                setQuizBankQuestions([])
+              }}
+            />
+          )}
 
           {activeSource === "fileImport" && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.2 }} className="mt-4 relative">

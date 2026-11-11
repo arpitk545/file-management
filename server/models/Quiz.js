@@ -93,7 +93,10 @@ const QuestionSchema = new mongoose.Schema({
     chapter: { type: String, required: true },
     quizType:{type:String},
     passcode:{type:String},
+    userId: { type: String },
+    userRole: { type: String },
   },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   questions: [QuestionSubSchema],
 }, { timestamps: true });
 const QuizRegion = mongoose.model("QuizRegion", RegionSchema);

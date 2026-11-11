@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Plus, FileText, ImageIcon, Eye, EyeOff, Save, Upload, LinkIcon, Trash2 } from 'lucide-react'
+import { X, Plus, FileText, ImageIcon, Eye, EyeOff, Save, Upload, LinkIcon, Trash2, ArrowLeft, Home } from 'lucide-react'
 import { getFileById, GetFileRegion, updateFile, deleteFile } from "../../../../services/operations/filesAPI"
 import toast from "react-hot-toast"
 import { useNavigate, useParams } from "react-router-dom"
@@ -347,7 +347,7 @@ const handleSubmit = async (e) => {
     navigate("/filter-user-file")
   } catch (error) {
     console.error("Error updating file:", error)
-    toast.error("Failed to update file")
+    toast.error(error?.message || "Failed to update file")
   } finally {
     setIsSubmitting(false)
   }
@@ -449,6 +449,28 @@ const handleSubmit = async (e) => {
   return (
     <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
+        {/* Navigation Bar */}
+        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-800 hover:bg-gray-50 transition-colors shadow-sm cursor-pointer"
+            >
+              <Home className="w-4 h-4 text-blue-600" />
+              <span>Dashboard</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/filter-user-file")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-800 hover:bg-gray-50 transition-colors shadow-sm cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4 text-gray-700" />
+              <span>Back to File Vault</span>
+            </button>
+          </div>
+        </div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

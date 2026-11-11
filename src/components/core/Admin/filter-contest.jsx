@@ -476,7 +476,7 @@ const FilterContest = () => {
 
                           {/* Description */}
                           <p className="text-xs sm:text-sm text-[#555a6a] line-clamp-2 leading-relaxed">
-                            {contest.description || "A competitive contest to test your knowledge and win exciting prizes."}
+                            {contest.description || "A competitive contest to test your knowledge."}
                           </p>
 
                           {/* Chips / Taxonomy Grid */}
@@ -506,10 +506,6 @@ const FilterContest = () => {
                                 <span className="text-[#555a6a]">Chapter:</span> {contest.chapter}
                               </span>
                             )}
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#fff8e0] border border-[#fde89c] text-[#746019] font-bold">
-                              <Trophy className="w-3.5 h-3.5 text-[#b8860b]" />
-                              <span>Prize: ₹{contest.prize || 0}</span>
-                            </span>
                             {contest.deadline && (
                               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f7f8fa] border border-[#e0e2e8] text-[#555a6a] font-medium">
                                 <Calendar className="w-3.5 h-3.5 text-[#555a6a]" />

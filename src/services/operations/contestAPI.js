@@ -7,7 +7,12 @@ import { createContestAPI,getAllContestAPI,deleteContestAPI, getContestByIdAPI,c
 // create contest
 export const createContest = async (contestData) => {
   try {
-    const response = await apiConnector("POST", createContestAPI, contestData, {});
+    const token = localStorage.getItem("token");
+    const headers = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const response = await apiConnector("POST", createContestAPI, contestData, headers);
 
     if (response?.data?.success) {
       return response.data;
@@ -16,9 +21,10 @@ export const createContest = async (contestData) => {
     }
   } catch (error) {
     console.error("Create Contest Error:", error);
+    const serverMessage = error.response?.data?.message || error.message || "Something went wrong";
     return {
       success: false,
-      message: error.message || "Something went wrong",
+      message: serverMessage,
     };
   }
 };

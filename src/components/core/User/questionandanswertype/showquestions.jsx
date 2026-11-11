@@ -12,7 +12,9 @@ import {
   ChevronDown, 
   Maximize2,
   Sparkles,
-  RotateCcw
+  RotateCcw,
+  ArrowLeft,
+  Home
 } from "lucide-react";
 import { getAllQandA, reportQuestion, reportAnswer } from "../../../../services/operations/qandA";
 import toast from "react-hot-toast";
@@ -433,6 +435,35 @@ export default function ShowqnadaQuestions() {
         }
       `}</style>
 
+      {/* Navigation Bar */}
+      <div className="w-full flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => navigate("/dashboard")}
+            type="button"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#c7cad5] bg-white text-xs font-semibold text-[#1c1c1e] hover:bg-[#ebecf0] transition-colors shadow-sm active:scale-95 cursor-pointer"
+          >
+            <Home className="w-4 h-4 text-blue-600" />
+            <span>Dashboard</span>
+          </button>
+          <button
+            onClick={() => navigate(-1)}
+            type="button"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#c7cad5] bg-white text-xs font-semibold text-[#1c1c1e] hover:bg-[#ebecf0] transition-colors shadow-sm active:scale-95 cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4 text-[#1c1c1e]" />
+            <span>Back</span>
+          </button>
+        </div>
+        <button
+          onClick={() => navigate("/view-your-q-and-a")}
+          type="button"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#ffd02f] hover:bg-[#fcb900] text-[#1c1c1e] text-xs font-bold transition-all shadow-sm cursor-pointer"
+        >
+          My Q&A Documents
+        </button>
+      </div>
+
       {/* Top Banner */}
       <div className="w-full bg-white border border-[#e0e2e8] rounded-2xl p-6 sm:p-8 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
@@ -467,7 +498,7 @@ export default function ShowqnadaQuestions() {
               <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
             </button>
             <button
-              onClick={() => navigate("/qnada")}
+              onClick={() => navigate("/qanda")}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-[#1c1c1e] hover:bg-[#2c2c34] shadow-sm transition-all"
             >
               <BookOpen className="w-4 h-4" />

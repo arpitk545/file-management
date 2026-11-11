@@ -20,6 +20,7 @@ import {
   Calendar,
   Layers,
   HelpCircle,
+  Home,
 } from "lucide-react"
 import { GetFileRegion, CreateFileNew } from "../../../../services/operations/filesAPI"
 import toast from "react-hot-toast"
@@ -366,7 +367,7 @@ export default function CreateFiles() {
     } catch (error) {
       toast.dismiss(toastId)
       console.error("Error creating file:", error)
-      toast.error("Failed to upload file. Please try again.")
+      toast.error(error?.message || "Failed to upload file. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -392,13 +393,24 @@ export default function CreateFiles() {
         {/* Top Header & Navigation Bar */}
         <div className="space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <button
-              onClick={() => navigate("/filter-user-file")}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#c7cad5] bg-white text-xs font-semibold text-[#1c1c1e] hover:bg-[#ebecf0] transition-colors shadow-sm active:scale-95 cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to File Vault</span>
-            </button>
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard")}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#c7cad5] bg-white text-xs font-semibold text-[#1c1c1e] hover:bg-[#ebecf0] transition-colors shadow-sm active:scale-95 cursor-pointer"
+              >
+                <Home className="w-4 h-4 text-blue-600" />
+                <span>Dashboard</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/filter-user-file")}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#c7cad5] bg-white text-xs font-semibold text-[#1c1c1e] hover:bg-[#ebecf0] transition-colors shadow-sm active:scale-95 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to File Vault</span>
+              </button>
+            </div>
 
             <div className="flex items-center gap-2">
               <span className="px-3 py-1 bg-[#ffd02f] text-[#1c1c1e] text-[11px] font-black uppercase tracking-widest rounded-full shadow-sm">

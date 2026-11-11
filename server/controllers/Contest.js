@@ -14,11 +14,25 @@ exports.createContest = async (req, res) => {
       prize,
       deadline,
       startTime,
+      duration,
       description,
       status,
       author,
       passcode,
     } = req.body;
+
+    if (!title || !title.trim()) {
+      return res.status(400).json({ success: false, message: "Contest title is required." });
+    }
+
+    // Check duplicate title upfront
+    const existing = await Contest.findOne({ title: title.trim() });
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: "A contest with this title already exists. Please choose a different title.",
+      });
+    }
 
     let { questions } = req.body;
 
@@ -40,51 +54,131 @@ exports.createContest = async (req, res) => {
     let thumbnailUrl = null;
     if (req.files?.thumbnail) {
       const thumbnailFile = req.files.thumbnail;
-      thumbnailUrl = await uploadImageToCloudinary(thumbnailFile.tempFilePath, "contests/thumbnails", 800, 80);
-      fs.unlinkSync(thumbnailFile.tempFilePath);
+      if (thumbnailFile.tempFilePath && fs.existsSync(thumbnailFile.tempFilePath)) {
+        try {
+          thumbnailUrl = await uploadImageToCloudinary(thumbnailFile.tempFilePath, "contests/thumbnails", 800, 80);
+          if (fs.existsSync(thumbnailFile.tempFilePath)) {
+            fs.unlinkSync(thumbnailFile.tempFilePath);
+          }
+        } catch (thumbErr) {
+          console.error("Contest thumbnail upload warning:", thumbErr);
+        }
+      }
     }
 
-    // Upload each question image if needed
+    // Format & normalize questions so schema validations always pass
     const formattedQuestions = await Promise.all(
       questions.map(async (q) => {
         let imageUrl = q.image;
 
         // If image is a file object (from multer or similar)
         if (q.image && typeof q.image !== "string" && q.image.tempFilePath) {
-          imageUrl = await uploadImageToCloudinary(q.image.tempFilePath, "contests/questions", 800, 80);
-          fs.unlinkSync(q.image.tempFilePath);
+          if (fs.existsSync(q.image.tempFilePath)) {
+            try {
+              imageUrl = await uploadImageToCloudinary(q.image.tempFilePath, "contests/questions", 800, 80);
+              if (fs.existsSync(q.image.tempFilePath)) {
+                fs.unlinkSync(q.image.tempFilePath);
+              }
+            } catch (imgErr) {
+              console.error("Contest question image upload warning:", imgErr);
+            }
+          }
+        }
+
+        // Normalize options: can be array of strings or object { A: ..., B: ... }
+        let optionsArray = [];
+        if (Array.isArray(q.options)) {
+          optionsArray = q.options.map((opt) => (opt !== null && opt !== undefined ? String(opt) : ""));
+        } else if (q.options && typeof q.options === "object") {
+          optionsArray = [
+            String(q.options.A || ""),
+            String(q.options.B || ""),
+            String(q.options.C || ""),
+            String(q.options.D || ""),
+          ];
+          if (q.options.E) optionsArray.push(String(q.options.E));
+        }
+
+        // Schema requires 4 to 5 options
+        while (optionsArray.length < 4) {
+          optionsArray.push(`Option ${String.fromCharCode(65 + optionsArray.length)}`);
+        }
+        if (optionsArray.length > 5) {
+          optionsArray = optionsArray.slice(0, 5);
+        }
+
+        // Normalize correct answer
+        let ans = (q.correctAnswer || "A").trim().toUpperCase();
+        if (!["A", "B", "C", "D", "E"].includes(ans)) {
+          ans = "A";
         }
 
         return {
-          ...q,
-          image: imageUrl
+          topic: q.topic || chapter || subject || "General",
+          questionType: q.questionType || q.difficulty || "Average",
+          image: typeof imageUrl === "string" ? imageUrl : "",
+          question: q.question || q.text || "Question prompt",
+          options: optionsArray,
+          correctAnswer: ans,
         };
       })
     );
 
+    // Parse dates and duration safely
+    let cleanStartTime = undefined;
+    if (startTime && String(startTime).trim() !== "") {
+      const parsed = new Date(startTime);
+      if (!isNaN(parsed.getTime())) cleanStartTime = parsed;
+    }
+
+    let cleanDeadline = undefined;
+    if (deadline && String(deadline).trim() !== "") {
+      const parsed = new Date(deadline);
+      if (!isNaN(parsed.getTime())) cleanDeadline = parsed;
+    }
+
+    let cleanDuration = undefined;
+    if (duration !== undefined && duration !== "" && !isNaN(Number(duration))) {
+      cleanDuration = Number(duration);
+    }
+
+    const cleanDescription = description && description.trim()
+      ? description.trim()
+      : `${title.trim()} Contest guidelines and overview.`;
+
     const contest = new Contest({
-      title,
-      region,
-      description,
+      title: title.trim(),
+      region: region || "",
+      description: cleanDescription,
       status: status || "Approved",
-      startTime,
-      examType,
-      specificClass,
-      subject,
-      chapter,
-      prize,
-      deadline,
-      thumbnail: thumbnailUrl,
+      startTime: cleanStartTime,
+      deadline: cleanDeadline,
+      duration: cleanDuration,
+      examType: examType || "",
+      specificClass: specificClass || "",
+      subject: subject || "",
+      chapter: chapter || "",
+      prize: prize || "",
+      thumbnail: thumbnailUrl || "",
       questions: formattedQuestions,
-      author,
-      passcode,
+      author: author || req.user?.name || "Organizer",
+      passcode: passcode || "",
     });
 
     await contest.save();
     return res.status(201).json({ success: true, data: contest });
   } catch (err) {
     console.error("Create Contest Error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "A contest with this title already exists. Please choose a different title.",
+      });
+    }
+    if (err.name === "ValidationError") {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(500).json({ success: false, message: err.message || "Server error" });
   }
 };
 
@@ -250,9 +344,16 @@ exports.updateContest = async (req, res) => {
 
       // If q.image is a new uploaded file (not string)
       if (q.image && typeof q.image !== 'string' && q.image.tempFilePath) {
-        // Upload new image
-        newImageUrl = await uploadImageToCloudinary(q.image.tempFilePath, "contests/questions", 800, 80);
-        fs.unlinkSync(q.image.tempFilePath);
+        if (fs.existsSync(q.image.tempFilePath)) {
+          try {
+            newImageUrl = await uploadImageToCloudinary(q.image.tempFilePath, "contests/questions", 800, 80);
+            if (fs.existsSync(q.image.tempFilePath)) {
+              fs.unlinkSync(q.image.tempFilePath);
+            }
+          } catch (imgErr) {
+            console.error("Update question image error:", imgErr);
+          }
+        }
 
         // Delete old image from cloudinary if exists
         const oldImageUrl = existingContest.questions[index]?.image;
@@ -264,25 +365,66 @@ exports.updateContest = async (req, res) => {
         }
       }
 
+      // Normalize options
+      let optionsArray = [];
+      if (Array.isArray(q.options)) {
+        optionsArray = q.options.map((opt) => (opt !== null && opt !== undefined ? String(opt) : ""));
+      } else if (q.options && typeof q.options === "object") {
+        optionsArray = [
+          String(q.options.A || ""),
+          String(q.options.B || ""),
+          String(q.options.C || ""),
+          String(q.options.D || ""),
+        ];
+        if (q.options.E) optionsArray.push(String(q.options.E));
+      }
+
+      while (optionsArray.length < 4) {
+        optionsArray.push(`Option ${String.fromCharCode(65 + optionsArray.length)}`);
+      }
+      if (optionsArray.length > 5) {
+        optionsArray = optionsArray.slice(0, 5);
+      }
+
+      let ans = (q.correctAnswer || "A").trim().toUpperCase();
+      if (!["A", "B", "C", "D", "E"].includes(ans)) {
+        ans = "A";
+      }
+
       return {
-        ...q,
-        image: newImageUrl
+        topic: q.topic || existingContest.chapter || "General",
+        questionType: q.questionType || q.difficulty || "Average",
+        image: typeof newImageUrl === "string" ? newImageUrl : "",
+        question: q.question || q.text || "Question prompt",
+        options: optionsArray,
+        correctAnswer: ans,
       };
     }));
 
     // Update contest fields
-    existingContest.title = title || existingContest.title;
-    existingContest.region = region || existingContest.region;
-    existingContest.examType = examType || existingContest.examType;
-    existingContest.specificClass = specificClass || existingContest.specificClass;
-    existingContest.subject = subject || existingContest.subject;
-    existingContest.chapter = chapter || existingContest.chapter;
-    existingContest.prize = prize || existingContest.prize;
-    existingContest.deadline = deadline || existingContest.deadline;
-    existingContest.startTime = startTime || existingContest.startTime;
-    existingContest.duration = duration || existingContest.duration;
-    existingContest.description = description || existingContest.description;
-    existingContest.status = status || existingContest.status;
+    if (title && title.trim()) existingContest.title = title.trim();
+    if (region !== undefined) existingContest.region = region;
+    if (examType !== undefined) existingContest.examType = examType;
+    if (specificClass !== undefined) existingContest.specificClass = specificClass;
+    if (subject !== undefined) existingContest.subject = subject;
+    if (chapter !== undefined) existingContest.chapter = chapter;
+    if (prize !== undefined) existingContest.prize = prize;
+
+    if (deadline && String(deadline).trim() !== "") {
+      const parsed = new Date(deadline);
+      if (!isNaN(parsed.getTime())) existingContest.deadline = parsed;
+    }
+    if (startTime && String(startTime).trim() !== "") {
+      const parsed = new Date(startTime);
+      if (!isNaN(parsed.getTime())) existingContest.startTime = parsed;
+    }
+    if (duration !== undefined && duration !== "" && !isNaN(Number(duration))) {
+      existingContest.duration = Number(duration);
+    }
+    if (description && description.trim()) {
+      existingContest.description = description.trim();
+    }
+    if (status) existingContest.status = status;
     existingContest.questions = updatedQuestions;
     existingContest.thumbnail = thumbnailUrl;
 
@@ -291,7 +433,10 @@ exports.updateContest = async (req, res) => {
     return res.status(200).json({ success: true, data: existingContest });
   } catch (err) {
     console.error("Update Contest Error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    if (err.name === "ValidationError") {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(500).json({ success: false, message: err.message || "Server error" });
   }
 };
 

@@ -16,6 +16,8 @@ import {
   Star,
   Send,
   WheatIcon as Whatsapp,
+  ArrowLeft,
+  Home,
 } from "lucide-react"
 import { getFileById, getAllFiles } from "../../../../services/operations/filesAPI"
 import { createComment, getAllComments } from "../../../../services/operations/commentAPI"
@@ -177,12 +179,26 @@ export default function UserFileView() {
     }
   }
 
+  const resolveClientFileUrl = (url) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    const backendOrigin = process.env.REACT_APP_BASE_URL
+      ? process.env.REACT_APP_BASE_URL.replace(/\/api\/v1\/?$/, "")
+      : window.location.origin;
+    return `${backendOrigin}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
+
   const viewFileInGoogleDocs = () => {
     if (!file?.fileUrl) {
       toast.error("File URL not available")
       return
     }
-    const googleDocsViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(file.fileUrl)}&embedded=true`
+    const targetUrl = resolveClientFileUrl(file.fileUrl);
+    if (targetUrl.includes("localhost") || targetUrl.includes("127.0.0.1")) {
+      window.open(targetUrl, "_blank");
+      return;
+    }
+    const googleDocsViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(targetUrl)}&embedded=true`
     window.open(googleDocsViewerUrl, "_blank")
   }
 
@@ -191,11 +207,12 @@ export default function UserFileView() {
       toast.error("File URL not available")
       return
     }
+    const targetUrl = resolveClientFileUrl(file.fileUrl);
     const fileNameWithoutExt = file.fileName?.replace(/\.[^/.]+$/, "") || "downloaded-file"
     const extension = file.fileType?.toLowerCase() || "pdf"
     const downloadName = `${fileNameWithoutExt}.${extension}`
     const link = document.createElement("a")
-    link.href = file.fileUrl
+    link.href = targetUrl
     link.download = downloadName
     link.target = "_blank"
     link.rel = "noopener noreferrer"
@@ -239,9 +256,25 @@ export default function UserFileView() {
 
   if (!file) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-white via-blue-50 to-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 font-medium">File not found</p>
+      <div className="fixed inset-0 bg-gradient-to-br from-white via-blue-50 to-gray-100 flex items-center justify-center p-4">
+        <div className="text-center bg-white p-8 rounded-2xl shadow-lg border border-gray-100 max-w-sm w-full space-y-4">
+          <p className="text-gray-700 font-semibold text-lg">File not found</p>
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              <Home className="w-4 h-4 text-blue-600" />
+              Dashboard
+            </button>
+            <button
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Go Back
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -255,6 +288,31 @@ export default function UserFileView() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
+        {/* Navigation Bar */}
+        <div className="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-gray-100 flex-wrap">
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 bg-white text-xs font-semibold text-gray-800 hover:bg-gray-50 transition-colors shadow-sm cursor-pointer"
+            >
+              <Home className="w-4 h-4 text-blue-600" />
+              <span>Dashboard</span>
+            </button>
+            <button
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 bg-white text-xs font-semibold text-gray-800 hover:bg-gray-50 transition-colors shadow-sm cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4 text-gray-700" />
+              <span>Back</span>
+            </button>
+          </div>
+          <button
+            onClick={() => navigate("/file-view")}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold hover:bg-blue-100 transition-colors cursor-pointer"
+          >
+            All Files
+          </button>
+        </div>
         {/* Top Section: Single Rectangular Thumbnail */}
         <div className="mb-8">
           <div className="w-full max-h-[400px] flex items-center justify-center bg-gray-100 rounded-xl shadow-lg overflow-hidden">

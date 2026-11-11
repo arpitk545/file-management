@@ -203,7 +203,7 @@ const CreateFile = () => {
       setAdditionalAcademicYears([])
     } catch (error) {
       console.error("Error creating file:", error)
-      toast.error("Failed to upload file. Please try again.")
+      toast.error(error?.message || "Failed to upload file. Please try again.")
     } finally {
       setIsSubmitting(false)
     }

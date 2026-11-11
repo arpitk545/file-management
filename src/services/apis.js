@@ -50,6 +50,7 @@ export const deleteQuizByTitleAPI = (quizTitle) => `${BASE_URL}/quiz/delete-quiz
 export const getAllQuizQuestionsAPI = `${BASE_URL}/quiz/get-all-questions`;
 export const extractQuestionsFromFileAPI = `${BASE_URL}/quiz/extract-questions`;
 export const getAllQuizAPI = `${BASE_URL}/quiz/get-all-quiz-questions`;
+export const getUserQuizzesAPI = `${BASE_URL}/quiz/get-user-quizzes`;
 export const getQuizbankquestion = (questionId) => `${BASE_URL}/quiz/get-quizbank-questions/${questionId}`;
 export const updatequizbankquestion = (questionId) => `${BASE_URL}/quiz/question/${questionId}`;
 export const deletequizbankquestion = (text) => `${BASE_URL}/quiz/question/text/${encodeURIComponent(text)}`;

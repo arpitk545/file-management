@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { getAllQuizRegions, createQuizQuestion, getAllQuizQuestions, extractQuestionsFromFile } from "../../../../services/operations/quizAPI"
 import QuizAI from "./CreateQuizAI"
+import QuizBankSelector from "../../User/Quiz/QuizBankSelector"
 import {
   Database,
   X,
@@ -977,51 +978,17 @@ export default function CreateQuiz() {
 
               {/* Quiz Bank Questions Cycler */}
               {quizBankQuestions.length > 0 && activeSource === "quizBank" && (
-                <div className="border border-[#ddd6fe] bg-[#f5f3ff] rounded-2xl p-5 space-y-4">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                    <h4 className="text-sm font-bold text-[#1c1c1e]">
-                      Quiz Bank Question {currentQuizBankIndex + 1} of {quizBankQuestions.length}
-                    </h4>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setCurrentQuizBankIndex((prev) => Math.max(0, prev - 1))}
-                        disabled={currentQuizBankIndex === 0}
-                        className="px-4 py-1.5 rounded-full bg-white border border-[#c7cad5] text-xs font-semibold text-[#1c1c1e] disabled:opacity-40"
-                      >
-                        Previous
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCurrentQuizBankIndex((prev) => Math.min(quizBankQuestions.length - 1, prev + 1))}
-                        disabled={currentQuizBankIndex === quizBankQuestions.length - 1}
-                        className="px-4 py-1.5 rounded-full bg-white border border-[#c7cad5] text-xs font-semibold text-[#1c1c1e] disabled:opacity-40"
-                      >
-                        Skip
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleAddQuizBankQuestion}
-                        className="px-4 py-1.5 rounded-full bg-[#1c1c1e] text-white text-xs font-bold flex items-center gap-1 active:scale-95"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        Add to Quiz
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-4 rounded-xl border border-[#ddd6fe] space-y-2.5">
-                    <p className="font-semibold text-sm text-[#1c1c1e]">{quizBankQuestions[currentQuizBankIndex]?.text}</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {["A", "B", "C", "D"].map((opt) => (
-                        <div key={opt} className="p-2 rounded-lg bg-[#f7f8fa] text-xs flex items-center gap-2">
-                          <span className="font-bold text-[#4262ff]">{opt}:</span>
-                          <span>{quizBankQuestions[currentQuizBankIndex]?.options?.[opt]}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <QuizBankSelector
+                  questions={quizBankQuestions}
+                  existingQuestions={questions}
+                  onAddQuestion={(newQ) => {
+                    setQuestions((prev) => [...prev, newQ])
+                  }}
+                  onClose={() => {
+                    setActiveSource(null)
+                    setQuizBankQuestions([])
+                  }}
+                />
               )}
 
               {/* Questions List */}

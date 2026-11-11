@@ -1,4 +1,5 @@
 const {QuizRegion,Quiz} = require("../models/Quiz");
+const Contest = require("../models/Contest");
 const fs = require('fs/promises');
 const pdfParse = require("pdf-parse");
 const mammoth = require("mammoth");
@@ -61,10 +62,10 @@ exports.deleteRegionByName = async (req, res) => {
   }
 };
 
-// UPDATE a region by name
+// UPDATE a region by name with cascading updates to Quizzes and Contests
 exports.updateRegionByName = async (req, res) => {
   try {
-      const name = decodeURIComponent(req.params.name);
+    const name = decodeURIComponent(req.params.name);
     const { updatedData } = req.body;
 
     if (!name) {
@@ -74,17 +75,132 @@ exports.updateRegionByName = async (req, res) => {
       return res.status(400).json({ error: "No data provided for update." });
     }
 
+    const existingRegion = await QuizRegion.findOne({ name });
+    if (!existingRegion) {
+      return res.status(404).json({ error: "No region found with that name." });
+    }
+
+    const oldRegionName = name;
+    const newRegionName = (updatedData.name && updatedData.name.trim() !== '') ? updatedData.name.trim() : oldRegionName;
+
+    // 1. Cascade region rename to Quizzes and Contests
+    if (newRegionName !== oldRegionName) {
+      await Quiz.updateMany(
+        { "category.region": oldRegionName },
+        { $set: { "category.region": newRegionName } }
+      );
+      await Contest.updateMany(
+        { region: oldRegionName },
+        { $set: { region: newRegionName } }
+      );
+    }
+
+    // 2. Cascade hierarchy renames (examType -> specificClass -> subject -> chapter)
+    if (Array.isArray(updatedData.examTypes)) {
+      for (let i = 0; i < updatedData.examTypes.length; i++) {
+        const oldExam = existingRegion.examTypes?.[i];
+        const newExam = updatedData.examTypes[i];
+        if (oldExam && newExam && oldExam.name && newExam.name && oldExam.name !== newExam.name) {
+          await Quiz.updateMany(
+            { "category.region": { $in: [oldRegionName, newRegionName] }, "category.examType": oldExam.name },
+            { $set: { "category.examType": newExam.name } }
+          );
+          await Contest.updateMany(
+            { region: { $in: [oldRegionName, newRegionName] }, examType: oldExam.name },
+            { $set: { examType: newExam.name } }
+          );
+        }
+
+        if (oldExam && newExam && Array.isArray(newExam.specificClasses)) {
+          for (let j = 0; j < newExam.specificClasses.length; j++) {
+            const oldClass = oldExam.specificClasses?.[j];
+            const newClass = newExam.specificClasses[j];
+            if (oldClass && newClass && oldClass.name && newClass.name && oldClass.name !== newClass.name) {
+              await Quiz.updateMany(
+                {
+                  "category.region": { $in: [oldRegionName, newRegionName] },
+                  "category.examType": { $in: [oldExam.name, newExam.name] },
+                  "category.specificClass": oldClass.name
+                },
+                { $set: { "category.specificClass": newClass.name } }
+              );
+              await Contest.updateMany(
+                {
+                  region: { $in: [oldRegionName, newRegionName] },
+                  examType: { $in: [oldExam.name, newExam.name] },
+                  specificClass: oldClass.name
+                },
+                { $set: { specificClass: newClass.name } }
+              );
+            }
+
+            if (oldClass && newClass && Array.isArray(newClass.subjects)) {
+              for (let k = 0; k < newClass.subjects.length; k++) {
+                const oldSub = oldClass.subjects?.[k];
+                const newSub = newClass.subjects[k];
+                if (oldSub && newSub && oldSub.name && newSub.name && oldSub.name !== newSub.name) {
+                  await Quiz.updateMany(
+                    {
+                      "category.region": { $in: [oldRegionName, newRegionName] },
+                      "category.examType": { $in: [oldExam.name, newExam.name] },
+                      "category.specificClass": { $in: [oldClass.name, newClass.name] },
+                      "category.subject": oldSub.name
+                    },
+                    { $set: { "category.subject": newSub.name } }
+                  );
+                  await Contest.updateMany(
+                    {
+                      region: { $in: [oldRegionName, newRegionName] },
+                      examType: { $in: [oldExam.name, newExam.name] },
+                      specificClass: { $in: [oldClass.name, newClass.name] },
+                      subject: oldSub.name
+                    },
+                    { $set: { subject: newSub.name } }
+                  );
+                }
+
+                if (oldSub && newSub && Array.isArray(newSub.chapters)) {
+                  for (let l = 0; l < newSub.chapters.length; l++) {
+                    const oldChap = oldSub.chapters?.[l];
+                    const newChap = newSub.chapters[l];
+                    if (oldChap && newChap && oldChap.name && newChap.name && oldChap.name !== newChap.name) {
+                      await Quiz.updateMany(
+                        {
+                          "category.region": { $in: [oldRegionName, newRegionName] },
+                          "category.examType": { $in: [oldExam.name, newExam.name] },
+                          "category.specificClass": { $in: [oldClass.name, newClass.name] },
+                          "category.subject": { $in: [oldSub.name, newSub.name] },
+                          "category.chapter": oldChap.name
+                        },
+                        { $set: { "category.chapter": newChap.name } }
+                      );
+                      await Contest.updateMany(
+                        {
+                          region: { $in: [oldRegionName, newRegionName] },
+                          examType: { $in: [oldExam.name, newExam.name] },
+                          specificClass: { $in: [oldClass.name, newClass.name] },
+                          subject: { $in: [oldSub.name, newSub.name] },
+                          chapter: oldChap.name
+                        },
+                        { $set: { chapter: newChap.name } }
+                      );
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
     const updatedRegion = await QuizRegion.findOneAndUpdate(
       { name },
       updatedData,
       { new: true, runValidators: true }
     );
 
-    if (!updatedRegion) {
-      return res.status(404).json({ error: "No region found with that name." });
-    }
-
-    res.status(200).json({ message: `Region updated successfully.`, data: updatedRegion });
+    res.status(200).json({ message: `Region and related quizzes/contests updated successfully.`, data: updatedRegion });
   } catch (error) {
     console.error("Error updating region:", error);
     res.status(500).json({ error: "Server error during update." });
@@ -97,6 +213,13 @@ exports.createQuizQuestion = async (req, res) => {
 
     if (!category || !questions || !Array.isArray(questions) || questions.length === 0) {
       return res.status(400).json({ error: "Category and questions array are required." });
+    }
+
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
+    if (userId) {
+      category.userId = userId;
+      category.userRole = userRole || "user";
     }
 
     if (req.files && req.files.thumbnail) {
@@ -136,6 +259,9 @@ exports.createQuizQuestion = async (req, res) => {
 
     if (existingQuiz) {
       existingQuiz.questions.push(...questions);
+      if (!existingQuiz.user && userId) {
+        existingQuiz.user = userId;
+      }
       await existingQuiz.save();
 
       return res.status(200).json({
@@ -143,7 +269,11 @@ exports.createQuizQuestion = async (req, res) => {
         data: existingQuiz,
       });
     } else {
-      const newQuiz = new Quiz({ category, questions });
+      const newQuiz = new Quiz({
+        user: userId || undefined,
+        category,
+        questions
+      });
       await newQuiz.save();
 
       return res.status(201).json({
@@ -273,6 +403,34 @@ exports.getAllQuizzesWithCategoryAndQuestions = async (req, res) => {
   }
 };
 
+// Get quizzes created by the logged-in user
+exports.getUserQuizzes = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized: User not authenticated." });
+    }
+
+    const quizzes = await Quiz.find(
+      {
+        $or: [
+          { user: userId },
+          { "category.userId": userId }
+        ]
+      },
+      { "category.thumbnailimage": 0 }
+    ).sort({ createdAt: -1 }).lean();
+
+    return res.status(200).json({
+      message: "User quizzes fetched successfully.",
+      data: quizzes || [],
+    });
+  } catch (error) {
+    console.error("Error fetching user quizzes:", error);
+    return res.status(500).json({ error: "Failed to fetch user quizzes." });
+  }
+};
+
 // Get all quiz questions filtered by category.
 exports.getAllQuizQuestions = async (req, res) => {
   try {
@@ -339,11 +497,24 @@ exports.deleteQuizByTitle = async (req, res) => {
       return res.status(400).json({ error: "quizTitle is required in the URL parameter." });
     }
 
-    const deletedQuiz = await Quiz.findOneAndDelete({ "category.quizTitle": quizTitle });
+    const quiz = await Quiz.findOne({ "category.quizTitle": quizTitle });
 
-    if (!deletedQuiz) {
+    if (!quiz) {
       return res.status(404).json({ error: "Quiz not found with the given title." });
     }
+
+    // Ownership check: if role is 'user', must be the owner
+    const userRole = req.user?.role;
+    const userId = req.user?.id;
+    if (userRole === "user") {
+      const isOwner = (quiz.user && quiz.user.toString() === userId) ||
+                      (quiz.category && quiz.category.userId === userId);
+      if (!isOwner) {
+        return res.status(403).json({ error: "Forbidden: You are not authorized to delete this quiz." });
+      }
+    }
+
+    const deletedQuiz = await Quiz.findByIdAndDelete(quiz._id);
 
     return res.status(200).json({
       message: `Quiz with title "${quizTitle}" has been deleted.`,
@@ -487,8 +658,24 @@ exports.updateQuizById = async (req, res) => {
       return res.status(404).json({ error: "Quiz not found" });
     }
 
+    // Ownership check: if role is 'user', must be the owner of the quiz
+    const userRole = req.user?.role;
+    const userId = req.user?.id;
+    if (userRole === "user") {
+      const isOwner = (quiz.user && quiz.user.toString() === userId) ||
+                      (quiz.category && quiz.category.userId === userId);
+      if (!isOwner) {
+        return res.status(403).json({ error: "Forbidden: You are not authorized to edit this quiz." });
+      }
+    }
+
     // Update fields if provided
-    if (category) quiz.category = category;
+    if (category) {
+      if (quiz.user && !category.userId) {
+        category.userId = quiz.user.toString();
+      }
+      quiz.category = category;
+    }
     if (questions && Array.isArray(questions)) {
       quiz.questions = questions;
     }
@@ -506,10 +693,23 @@ exports.updateQuizById = async (req, res) => {
 exports.deleteQuizById = async (req, res) => {
   try {
     const { id } = req.params;
-    const deleted = await Quiz.findByIdAndDelete(id);
-    if (!deleted) {
+    const quiz = await Quiz.findById(id);
+    if (!quiz) {
       return res.status(404).json({ error: "Quiz not found" });
     }
+
+    // Ownership check: if role is 'user', must be the owner of the quiz
+    const userRole = req.user?.role;
+    const userId = req.user?.id;
+    if (userRole === "user") {
+      const isOwner = (quiz.user && quiz.user.toString() === userId) ||
+                      (quiz.category && quiz.category.userId === userId);
+      if (!isOwner) {
+        return res.status(403).json({ error: "Forbidden: You are not authorized to delete this quiz." });
+      }
+    }
+
+    await Quiz.findByIdAndDelete(id);
     res.status(200).json({ message: "Quiz deleted successfully" });
   } catch (error) {
     console.error("Error deleting quiz:", error);

@@ -1,6 +1,6 @@
 import { apiConnector } from "../apiconnector";
 import { createQuizRegionAPI,getAllQuizRegionAPI,updateQuizRegionAPI,deleteQuizRegionAPI,
-  createQuizQuestionAPI, getAllQuizQuestionsAPI,extractQuestionsFromFileAPI,getAllQuizAPI,
+  createQuizQuestionAPI, getAllQuizQuestionsAPI,extractQuestionsFromFileAPI,getAllQuizAPI,getUserQuizzesAPI,
   getQuizByIdAPI,updateQuizByIdAPI,deleteQuizByIdAPI,updateApprovalStatusByIdAPI, createQuizWithAIAPI,
   deleteQuizByTitleAPI,submitAiQuizAPI,getQuizSubmissionAPI,submitQuizAPI,getQuizSubmissionByIdAPI,
   getQuizbankquestion, updatequizbankquestion,deletequizbankquestion,submitQuestionReportAPI,
@@ -92,7 +92,10 @@ export const deleteQuizRegion = async (name) => {
 //create quiz question
 export const createQuizQuestion = async (data) => {
   try {
-    const response = await apiConnector("POST", createQuizQuestionAPI, data);
+    const token = localStorage.getItem("token");
+    const response = await apiConnector("POST", createQuizQuestionAPI, data, {
+      Authorization: `Bearer ${token}`
+    });
     return response.data;
   } catch (error) {
     console.error("Error creating quiz question:", error);
@@ -120,7 +123,10 @@ export const getAllQuizQuestions = async (category) => {
 //delete quiz by title
 export const deleteQuizByTitle = async (quizTitle) => {
   try {
-    const response = await apiConnector("DELETE",deleteQuizByTitleAPI(quizTitle));
+    const token = localStorage.getItem("token");
+    const response = await apiConnector("DELETE", deleteQuizByTitleAPI(quizTitle), null, {
+      Authorization: `Bearer ${token}`
+    });
     return response.data;
   } catch (error) {
     console.error("Error in deleting quiz by title API:", error);
@@ -135,6 +141,20 @@ export const getAllQuizzesWithCategoryAndQuestions = async () => {
     return response.data;
   } catch (error) {
     console.error("Error in fetching all quizzes API:", error);
+    throw error;
+  }
+}
+
+//get user's own quizzes
+export const getUserQuizzes = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await apiConnector("GET", getUserQuizzesAPI, null, {
+      Authorization: `Bearer ${token}`
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error in fetching user quizzes API:", error);
     throw error;
   }
 }
@@ -156,7 +176,10 @@ export const extractQuestionsFromFile = async (file) => {
 //get quiz by id
 export const getQuizById = async (id) => {
   try {
-    const response = await apiConnector("GET", getQuizByIdAPI(id));
+    const token = localStorage.getItem("token");
+    const response = await apiConnector("GET", getQuizByIdAPI(id), null, {
+      Authorization: `Bearer ${token}`
+    });
     return response.data;
   } catch (error) {
     console.error("Error in fetching quiz by ID API:", error);
@@ -166,8 +189,10 @@ export const getQuizById = async (id) => {
 //update quiz by id
 export const updateQuizById = async (id, data) => {
   try {
+    const token = localStorage.getItem("token");
     const response = await apiConnector("PATCH", updateQuizByIdAPI(id), data, {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
     });
     return response.data;
   } catch (error) {
@@ -178,7 +203,10 @@ export const updateQuizById = async (id, data) => {
 //delete quiz by id
 export const deleteQuizById = async (id) => {
   try {
-    const response = await apiConnector("DELETE", deleteQuizByIdAPI(id));
+    const token = localStorage.getItem("token");
+    const response = await apiConnector("DELETE", deleteQuizByIdAPI(id), null, {
+      Authorization: `Bearer ${token}`
+    });
     return response.data;
   } catch (error) {
     console.error("Error in deleting quiz by ID API:", error);

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
+import { Analytics } from "@vercel/analytics/react";
 import { useAutoLogout } from "./lib/autoLogout";
 import LandingPage from "./landingpage";
 import Banner from "./components/common/banner";
@@ -154,6 +155,7 @@ function App() {
 
   return (
     <div className={`App ${!isOnline ? "blur-sm pointer-events-none transition-all duration-300" : "transition-all duration-300"}`}>
+      <Analytics />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/documentation" element={<Documentation />} />
